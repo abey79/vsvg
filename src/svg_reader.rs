@@ -22,7 +22,6 @@ fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines 
     let mut output = Lines::new();
     let mut line = Vec::new();
     for elem in usvg::TransformedPath::new(&path.data, *transform) {
-        println!("   {:?}", elem);
         match elem {
             PathSegment::MoveTo { x, y } => {
                 if !line.is_empty() {
@@ -42,8 +41,8 @@ fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines 
             } => {
                 // todo: hardcoded to 10 points
                 const N: usize = 10;
-                let first = line[0];
-                line.extend((0..N).map(move |i| {
+                let first = *line.last().unwrap();
+                line.extend((1..N).map(move |i| {
                     let t = i as f64 / (N - 1) as f64;
                     let ttt = t * t * t;
                     let ttu = t * t * (1. - t);
@@ -51,8 +50,8 @@ fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines 
                     let uuu = (1. - t) * (1. - t) * (1. - t);
 
                     [
-                        first[0] * ttt + 3. * x1 * ttu * 3. * x2 * tuu + x * uuu,
-                        first[1] * ttt + 3. * y1 * ttu * 3. * y2 * tuu + y * uuu,
+                        first[0] * uuu + 3. * x1 * tuu + 3. * x2 * ttu + x * ttt,
+                        first[1] * uuu + 3. * y1 * tuu + 3. * y2 * ttu + y * ttt,
                     ]
                 }));
             }
@@ -66,20 +65,20 @@ fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines 
     output
 }
 
-fn parse_group(group: &usvg::Node, &transform: &usvg::Transform) -> Lines {
+fn parse_group(group: &usvg::Node, transform: &usvg::Transform) -> Lines {
     let mut output = Lines::new();
 
     for node in group.children() {
-        let mut transform = transform.clone();
-        transform.append(&node.borrow().transform());
+        let mut child_transform = *transform;
+        child_transform.append(&node.borrow().transform());
 
         match *node.borrow() {
             usvg::NodeKind::Path(ref path) => {
-                output.extend(path_to_plot_points(path, &transform));
+                output.extend(path_to_plot_points(path, &child_transform));
             }
             usvg::NodeKind::Image(_) => {}
             usvg::NodeKind::Group(_) => {
-                output.extend(parse_group(&node, &transform));
+                output.extend(parse_group(&node, &child_transform));
             }
             usvg::NodeKind::Text(_) => {}
         }
@@ -107,7 +106,7 @@ pub(crate) fn parse_svg<P: AsRef<Path>>(path: P) -> Result<Lines, Box<dyn Error>
 
     for child in tree.root.children() {
         if let usvg::NodeKind::Group(_) = *child.borrow() {
-            let mut transform = global_transform.clone();
+            let mut transform = global_transform;
             transform.append(&child.borrow().transform());
             output.extend(parse_group(&child, &transform));
         }

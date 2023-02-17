@@ -20,6 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let lines = parse_svg(cli.path)?;
 
     // Log to stdout (if you run with `RUST_LOG=debug`).
+    #[cfg(debug_assertions)]
     tracing_subscriber::fmt::init();
 
     let native_options = eframe::NativeOptions::default();

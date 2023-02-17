@@ -1,28 +1,21 @@
-use egui;
-use std::f64::consts::TAU;
-
 use crate::svg_reader::Lines;
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub(crate) struct Viewer {
     #[serde(skip)]
     lines: Lines,
-    // this how you opt-out of serialization of a member
-    //    #[serde(skip)]
-    //    value: f32,
 }
 
-// impl Default for Viewer {
-//     fn default() -> Self {
-//         Self {
-//             // Example stuff:
-//             label: "Hello World!".to_owned(),
-//             value: 2.7,
-//         }
-//     }
-// }
+#[allow(clippy::derivable_impls)]
+impl Default for Viewer {
+    // implementing default is needed for egui's persistence feature
+    fn default() -> Self {
+        Self {
+            lines: Lines::default(),
+        }
+    }
+}
 
 impl Viewer {
     /// Called once before the first frame.
@@ -49,7 +42,7 @@ impl eframe::App for Viewer {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
         // Tip: a good default choice is to just keep the `CentralPanel`.
@@ -61,43 +54,35 @@ impl eframe::App for Viewer {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Quit").clicked() {
-                        _frame.close();
+                        frame.close();
                     }
                 });
             });
         });
 
-        let frame =
+        let panel_frame =
             egui::Frame::central_panel(&ctx.style()).inner_margin(egui::style::Margin::same(0.));
-        egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            let mut plot = egui::plot::Plot::new("svg_plot").data_aspect(1.0);
+        egui::CentralPanel::default()
+            .frame(panel_frame)
+            .show(ctx, |ui| {
+                let mut plot = egui::plot::Plot::new("svg_plot").data_aspect(1.0);
 
-            let grid = true;
-            if !grid {
-                plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
-            }
-
-            plot.show(ui, |plot_ui| {
-                // let n = 512;
-                // let circle_points: egui::plot::PlotPoints = (0..=n)
-                //     .map(|i| {
-                //         let t = egui::emath::remap(i as f64, 0.0..=(n as f64), 0.0..=TAU);
-                //         let r = 50.;
-                //         [r * t.cos() + 10. as f64, r * t.sin() + 0. as f64]
-                //     })
-                //     .collect();
-
-                for line in self.lines.lines.iter() {
-                    plot_ui.line(
-                        egui::plot::Line::new(egui::plot::PlotPoints::new(line.clone()))
-                            .color(egui::ecolor::Color32::from_rgb(100, 200, 100))
-                            .name("circle"),
-                    );
+                let grid = true;
+                if !grid {
+                    plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
                 }
-            });
 
-            egui::warn_if_debug_build(ui);
-        });
+                plot.show(ui, |plot_ui| {
+                    for line in self.lines.lines.iter() {
+                        plot_ui.line(
+                            egui::plot::Line::new(egui::plot::PlotPoints::new(line.clone()))
+                                .color(egui::ecolor::Color32::from_rgb(100, 200, 100))
+                                .name("circle"),
+                        );
+                    }
+                });
+
+                egui::warn_if_debug_build(ui);
+            });
     }
 }
