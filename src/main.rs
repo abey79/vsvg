@@ -11,24 +11,27 @@ use std::path::PathBuf;
 struct Cli {
     /// path of input SVG file
     path: PathBuf,
+
+    /// return after loading the SVG file without showing the GUI (for benchmarking)
+    #[clap(short, long)]
+    no_gui: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
-    println!("{:?}", cli.path);
-
     let lines = parse_svg(cli.path)?;
 
     // Log to stdout (if you run with `RUST_LOG=debug`).
     #[cfg(debug_assertions)]
     tracing_subscriber::fmt::init();
 
-    let native_options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "eframe template",
-        native_options,
-        Box::new(|cc| Box::new(viewer::Viewer::new(cc, lines))),
-    )?;
-
+    if !cli.no_gui {
+        let native_options = eframe::NativeOptions::default();
+        eframe::run_native(
+            "eframe template",
+            native_options,
+            Box::new(|cc| Box::new(viewer::Viewer::new(cc, lines))),
+        )?;
+    }
     Ok(())
 }
