@@ -57,6 +57,7 @@ impl eframe::App for Viewer {
                         frame.close();
                     }
                 });
+                egui::warn_if_debug_build(ui);
             });
         });
 
@@ -75,14 +76,12 @@ impl eframe::App for Viewer {
                 plot.show(ui, |plot_ui| {
                     for line in self.lines.lines.iter() {
                         plot_ui.line(
-                            egui::plot::Line::new(egui::plot::PlotPoints::new(line.clone()))
+                            egui::plot::Line::new(egui::plot::PlotPoints::new(line.points.clone()))
                                 .color(egui::ecolor::Color32::from_rgb(100, 200, 100))
                                 .name("circle"),
                         );
                     }
                 });
-
-                egui::warn_if_debug_build(ui);
             });
     }
 }

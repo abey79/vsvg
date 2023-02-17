@@ -4,8 +4,19 @@ use std::path::Path;
 use usvg::{NodeExt, PathSegment, Transform};
 
 #[derive(Default)]
+pub(crate) struct Line {
+    pub points: Vec<[f64; 2]>,
+}
+
+impl From<Vec<[f64; 2]>> for Line {
+    fn from(points: Vec<[f64; 2]>) -> Self {
+        Self { points }
+    }
+}
+
+#[derive(Default)]
 pub(crate) struct Lines {
-    pub lines: Vec<Vec<[f64; 2]>>,
+    pub lines: Vec<Line>,
 }
 
 impl Lines {
@@ -13,19 +24,19 @@ impl Lines {
         Self { lines: Vec::new() }
     }
 
-    fn extend(&mut self, other: Self) {
-        self.lines.extend(other.lines);
+    fn add_lines(&mut self, lines: Vec<Line>) {
+        self.lines.extend(lines);
     }
 }
 
-fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines {
-    let mut output = Lines::new();
-    let mut line = Vec::new();
+fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Vec<Line> {
+    let mut output: Vec<Line> = vec![];
+    let mut line = vec![];
     for elem in usvg::TransformedPath::new(&path.data, *transform) {
         match elem {
             PathSegment::MoveTo { x, y } => {
                 if !line.is_empty() {
-                    output.lines.push(line);
+                    output.push(Line::from(line));
                     line = Vec::new();
                 }
                 line.push([x, y]);
@@ -59,32 +70,28 @@ fn path_to_plot_points(path: &usvg::Path, transform: &usvg::Transform) -> Lines 
         }
     }
     if !line.is_empty() {
-        output.lines.push(line);
+        output.push(Line::from(line));
     }
 
     output
 }
 
-fn parse_group(group: &usvg::Node, transform: &usvg::Transform) -> Lines {
-    let mut output = Lines::new();
+fn parse_group(group: &usvg::Node, transform: &usvg::Transform) -> Vec<Line> {
+    group
+        .children()
+        .flat_map(|node| {
+            let mut child_transform = *transform;
+            child_transform.append(&node.borrow().transform());
 
-    for node in group.children() {
-        let mut child_transform = *transform;
-        child_transform.append(&node.borrow().transform());
-
-        match *node.borrow() {
-            usvg::NodeKind::Path(ref path) => {
-                output.extend(path_to_plot_points(path, &child_transform));
+            match *node.borrow() {
+                usvg::NodeKind::Path(ref path) => path_to_plot_points(path, &child_transform),
+                usvg::NodeKind::Group(_) => parse_group(&node, &child_transform),
+                _ => {
+                    vec![]
+                }
             }
-            usvg::NodeKind::Image(_) => {}
-            usvg::NodeKind::Group(_) => {
-                output.extend(parse_group(&node, &child_transform));
-            }
-            usvg::NodeKind::Text(_) => {}
-        }
-    }
-
-    output
+        })
+        .collect()
 }
 
 pub(crate) fn parse_svg<P: AsRef<Path>>(path: P) -> Result<Lines, Box<dyn Error>> {
@@ -95,9 +102,9 @@ pub(crate) fn parse_svg<P: AsRef<Path>>(path: P) -> Result<Lines, Box<dyn Error>
 
     // add frame for the page
     let (w, h) = (tree.size.width(), tree.size.height());
-    output
-        .lines
-        .push(vec![[0., 0.], [w, 0.], [w, h], [0., h], [0., 0.]]);
+    output.lines.push(Line {
+        points: vec![[0., 0.], [w, 0.], [w, h], [0., h], [0., 0.]],
+    });
 
     // setup transform to account for egui's y-up setup.
     let mut global_transform = Transform::new_scale(1., -1.);
@@ -108,7 +115,7 @@ pub(crate) fn parse_svg<P: AsRef<Path>>(path: P) -> Result<Lines, Box<dyn Error>
         if let usvg::NodeKind::Group(_) = *child.borrow() {
             let mut transform = global_transform;
             transform.append(&child.borrow().transform());
-            output.extend(parse_group(&child, &transform));
+            output.add_lines(parse_group(&child, &transform));
         }
     }
 

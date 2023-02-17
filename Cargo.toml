@@ -16,6 +16,7 @@ eframe = { version = "0.21.0", default-features = false, features = [
 serde = { version = "1", features = ["derive"] }
 tracing-subscriber = "0.3.16"
 clap = { version = "4.1.6", features = ["derive"]}
+rayon = "1.6.1"
 
 
 # Optimize all dependencies even in debug builds:
