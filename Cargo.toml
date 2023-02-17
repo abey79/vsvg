@@ -1,0 +1,23 @@
+[package]
+name = "svger"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+usvg = "0.29.0"
+rctree = "*"  # Let usvg decide on the version
+egui = "0.21.0"
+eframe = { version = "0.21.0", default-features = false, features = [
+    "default_fonts", # Embed the default egui fonts.
+    "wgpu",
+] }
+serde = { version = "1", features = ["derive"] }
+tracing-subscriber = "0.3.16"
+clap = { version = "4.1.6", features = ["derive"]}
+
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+#opt-level = 2
