@@ -15,11 +15,15 @@ struct Cli {
     /// return after loading the SVG file without showing the GUI (for benchmarking)
     #[clap(short, long)]
     no_gui: bool,
+
+    /// tolerance when flatting SVG curves
+    #[clap(short, long, default_value = "0.01")]
+    tolerance: f64,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
-    let lines = parse_svg(cli.path)?;
+    let lines = parse_svg(cli.path, cli.tolerance)?;
 
     // Log to stdout (if you run with `RUST_LOG=debug`).
     #[cfg(debug_assertions)]
