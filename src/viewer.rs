@@ -77,8 +77,14 @@ impl eframe::App for Viewer {
                     for line in self.lines.lines.iter() {
                         plot_ui.line(
                             egui::plot::Line::new(egui::plot::PlotPoints::new(line.points.clone()))
-                                .color(egui::ecolor::Color32::from_rgb(100, 200, 100))
-                                .name("circle"),
+                                .color(egui::ecolor::Color32::from_rgb(100, 200, 100)),
+                        );
+                        plot_ui.points(
+                            egui::plot::Points::new(egui::plot::PlotPoints::new(
+                                line.points.clone(),
+                            ))
+                            .color(egui::ecolor::Color32::from_rgb(30, 200, 250))
+                            .radius(2.0),
                         );
                     }
                 });
