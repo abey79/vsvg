@@ -1,10 +1,10 @@
-use crate::svg_reader::Lines;
+use crate::types::Polylines;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub(crate) struct Viewer {
     #[serde(skip)]
-    lines: Lines,
+    polylines: Polylines,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -12,14 +12,14 @@ impl Default for Viewer {
     // implementing default is needed for egui's persistence feature
     fn default() -> Self {
         Self {
-            lines: Lines::default(),
+            polylines: Polylines::default(),
         }
     }
 }
 
 impl Viewer {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, lines: Lines) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, polylines: Polylines) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -30,7 +30,7 @@ impl Viewer {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }*/
 
-        Viewer { lines }
+        Viewer { polylines }
     }
 }
 
@@ -74,7 +74,7 @@ impl eframe::App for Viewer {
                 }
 
                 plot.show(ui, |plot_ui| {
-                    for line in self.lines.lines.iter() {
+                    for line in self.polylines.iter() {
                         plot_ui.line(
                             egui::plot::Line::new(egui::plot::PlotPoints::new(line.points.clone()))
                                 .color(egui::ecolor::Color32::from_rgb(100, 200, 100)),

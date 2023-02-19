@@ -1,9 +1,11 @@
 mod crop;
 mod svg_reader;
+mod types;
 mod viewer;
 
 use crate::svg_reader::*;
 use std::error::Error;
+use std::hint::black_box;
 
 use clap::Parser;
 use std::path::PathBuf;
@@ -23,12 +25,16 @@ struct Cli {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let cli = Cli::parse();
-    let lines = parse_svg(cli.path, cli.tolerance)?;
-
     // Log to stdout (if you run with `RUST_LOG=debug`).
     #[cfg(debug_assertions)]
     tracing_subscriber::fmt::init();
+
+    // load SVG file
+    let cli = Cli::parse();
+    let doc = parse_svg(cli.path)?;
+
+    // flatten curves
+    let lines = doc.flatten(cli.tolerance);
 
     if !cli.no_gui {
         let native_options = eframe::NativeOptions::default();
@@ -37,6 +43,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             native_options,
             Box::new(|cc| Box::new(viewer::Viewer::new(cc, lines))),
         )?;
+    } else {
+        // ensure this is not optimised away
+        // TODO: needs to be eventually cleaned up
+        black_box(lines);
     }
     Ok(())
 }
