@@ -1,3 +1,4 @@
+mod crop;
 mod svg_reader;
 mod viewer;
 
