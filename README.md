@@ -4,6 +4,9 @@
 
 This is a fast SVG viewer targeted at plotter users. It is somewhat usable, although it's still a highly experimental WIP.
 
+<img width="500" alt="image" src="https://user-images.githubusercontent.com/49431240/220178589-e07f7e13-5706-4a7d-bbd4-aefffffa0c58.png">
+
+
 By "fast", I mean "much faster than [*vpype*](https://github.com/abey79/vpype)". Consider the following command:
 
 ```
