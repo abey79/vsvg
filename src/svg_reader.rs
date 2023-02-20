@@ -1,53 +1,63 @@
-use kurbo::{BezPath, PathEl};
+use kurbo::PathEl;
 
 use std::error::Error;
 use std::fs;
 use std::path;
 
-use crate::types::Document;
+use crate::types::{Document, Layer, PageSize, Path};
 
 use usvg::{NodeExt, PathSegment, Transform};
 
-fn usvg_to_kurbo_path(path: &usvg::Path, transform: &Transform) -> BezPath {
-    usvg::TransformedPath::new(&path.data, *transform)
-        .into_iter()
-        .map(|elem| match elem {
-            PathSegment::MoveTo { x, y } => PathEl::MoveTo(kurbo::Point::new(x, y)),
-            PathSegment::LineTo { x, y } => PathEl::LineTo(kurbo::Point::new(x, y)),
-            PathSegment::CurveTo {
-                x1,
-                y1,
-                x2,
-                y2,
-                x,
-                y,
-            } => PathEl::CurveTo(
-                kurbo::Point::new(x1, y1),
-                kurbo::Point::new(x2, y2),
-                kurbo::Point::new(x, y),
-            ),
-            PathSegment::ClosePath => PathEl::ClosePath,
-        })
-        .collect()
+impl Path {
+    pub fn from_svg(svg_path: &usvg::Path, transform: &Transform) -> Self {
+        let bezpath = usvg::TransformedPath::new(&svg_path.data, *transform)
+            .into_iter()
+            .map(|elem| match elem {
+                PathSegment::MoveTo { x, y } => PathEl::MoveTo(kurbo::Point::new(x, y)),
+                PathSegment::LineTo { x, y } => PathEl::LineTo(kurbo::Point::new(x, y)),
+                PathSegment::CurveTo {
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    x,
+                    y,
+                } => PathEl::CurveTo(
+                    kurbo::Point::new(x1, y1),
+                    kurbo::Point::new(x2, y2),
+                    kurbo::Point::new(x, y),
+                ),
+                PathSegment::ClosePath => PathEl::ClosePath,
+            })
+            .collect();
+
+        Self {
+            bezpath,
+            ..Default::default() // TODO: metadata!!!!
+        }
+    }
 }
 
-fn parse_group(group: &usvg::Node, transform: &Transform) -> Vec<BezPath> {
-    //TODO: we're not keeping the group structure here :)
-    group
-        .children()
-        .flat_map(|node| {
-            let mut child_transform = *transform;
-            child_transform.append(&node.borrow().transform());
+fn parse_group(group: &usvg::Node, transform: &Transform) -> Layer {
+    let mut layer = Layer::new();
 
-            match *node.borrow() {
-                usvg::NodeKind::Path(ref path) => vec![usvg_to_kurbo_path(path, &child_transform)],
-                usvg::NodeKind::Group(_) => parse_group(&node, &child_transform),
-                _ => {
-                    vec![]
-                }
+    group.children().for_each(|node| {
+        let mut child_transform = *transform;
+        child_transform.append(&node.borrow().transform());
+
+        match *node.borrow() {
+            usvg::NodeKind::Path(ref path) => {
+                layer.paths.push(Path::from_svg(path, &child_transform));
             }
-        })
-        .collect()
+            usvg::NodeKind::Group(_) => {
+                let sub_layer = parse_group(&node, &child_transform);
+                layer.paths.extend(sub_layer.paths);
+            }
+            _ => {}
+        }
+    });
+
+    layer
 }
 
 pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<dyn Error>> {
@@ -62,16 +72,24 @@ pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<d
     global_transform.translate(0., -h);
     global_transform.append(&tree.root.transform());
 
-    let mut doc = Document::new();
-    doc.add_path(kurbo::Rect::new(0., 0., w, h));
+    let mut doc = Document::new_with_page_size(PageSize { w, h });
 
     for child in tree.root.children() {
         if let usvg::NodeKind::Group(_) = *child.borrow() {
             let mut transform = global_transform;
             transform.append(&child.borrow().transform());
-            doc.add_paths(parse_group(&child, &transform));
+            doc.layers.push(parse_group(&child, &transform));
         }
+
+        // TODO: we're missing top-level paths here!
     }
+
+    // TODO: this needs to be done by the viewer
+    doc.layers
+        .last_mut()
+        .unwrap()
+        .paths
+        .push(Path::from_shape(kurbo::Rect::new(0., 0., w, h)));
 
     let doc = doc.crop(0., 0., w, h);
 

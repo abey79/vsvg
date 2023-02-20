@@ -17,6 +17,11 @@ impl Default for Viewer {
     }
 }
 
+// TODO: draw page size
+// TODO: light mode
+// TODO: line color & width
+// TODO: API takes a `&Document`
+
 impl Viewer {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>, polylines: Polylines) -> Self {
