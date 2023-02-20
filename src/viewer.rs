@@ -166,7 +166,7 @@ impl Document {
         let page_size = self.page_size;
 
         eframe::run_native(
-            "eframe template",
+            "vsvg",
             native_options,
             Box::new(move |cc| {
                 let style = egui::Style {
