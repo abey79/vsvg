@@ -4,7 +4,7 @@ use std::error::Error;
 use std::fs;
 use std::path;
 
-use crate::types::{Document, Layer, PageSize, Path};
+use crate::types::{Color, Document, Layer, PageSize, Path};
 
 use usvg::{NodeExt, PathSegment, Transform};
 
@@ -31,10 +31,25 @@ impl Path {
             })
             .collect();
 
-        Self {
+        let mut res = Self {
             bezpath,
-            ..Default::default() // TODO: metadata!!!!
+            ..Default::default()
+        };
+
+        // extract metadata
+        if let Some(stroke) = &svg_path.stroke {
+            if let usvg::Paint::Color(c) = stroke.paint {
+                res.color = Color {
+                    r: c.red,
+                    g: c.green,
+                    b: c.blue,
+                    a: 255,
+                };
+            }
+            res.stroke_width = stroke.width.get();
         }
+
+        res
     }
 }
 
@@ -68,6 +83,7 @@ pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<d
     let (w, h) = (tree.size.width(), tree.size.height());
 
     // setup transform to account for egui's y-up setup.
+    // TODO: this needs to be done in the viewer
     let mut global_transform = Transform::new_scale(1., -1.);
     global_transform.translate(0., -h);
     global_transform.append(&tree.root.transform());
@@ -83,13 +99,6 @@ pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<d
 
         // TODO: we're missing top-level paths here!
     }
-
-    // TODO: this needs to be done by the viewer
-    doc.layers
-        .last_mut()
-        .unwrap()
-        .paths
-        .push(Path::from_shape(kurbo::Rect::new(0., 0., w, h)));
 
     let doc = doc.crop(0., 0., w, h);
 
