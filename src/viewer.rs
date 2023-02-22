@@ -18,14 +18,9 @@ pub(crate) struct Viewer {
     show_grid: bool,
 }
 
-// TODO: draw page size
-// TODO: light mode
-// TODO: line color & width
-// TODO: API takes a `&Document`
-
-impl Into<egui::ecolor::Color32> for crate::types::Color {
-    fn into(self) -> egui::ecolor::Color32 {
-        egui::ecolor::Color32::from_rgba_unmultiplied(self.r, self.g, self.b, self.a)
+impl From<crate::types::Color> for egui::ecolor::Color32 {
+    fn from(val: crate::types::Color) -> Self {
+        egui::ecolor::Color32::from_rgba_unmultiplied(val.r, val.g, val.b, val.a)
     }
 }
 
@@ -58,7 +53,7 @@ impl Viewer {
 const SHADOW_OFFSET: f64 = 10.;
 
 impl eframe::App for Viewer {
-    /// Called by the frame work to save state before shutdown.
+    /// Called by the framework to save state before shutdown.
     /*fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }*/
