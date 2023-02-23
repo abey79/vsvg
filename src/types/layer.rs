@@ -15,6 +15,12 @@ impl<T: Default> LayerImpl<T> {
             ..Default::default()
         }
     }
+
+    pub(crate) fn map_paths(self, f: impl Fn(PathImpl<T>) -> PathImpl<T>) -> Self {
+        Self {
+            paths: self.paths.into_iter().map(f).collect(),
+        }
+    }
 }
 
 impl Layer {
@@ -33,12 +39,6 @@ impl Layer {
     }
 
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
-        Self {
-            paths: self
-                .paths
-                .into_iter()
-                .map(|path| path.crop(x_min, y_min, x_max, y_max))
-                .collect(),
-        }
+        self.map_paths(|path| path.crop(x_min, y_min, x_max, y_max))
     }
 }
