@@ -1,4 +1,4 @@
-use crate::types::{Document, PageSize, Polylines};
+use crate::types::{document::FlattenedDocument, Document, PageSize};
 use std::error::Error;
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -6,7 +6,7 @@ use std::error::Error;
 pub(crate) struct Viewer {
     /// polylines derived from the document
     #[serde(skip)]
-    polylines: Polylines,
+    document: FlattenedDocument,
 
     #[serde(skip)]
     page_size: Option<PageSize>,
@@ -28,7 +28,7 @@ impl Viewer {
     /// Called once before the first frame.
     pub fn new(
         _cc: &eframe::CreationContext<'_>,
-        polylines: Polylines,
+        document: FlattenedDocument,
         page_size: Option<PageSize>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -42,7 +42,7 @@ impl Viewer {
         }*/
 
         Viewer {
-            polylines,
+            document,
             page_size,
             show_point: false,
             show_grid: false,
@@ -130,23 +130,25 @@ impl eframe::App for Viewer {
                         );
                     }
 
-                    for line in self.polylines.iter() {
-                        plot_ui.line(
-                            egui::plot::Line::new(egui::plot::PlotPoints::from_iter(
-                                line.points.iter().copied(),
-                            ))
-                            .color(line.color)
-                            .width(line.stroke_width as f32),
-                        );
-
-                        if self.show_point {
-                            plot_ui.points(
-                                egui::plot::Points::new(egui::plot::PlotPoints::from_iter(
-                                    line.points.iter().copied(),
+                    for layer in self.document.layers.iter() {
+                        for path in layer.paths.iter() {
+                            plot_ui.line(
+                                egui::plot::Line::new(egui::plot::PlotPoints::from_iter(
+                                    path.data.iter().copied(),
                                 ))
-                                .color(line.color)
-                                .radius(line.stroke_width as f32 * 2.0),
+                                .color(path.color)
+                                .width(path.stroke_width as f32),
                             );
+
+                            if self.show_point {
+                                plot_ui.points(
+                                    egui::plot::Points::new(egui::plot::PlotPoints::from_iter(
+                                        path.data.iter().copied(),
+                                    ))
+                                    .color(path.color)
+                                    .radius(path.stroke_width as f32 * 2.0),
+                                );
+                            }
                         }
                     }
                 });

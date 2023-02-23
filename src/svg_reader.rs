@@ -32,7 +32,7 @@ impl Path {
             .collect();
 
         let mut res = Self {
-            bezpath,
+            data: bezpath,
             ..Default::default()
         };
 
