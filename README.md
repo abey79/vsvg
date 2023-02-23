@@ -6,7 +6,6 @@ This is a fast SVG viewer targeted at plotter users. It is somewhat usable, alth
 
 <img width="500" alt="image" src="https://user-images.githubusercontent.com/49431240/220178589-e07f7e13-5706-4a7d-bbd4-aefffffa0c58.png">
 
-
 By "fast", I mean "much faster than [*vpype*](https://github.com/abey79/vpype)". Consider the following command:
 
 ```
@@ -75,9 +74,11 @@ To uninstall `vsvg`, navigate back to the `vsvg` source directory and execute th
 cargo uninstall
 ```
 
+
 ## Design notes
 
 Here are a few design considerations, in the frame of using this project as basis for a future, Rust-based `vpype-core` project.
+
 
 ### Elementary path
 
@@ -90,6 +91,7 @@ One approach is to support *all* of SVG primitives: elliptic arcs (including ful
 As it turns out, the `usvg` crate offers facilities to normalise any SVG primitive into paths made of polylines and cubic Bézier only. Its output relies on the `BezPath` structure from the `kurbo` crate, which offers a dual representation: draw commands (MoveTo, LineTo, CurveTo, ClosePath) and segments (LineSegment, BezierSegment). Each representation has advantages in different circumstances. Conveniently, `BezPath` also supports compound paths.
 
 Consequently, my current plan is to use `krubo::BezPath` as fundamental structure for path representation, and build a Path/Layer/Document hierarchy around it.
+
 
 ### Flattened paths
 
@@ -126,6 +128,11 @@ To minimise code duplication, my plan is use the following data structures:
 The core of the Path/Layer/Document hierarchy is implemented with structures that are generic over the actual path data type. Then, two sets of concrete types are offered, one based on `BezPath` and another based on a simple vector of points. Any feature that is easy to implement generically is done in `XXXImpl<T>`. Features that would require too much work to cover both hierarchies and not strictly necessary for the flattened use cases are implemented for `Path` and friends only. Conversion between normal and flattened structure is offered, though obviously the round-trip would be destructive.
 
 
+### Mutability of Path/Layer/Doc
+
+For operations on Path/Layer/Document structures (e.g. transforms, crop, etc.), I'm using for the moment an immutable pattern (e.g. `fn ops(self, ...) -> Self {}`), though clearly the goal is not to have purely immutable structure (e.g. paths addition/removal in layers, layer addition/removal in document, etc.). I'm not sure yet of the implication and if this is a good idea or not.
+
+
 ### Metadata handling
 
 I'm still in the process of sorting that out.
@@ -138,14 +145,14 @@ Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 
 ## TODO
 
-- [ ] egui plot viewer cannot display zoom-aware fat lines :(
+- [x] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer. 
 - [ ] ~~Properly handle Y axis (currently it's flipped)~~ (probably pointless if we move to a custom viewer)
   - [ ] ~~Custom y_axis_formatter~~
 - [x] Add support for color and line width (but width is zoom-aware)
 - [x] Crop to page size
-- [ ] Test viewbox
+- [ ] ~~Test viewbox~~ Fix viewbox handling
 - [ ] Metadata concept, possibly using `Rc`'s clone-on-write capability
-- [ ] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
-- [ ] Move stuff to `lib.rs`
+- [x] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
+- [x] Move stuff to `lib.rs`
 - [ ] Implement *vpype*-like layer IDs.
 - [ ] .......
