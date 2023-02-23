@@ -75,6 +75,66 @@ To uninstall `vsvg`, navigate back to the `vsvg` source directory and execute th
 cargo uninstall
 ```
 
+## Design notes
+
+Here are a few design considerations, in the frame of using this project as basis for a future, Rust-based `vpype-core` project.
+
+### Elementary path
+
+*vpype* uses one-dimensional Numpy array of `complex` as basic path type. This means that anything curvy must be linearised and transformed into a polyline. This is why the `read` command has a `-q/--quantization` option to control the accuracy of this transformation. One design goal of *vpype* 2 is to no longer degrade curved paths into polylines.
+
+Another design goal is to support compound paths, i.e. paths made of several, possibly-closing sub-paths. This is used to represent shapes with holes. Proper support for shapes with holes is a strong prerequisite towards a robust hatch filling feature for *vpype*.
+
+One approach is to support *all* of SVG primitives: elliptic arcs (including full circles and ellipses), quadratic Beziers, and cubic Bézier. The drawback is the added complexity of dealing with so many primitives. Another approach would be to support only polylines and cubic Bézier. They provide an exact approximation of quadratic bezier and a good approximation of arcs, while generally be nice to work with.
+
+As it turns out, the `usvg` crate offers facilities to normalise any SVG primitive into paths made of polylines and cubic Bézier only. Its output relies on the `BezPath` structure from the `kurbo` crate, which offers a dual representation: draw commands (MoveTo, LineTo, CurveTo, ClosePath) and segments (LineSegment, BezierSegment). Each representation has advantages in different circumstances. Conveniently, `BezPath` also supports compound paths.
+
+Consequently, my current plan is to use `krubo::BezPath` as fundamental structure for path representation, and build a Path/Layer/Document hierarchy around it.
+
+### Flattened paths
+
+The case for fully "flattened" representations (e.g. representations where everything is converted to polyline) remains. At the very least, this will be needed for the viewer (unless Bezier -> polyline can be figured out in a shader). HPGL and gcode export also come to mind. Finally, backward plug-in compatibility could also benefit from that, although this is not really a design goal. When flattening a document, keeping the Doc/Layer/Path hierarchy would still be needed though, i.e. for the viewer to handle layer visibility or properly colouring each path using its attached metadata.
+
+To minimise code duplication, my plan is use the following data structures:
+
+
+```
+        CONCRETE                     GENERIC                    FLATTENED        
+     IMPLEMENTATION              IMPLEMENTATION              IMPLEMENTATION      
+                                                                                 
++-----------------------+   +-----------------------+   +-----------------------+
+|         Path          |   |                       |   |     FlattenedPath     |
+|                       |<--|      PathImpl<T>      |-->|                       |
+|   PathImpl<BezPath>   |   |                       |   |  PathImpl<Polyline>   |
++-----------------------+   +-----------------------+   +-----------------------+
+                                                                                 
++-----------------------+   +-----------------------+   +-----------------------+
+|         Layer         |   |                       |   |    FlattenedLayer     |
+|                       |<--|     LayerImpl<T>      |-->|                       |
+|  LayerImpl<BezPath>   |   |                       |   |  LayerImpl<Polyline>  |
++-----------------------+   +-----------------------+   +-----------------------+
+                                                                                 
++-----------------------+   +-----------------------+   +-----------------------+
+|       Document        |   |                       |   |   FlattenedDocument   |
+|                       |<--|    DocumentImpl<T>    |-->|                       |
+| DocumentImpl<BezPath> |   |                       |   |DocumentImpl<Polyline> |
++-----------------------+   +-----------------------+   +-----------------------+
+                                                                                 
+                                                         Polyline = Vec<[f64; 2]>
+```
+
+The core of the Path/Layer/Document hierarchy is implemented with structures that are generic over the actual path data type. Then, two sets of concrete types are offered, one based on `BezPath` and another based on a simple vector of points. Any feature that is easy to implement generically is done in `XXXImpl<T>`. Features that would require too much work to cover both hierarchies and not strictly necessary for the flattened use cases are implemented for `Path` and friends only. Conversion between normal and flattened structure is offered, though obviously the round-trip would be destructive.
+
+
+### Metadata handling
+
+I'm still in the process of sorting that out.
+
+There are at least two design goals:
+- The data structure should support the hierarchical nature of metadata, i.e. color is looked up for a path but not defined, the look-up should escalate to the layer, then to the document, then to default values.
+- Cloning metadata should be cheap. For example, flattening a document should not copy all the metadata upon cloning, but only lazily upon mutation—if any.
+
+Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 
 ## TODO
 

@@ -12,34 +12,6 @@ pub use layer::*;
 pub use path::*;
 
 // =================================================================================================
-// Polylines
-
-//TODO: might need to put that somewhere
-
-//
-// pub fn iter(&self) -> impl Iterator<Item = &Polyline> {
-//     self.lines.iter()
-// }
-//
-// #[allow(dead_code)]
-// pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polyline> {
-//     self.lines.iter_mut()
-// }
-//
-// fn append(&mut self, other: &mut Self) {
-//     self.lines.append(&mut other.lines);
-// }
-
-// impl IntoIterator for Polylines {
-//     type Item = Polyline;
-//     type IntoIter = std::vec::IntoIter<Polyline>;
-//
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.lines.into_iter()
-//     }
-// }
-
-// =================================================================================================
 // Page Size
 
 #[derive(Default, Clone, Copy, Debug)]
