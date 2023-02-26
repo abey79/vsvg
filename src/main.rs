@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let path = matches
         .remove_one::<PathBuf>("PATH")
         .expect("PATH is a required arg");
-    let no_show = matches.remove_one::<bool>("noshow").unwrap();
+    let no_show = matches.remove_one::<bool>("no-show").unwrap();
     let verbose = matches.remove_one::<bool>("verbose").unwrap();
 
     if verbose {
@@ -29,12 +29,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let values = cli::CommandValue::from_matches(&matches, &commands);
     for (id, value) in values.iter() {
         let command_desc = commands.get(id).expect("id came from matches");
-        doc = (command_desc.action)(value, doc);
+        doc = (command_desc.action)(value, doc)?;
     }
 
     // display gui
     if !no_show {
-        doc.show(0.37)?;
+        doc.show(0.1)?;
     }
 
     Ok(())

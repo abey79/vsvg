@@ -2,7 +2,7 @@
 
 ## What's this?
 
-This is a fast SVG viewer targeted at plotter users. It is somewhat usable, although it's still a highly experimental WIP.
+This is a fast SVG viewer targeted at plotter users. It is somewhat usable, although it's still a highly experimental WIP. In addition, `vsvg` support a small subset of commands similar to *vpype*'s, albeit with a different syntax (see `vsvg --help`).
 
 <img width="500" alt="image" src="https://user-images.githubusercontent.com/49431240/220178589-e07f7e13-5706-4a7d-bbd4-aefffffa0c58.png">
 
@@ -145,6 +145,7 @@ Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 
 ## TODO
 
+- [ ] Sort out page orientation and check that rotation, etc. work the same as with vpype
 - [x] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer. 
 - [ ] ~~Properly handle Y axis (currently it's flipped)~~ (probably pointless if we move to a custom viewer)
   - [ ] ~~Custom y_axis_formatter~~

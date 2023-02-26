@@ -1,7 +1,8 @@
 use clap::{arg, command, value_parser, Arg, ArgAction, ArgGroup, ArgMatches, Command, Id};
 use std::collections::{BTreeMap, HashMap};
+use std::error::Error;
 
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 
 use crate::types::Document;
 use std::path::PathBuf;
@@ -9,6 +10,21 @@ use std::path::PathBuf;
 /// A trait for types that can be used as command line arguments.
 trait CommandArg: Clone + Into<CommandValue> + Send + Sync + Debug + 'static {}
 impl<T: Clone + Into<CommandValue> + Send + Sync + Debug + 'static> CommandArg for T {}
+
+#[derive(Debug)]
+pub enum CliError {
+    NotAVector,
+}
+
+impl Display for CliError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CliError::NotAVector => write!(f, "Not a vector"),
+        }
+    }
+}
+
+impl Error for CliError {}
 
 trait ArgCreator {
     type T: CommandArg;
@@ -20,11 +36,14 @@ pub(crate) struct CommandDesc<'a> {
     pub(crate) id: Id,
     pub(crate) arg: Arg,
     pub(crate) multiple_args: bool,
-    pub(crate) action: &'a dyn Fn(&CommandValue, Document) -> Document,
+    pub(crate) action: &'a dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>,
 }
 
 impl<'a> CommandDesc<'a> {
-    pub(crate) fn new(arg: Arg, action: &'a dyn Fn(&CommandValue, Document) -> Document) -> Self {
+    pub(crate) fn new(
+        arg: Arg,
+        action: &'a dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>,
+    ) -> Self {
         let multiple_args = arg.get_num_args().unwrap_or_default().max_values() > 1;
         Self {
             id: arg.get_id().clone(),
@@ -39,7 +58,10 @@ pub(crate) fn cli(command_descs: &HashMap<Id, CommandDesc>) -> Command {
     let mut cli = command!()
         .args([
             arg!(<PATH> "Path to the SVG file").value_parser(value_parser!(PathBuf)),
-            arg!(-s --noshow "Don't show the GUI"),
+            Arg::new("no-show")
+                .long("no-show")
+                .help("Don't show the GUI")
+                .num_args(0),
             arg!(-v --verbose "Enable debug output"),
         ])
         .group(ArgGroup::new("commands").multiple(true))
@@ -139,6 +161,13 @@ impl CommandValue {
             Err(_) => {
                 unreachable!("id came from matches")
             }
+        }
+    }
+
+    pub(crate) fn try_vector(&self) -> Result<&[CommandValue], CliError> {
+        match self {
+            Self::Vector(v) => Ok(&v[..]),
+            _ => Err(CliError::NotAVector),
         }
     }
 }

@@ -45,12 +45,6 @@ impl Document {
                 .collect(),
             page_size: self.page_size,
         }
-        // self.layers
-        //     .iter()
-        //     .fold(Polylines::new(), |mut polylines, layer| {
-        //         polylines.append(&mut layer.flatten(tolerance));
-        //         polylines
-        //     })
     }
 
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
