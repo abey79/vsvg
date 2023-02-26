@@ -19,6 +19,13 @@ impl<T: Default> DocumentImpl<T> {
             ..Default::default()
         }
     }
+
+    pub(crate) fn map_layers(self, f: impl Fn(LayerImpl<T>) -> LayerImpl<T>) -> Self {
+        Self {
+            layers: self.layers.into_iter().map(f).collect(),
+            ..self
+        }
+    }
 }
 
 impl Document {
@@ -47,13 +54,6 @@ impl Document {
     }
 
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
-        Self {
-            layers: self
-                .layers
-                .into_iter()
-                .map(|layer| layer.crop(x_min, y_min, x_max, y_max))
-                .collect(),
-            ..self
-        }
+        self.map_layers(|layer| layer.crop(x_min, y_min, x_max, y_max))
     }
 }

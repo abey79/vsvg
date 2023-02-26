@@ -155,4 +155,5 @@ Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 - [x] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
 - [x] Move stuff to `lib.rs`
 - [ ] Implement *vpype*-like layer IDs.
+- [ ] Rename `Path` to `Shape` to denote it being higher level?
 - [ ] .......

@@ -1,7 +1,12 @@
 [package]
 name = "vsvg"
+description = "An experimental SVG viewer for plotter users."
+authors = ["Antoine Beyeler"]
 version = "0.1.0-alpha.0"
 edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/abey79/vsvg"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,7 +20,7 @@ eframe = { version = "0.21.0", default-features = false, features = [
 ] }
 serde = { version = "1", features = ["derive"] }
 tracing-subscriber = "0.3.16"
-clap = { version = "4.1.6", features = ["derive"]}
+clap = { version = "4.1.6", features = ["cargo"]}
 rayon = "1.6.1"
 kurbo = "0.9.0"
 arrayvec = "0.7.2"

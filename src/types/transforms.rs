@@ -1,4 +1,4 @@
-use crate::types::{LayerImpl, PathImpl, Polyline};
+use crate::types::{DocumentImpl, LayerImpl, PathImpl, Polyline};
 use kurbo::{Affine, BezPath};
 
 #[allow(dead_code)]
@@ -94,6 +94,12 @@ impl<T: Transforms + Default> Transforms for PathImpl<T> {
 impl<T: Transforms + Default> Transforms for LayerImpl<T> {
     fn apply_affine(self, affine: Affine) -> Self {
         self.map_paths(|path| path.apply_affine(affine))
+    }
+}
+
+impl<T: Transforms + Default> Transforms for DocumentImpl<T> {
+    fn apply_affine(self, affine: Affine) -> Self {
+        self.map_layers(|layer| layer.apply_affine(affine))
     }
 }
 

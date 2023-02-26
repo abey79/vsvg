@@ -1,35 +1,40 @@
+mod cli;
+mod commands;
 mod svg_reader;
 mod types;
 mod viewer;
 
+use crate::commands::command_list;
 use crate::svg_reader::*;
 use std::error::Error;
-
-use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Parser)]
-struct Cli {
-    /// path of input SVG file
-    path: PathBuf,
-
-    /// return after loading the SVG file without showing the GUI (for benchmarking)
-    #[clap(short, long)]
-    no_gui: bool,
-
-    /// tolerance when displaying SVG curves
-    #[clap(short, long, default_value = "0.01")]
-    tolerance: f64,
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
-    #[cfg(debug_assertions)]
-    tracing_subscriber::fmt::init();
+    let commands = command_list();
+    let mut matches = cli::cli(&commands).get_matches();
 
-    let cli = Cli::parse();
-    let doc = parse_svg(cli.path)?;
-    if !cli.no_gui {
-        doc.show(cli.tolerance)?;
+    // remove global args
+    let path = matches
+        .remove_one::<PathBuf>("PATH")
+        .expect("PATH is a required arg");
+    let no_show = matches.remove_one::<bool>("noshow").unwrap();
+    let verbose = matches.remove_one::<bool>("verbose").unwrap();
+
+    if verbose {
+        tracing_subscriber::fmt::init();
+    }
+
+    // create and process document
+    let mut doc = parse_svg(path)?;
+    let values = cli::CommandValue::from_matches(&matches, &commands);
+    for (id, value) in values.iter() {
+        let command_desc = commands.get(id).expect("id came from matches");
+        doc = (command_desc.action)(value, doc);
+    }
+
+    // display gui
+    if !no_show {
+        doc.show(0.37)?;
     }
 
     Ok(())
