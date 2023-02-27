@@ -81,18 +81,11 @@ pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<d
 
     // add frame for the page
     let (w, h) = (tree.size.width(), tree.size.height());
-
-    // setup transform to account for egui's y-up setup.
-    // TODO: this needs to be done in the viewer
-    let mut global_transform = Transform::new_scale(1., -1.);
-    global_transform.translate(0., -h);
-    global_transform.append(&tree.root.transform());
-
     let mut doc = Document::new_with_page_size(PageSize { w, h });
 
     for child in tree.root.children() {
         if let usvg::NodeKind::Group(_) = *child.borrow() {
-            let mut transform = global_transform;
+            let mut transform = Transform::default();
             transform.append(&child.borrow().transform());
             doc.layers.push(parse_group(&child, &transform));
         }

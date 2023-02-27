@@ -1,3 +1,4 @@
+use crate::types::transforms::Transforms;
 use crate::types::{document::FlattenedDocument, Document, PageSize};
 use std::error::Error;
 
@@ -84,7 +85,9 @@ impl eframe::App for Viewer {
             .show(ctx, |ui| {
                 let mut plot = egui::plot::Plot::new("svg_plot")
                     .data_aspect(1.0)
-                    .show_background(false);
+                    .show_background(false)
+                    .auto_bounds_x()
+                    .auto_bounds_y();
 
                 if !self.show_grid {
                     plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
@@ -96,8 +99,8 @@ impl eframe::App for Viewer {
                         let page_frame = vec![
                             [0.0, 0.0],
                             [page_size.w, 0.0],
-                            [page_size.w, page_size.h],
-                            [0.0, page_size.h],
+                            [page_size.w, -page_size.h],
+                            [0.0, -page_size.h],
                         ];
 
                         // shadow
@@ -159,8 +162,8 @@ impl eframe::App for Viewer {
 impl Document {
     pub fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
-        let polylines = self.flatten(tolerance);
         let page_size = self.page_size;
+        let polylines = self.flatten(tolerance).scale_non_uniform(1.0, -1.0);
 
         eframe::run_native(
             "vsvg",
