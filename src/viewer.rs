@@ -1,5 +1,6 @@
 use crate::types::transforms::Transforms;
 use crate::types::{document::FlattenedDocument, Document, PageSize};
+use std::collections::HashMap;
 use std::error::Error;
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -17,6 +18,10 @@ pub(crate) struct Viewer {
 
     /// show grid
     show_grid: bool,
+
+    /// layer visibility
+    #[serde(skip)]
+    layer_visibility: HashMap<usize, bool>,
 }
 
 impl From<crate::types::Color> for egui::ecolor::Color32 {
@@ -47,6 +52,7 @@ impl Viewer {
             page_size,
             show_point: false,
             show_grid: false,
+            layer_visibility: HashMap::new(),
         }
     }
 }
@@ -63,16 +69,27 @@ impl eframe::App for Viewer {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
+                //////////////// file menu
                 ui.menu_button("File", |ui| {
                     if ui.button("Quit").clicked() {
                         frame.close();
                     }
                 });
 
+                //////////////// view menu
                 ui.menu_button("View", |ui| {
                     ui.checkbox(&mut self.show_point, "Show points");
                     ui.checkbox(&mut self.show_grid, "Show grid");
                 });
+
+                //////////////// layer menu
+                ui.menu_button("Layer", |ui| {
+                    for i in 0..self.document.layers.len() {
+                        let visibility = self.layer_visibility.entry(i).or_insert(true);
+                        ui.checkbox(visibility, format!("Layer {}", i));
+                    }
+                });
+
                 egui::warn_if_debug_build(ui);
             });
         });
@@ -133,7 +150,11 @@ impl eframe::App for Viewer {
                         );
                     }
 
-                    for layer in self.document.layers.iter() {
+                    for (i, layer) in self.document.layers.iter().enumerate() {
+                        if !self.layer_visibility.get(&i).unwrap_or(&true) {
+                            continue;
+                        }
+
                         for path in layer.paths.iter() {
                             plot_ui.line(
                                 egui::plot::Line::new(egui::plot::PlotPoints::from_iter(
