@@ -75,53 +75,62 @@ fn parse_group(group: &usvg::Node, transform: &Transform) -> Layer {
     layer
 }
 
-pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<dyn Error>> {
-    let svg = fs::read_to_string(path)?;
-    let tree = usvg::Tree::from_str(&svg, &usvg::Options::default())?;
-
-    // add frame for the page
-    let (w, h) = (tree.size.width(), tree.size.height());
-    let mut doc = Document::new_with_page_size(PageSize { w, h });
-
-    let mut top_level = Layer::new();
-    for child in tree.root.children() {
-        let mut transform = Transform::default();
-        transform.append(&child.borrow().transform());
-
-        match *child.borrow() {
-            usvg::NodeKind::Group(_) => {
-                doc.layers.push(parse_group(&child, &transform));
-            }
-            usvg::NodeKind::Path(ref path) => {
-                top_level
-                    .paths
-                    .push(Path::from_svg(path, &Transform::default()));
-            }
-            _ => {}
-        }
+impl Document {
+    /// Create a `Document` based on a path to an SVG file.
+    pub fn from_svg<P: AsRef<path::Path>>(path: P) -> Result<Self, Box<dyn Error>> {
+        let svg = fs::read_to_string(path)?;
+        Document::from_string(&svg)
     }
 
-    // insert top-level path in the first layer
-    if !top_level.paths.is_empty() {
-        if let Some(layer) = doc.layers.first_mut() {
-            layer.paths.extend(top_level.paths.drain(..));
-        } else {
-            doc.layers.push(top_level);
+    /// Create a `Document` based on a string containing SVG data.
+    pub fn from_string(svg: &str) -> Result<Self, Box<dyn Error>> {
+        let tree = usvg::Tree::from_str(svg, &usvg::Options::default())?;
+
+        // add frame for the page
+        let (w, h) = (tree.size.width(), tree.size.height());
+        let mut doc = Document::new_with_page_size(PageSize { w, h });
+
+        let mut top_level = Layer::new();
+        for child in tree.root.children() {
+            let mut transform = Transform::default();
+            transform.append(&child.borrow().transform());
+
+            match *child.borrow() {
+                usvg::NodeKind::Group(_) => {
+                    doc.layers.push(parse_group(&child, &transform));
+                }
+                usvg::NodeKind::Path(ref path) => {
+                    top_level
+                        .paths
+                        .push(Path::from_svg(path, &Transform::default()));
+                }
+                _ => {}
+            }
         }
+
+        // insert top-level path in the first layer
+        if !top_level.paths.is_empty() {
+            if let Some(layer) = doc.layers.first_mut() {
+                layer.paths.append(&mut top_level.paths);
+            } else {
+                doc.layers.push(top_level);
+            }
+        }
+
+        let doc = doc.crop(0., 0., w, h);
+
+        Ok(doc)
     }
-
-    let doc = doc.crop(0., 0., w, h);
-
-    Ok(doc)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::test_file;
+    use crate::types::Document;
 
     #[test]
     fn test_top_level_path_in_first_layer() {
-        let doc = super::parse_svg(test_file!("multilayer.svg")).unwrap();
+        let doc = Document::from_svg(test_file!("multilayer.svg")).unwrap();
         assert_eq!(doc.layers.len(), 2);
         assert_eq!(doc.layers[0].paths.len(), 2);
         assert_eq!(doc.layers[1].paths.len(), 2);

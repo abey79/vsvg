@@ -1,6 +1,5 @@
 mod cli;
 mod commands;
-mod svg_reader;
 mod types;
 mod viewer;
 
@@ -8,7 +7,7 @@ mod viewer;
 mod test_utils;
 
 use crate::commands::command_list;
-use crate::svg_reader::*;
+use crate::types::Document;
 use std::error::Error;
 use std::path::PathBuf;
 
@@ -28,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // create and process document
-    let mut doc = parse_svg(path)?;
+    let mut doc = Document::from_svg(path)?;
     let values = cli::CommandValue::from_matches(&matches, &commands);
     for (id, value) in values.iter() {
         let command_desc = commands.get(id).expect("id came from matches");

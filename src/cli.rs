@@ -32,18 +32,17 @@ trait ArgCreator {
     fn create_arg(&self, arg: &mut Arg);
 }
 
+type CommandAction = dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>;
+
 pub(crate) struct CommandDesc<'a> {
     pub(crate) id: Id,
     pub(crate) arg: Arg,
     pub(crate) multiple_args: bool,
-    pub(crate) action: &'a dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>,
+    pub(crate) action: &'a CommandAction,
 }
 
 impl<'a> CommandDesc<'a> {
-    pub(crate) fn new(
-        arg: Arg,
-        action: &'a dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>,
-    ) -> Self {
+    pub(crate) fn new(arg: Arg, action: &'a CommandAction) -> Self {
         let multiple_args = arg.get_num_args().unwrap_or_default().max_values() > 1;
         Self {
             id: arg.get_id().clone(),
