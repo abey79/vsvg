@@ -6,6 +6,7 @@ use std::path;
 
 use crate::types::{Color, Document, Layer, PageSize, Path};
 
+use usvg::utils::view_box_to_transform;
 use usvg::{PathSegment, Transform};
 
 impl Path {
@@ -86,13 +87,16 @@ impl Document {
     pub fn from_string(svg: &str) -> Result<Self, Box<dyn Error>> {
         let tree = usvg::Tree::from_str(svg, &usvg::Options::default())?;
 
+        let viewbox_transform =
+            view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
+
         // add frame for the page
         let (w, h) = (tree.size.width(), tree.size.height());
         let mut doc = Document::new_with_page_size(PageSize { w, h });
 
         let mut top_level = Layer::new();
         for child in tree.root.children() {
-            let mut transform = Transform::default();
+            let mut transform = viewbox_transform;
             transform.append(&child.borrow().transform());
 
             match *child.borrow() {
@@ -100,9 +104,7 @@ impl Document {
                     doc.layers.push(parse_group(&child, &transform));
                 }
                 usvg::NodeKind::Path(ref path) => {
-                    top_level
-                        .paths
-                        .push(Path::from_svg(path, &Transform::default()));
+                    top_level.paths.push(Path::from_svg(path, &transform));
                 }
                 _ => {}
             }
@@ -127,6 +129,7 @@ impl Document {
 mod tests {
     use crate::test_file;
     use crate::types::Document;
+    use kurbo::BezPath;
 
     #[test]
     fn test_top_level_path_in_first_layer() {
@@ -134,5 +137,26 @@ mod tests {
         assert_eq!(doc.layers.len(), 2);
         assert_eq!(doc.layers[0].paths.len(), 2);
         assert_eq!(doc.layers[1].paths.len(), 2);
+    }
+
+    #[test]
+    fn test_viewbox() {
+        let doc = Document::from_string(
+            "<?xml version=\"1.0\"?>
+            <svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\"
+               width=\"100\" height=\"100\" viewBox=\"50 50 10 10\">
+               <line x1=\"50\" y1=\"50\" x2=\"60\" y2=\"60\" />
+            </svg>",
+        )
+        .unwrap();
+
+        let page_size = doc.page_size.unwrap();
+        assert_eq!(page_size.w, 100.);
+        assert_eq!(page_size.h, 100.);
+        assert_eq!(doc.layers[0].paths.len(), 1);
+        assert_eq!(
+            doc.layers[0].paths[0].data,
+            BezPath::from_svg("M 0 0 L 100 100").unwrap()
+        );
     }
 }

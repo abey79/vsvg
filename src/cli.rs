@@ -56,7 +56,8 @@ impl<'a> CommandDesc<'a> {
 pub(crate) fn cli(command_descs: &HashMap<Id, CommandDesc>) -> Command {
     let mut cli = command!()
         .args([
-            arg!(<PATH> "Path to the SVG file").value_parser(value_parser!(PathBuf)),
+            arg!(<PATH> "Path to the SVG file (or '-' for stdin)")
+                .value_parser(value_parser!(PathBuf)),
             Arg::new("no-show")
                 .long("no-show")
                 .help("Don't show the GUI")

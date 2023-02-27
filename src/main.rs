@@ -9,6 +9,7 @@ mod test_utils;
 use crate::commands::command_list;
 use crate::types::Document;
 use std::error::Error;
+use std::io::Read;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -27,7 +28,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // create and process document
-    let mut doc = Document::from_svg(path)?;
+    let mut doc = if path == PathBuf::from("-") {
+        let mut s = String::new();
+        std::io::stdin().read_to_string(&mut s)?;
+        Document::from_string(s.as_str())?
+    } else {
+        Document::from_svg(path)?
+    };
     let values = cli::CommandValue::from_matches(&matches, &commands);
     for (id, value) in values.iter() {
         let command_desc = commands.get(id).expect("id came from matches");
