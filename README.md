@@ -143,6 +143,20 @@ There are at least two design goals:
 
 Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 
+### Drawer API
+
+Currently, *vpype*'s offer in terms of drawing primitive is very weak: just a few functions to create corresponding `np.array(dtype=complex)`: [`vpype.rect()`](https://vpype.readthedocs.io/en/latest/api/vpype.html#vpype.rect), [`vpype.circle()`](https://vpype.readthedocs.io/en/latest/api/vpype.html#vpype.circle), etc. To complement that, significant additional work is done by *vsketch* to implement its Processing-like API. Given the relative simplicity of the basic path type, this works relatively well.
+
+The present work introduces a more complex path type that include cubic Bézier. Proper conversion from primitive (circle, arcs, elliptic arcs, rounded rects, etc.) has consequently become a bit more complex. To address that, I propose a plan to introduce a "Drawer API" to `vpype-core` with the following functionalities:
+- A minima, rect, circle, etc. (basically everything in SVG).
+- Maybe a Processing-like shape creation API? 
+- Maybe a transform stack?
+
+Advantages:
+- Offering a high-level API through the Rust-Python boundary increases the performance.
+- Provides a unified Drawing API that can be used both for *vpype*'s commands and *vsketch*'s API. 
+- Take advantage of kurbo's and usvg's facilities.
+
 ## TODO
 
 - [x] Sort out page orientation and check that rotation, etc. work the same as with vpype
