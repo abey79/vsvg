@@ -145,16 +145,18 @@ Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 
 ## TODO
 
-- [ ] Sort out page orientation and check that rotation, etc. work the same as with vpype
-- [x] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer. 
+- [x] Sort out page orientation and check that rotation, etc. work the same as with vpype
+- [ ] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer. 
 - [ ] ~~Properly handle Y axis (currently it's flipped)~~ (probably pointless if we move to a custom viewer)
   - [ ] ~~Custom y_axis_formatter~~
-- [x] Add support for color and line width (but width is zoom-aware)
+- [x] Add support for color and line width (but width is not zoom-aware)
 - [x] Crop to page size
 - [ ] ~~Test viewbox~~ Fix viewbox handling
+- [ ] Fix missing top-level paths
 - [ ] Metadata concept, possibly using `Rc`'s clone-on-write capability
 - [x] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
 - [x] Move stuff to `lib.rs`
 - [ ] Implement *vpype*-like layer IDs.
 - [ ] Rename `Path` to `Shape` to denote it being higher level?
+- [ ] Implement some Drawer API + add related commands? 
 - [ ] .......
