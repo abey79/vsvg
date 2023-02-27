@@ -86,7 +86,7 @@ impl Path {
                     .into_iter()
                     .map(kurbo::PathSeg::Cubic)
                     .collect(),
-                kurbo::PathSeg::Quad(_) => vec![], // TODO: implement for completeness
+                kurbo::PathSeg::Quad(_) => vec![], // TODO: implement for completeness?
             }
         }));
 

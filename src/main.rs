@@ -4,6 +4,9 @@ mod svg_reader;
 mod types;
 mod viewer;
 
+#[macro_use]
+mod test_utils;
+
 use crate::commands::command_list;
 use crate::svg_reader::*;
 use std::error::Error;

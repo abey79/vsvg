@@ -12,17 +12,11 @@ pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;
 
-// =================================================================================================
-// Page Size
-
 #[derive(Default, Clone, Copy, Debug)]
 pub struct PageSize {
     pub w: f64,
     pub h: f64,
 }
-
-// =================================================================================================
-// Color
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -41,9 +35,4 @@ impl Default for Color {
             a: 255,
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
 }

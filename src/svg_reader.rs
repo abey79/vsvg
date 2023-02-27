@@ -6,7 +6,7 @@ use std::path;
 
 use crate::types::{Color, Document, Layer, PageSize, Path};
 
-use usvg::{NodeExt, PathSegment, Transform};
+use usvg::{PathSegment, Transform};
 
 impl Path {
     pub fn from_svg(svg_path: &usvg::Path, transform: &Transform) -> Self {
@@ -83,17 +83,47 @@ pub(crate) fn parse_svg<P: AsRef<path::Path>>(path: P) -> Result<Document, Box<d
     let (w, h) = (tree.size.width(), tree.size.height());
     let mut doc = Document::new_with_page_size(PageSize { w, h });
 
+    let mut top_level = Layer::new();
     for child in tree.root.children() {
-        if let usvg::NodeKind::Group(_) = *child.borrow() {
-            let mut transform = Transform::default();
-            transform.append(&child.borrow().transform());
-            doc.layers.push(parse_group(&child, &transform));
-        }
+        let mut transform = Transform::default();
+        transform.append(&child.borrow().transform());
 
-        // TODO: we're missing top-level paths here!
+        match *child.borrow() {
+            usvg::NodeKind::Group(_) => {
+                doc.layers.push(parse_group(&child, &transform));
+            }
+            usvg::NodeKind::Path(ref path) => {
+                top_level
+                    .paths
+                    .push(Path::from_svg(path, &Transform::default()));
+            }
+            _ => {}
+        }
+    }
+
+    // insert top-level path in the first layer
+    if !top_level.paths.is_empty() {
+        if let Some(layer) = doc.layers.first_mut() {
+            layer.paths.extend(top_level.paths.drain(..));
+        } else {
+            doc.layers.push(top_level);
+        }
     }
 
     let doc = doc.crop(0., 0., w, h);
 
     Ok(doc)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::test_file;
+
+    #[test]
+    fn test_top_level_path_in_first_layer() {
+        let doc = super::parse_svg(test_file!("multilayer.svg")).unwrap();
+        assert_eq!(doc.layers.len(), 2);
+        assert_eq!(doc.layers[0].paths.len(), 2);
+        assert_eq!(doc.layers[1].paths.len(), 2);
+    }
 }

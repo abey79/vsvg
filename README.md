@@ -152,7 +152,7 @@ Maybe a `HashMap<_, Cow<_>>`? Or immutable data structure from the `im` crate?
 - [x] Add support for color and line width (but width is not zoom-aware)
 - [x] Crop to page size
 - [ ] ~~Test viewbox~~ Fix viewbox handling
-- [ ] Fix missing top-level paths
+- [x] Fix missing top-level paths
 - [ ] Metadata concept, possibly using `Rc`'s clone-on-write capability
 - [x] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
 - [x] Move stuff to `lib.rs`
