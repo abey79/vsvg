@@ -84,6 +84,7 @@ Here are a few design considerations, in the frame of using this project as basi
 - [Mutability of Path/Layer/Doc](https://github.com/abey79/vsvg/issues/3)
 - [Metadata handling](https://github.com/abey79/vsvg/issues/4)
 - [Drawer API](https://github.com/abey79/vsvg/issues/5)
+- [SVG import](https://github.com/abey79/vsvg/issues/6)
 
 ## TODO
 
