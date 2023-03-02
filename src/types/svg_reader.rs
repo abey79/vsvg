@@ -190,6 +190,7 @@ impl Document {
 
 #[cfg(test)]
 mod tests {
+
     use crate::test_file;
     use crate::types::Document;
     use kurbo::BezPath;
@@ -197,9 +198,10 @@ mod tests {
     #[test]
     fn test_top_level_path_in_first_layer() {
         let doc = Document::from_svg(test_file!("multilayer.svg")).unwrap();
-        assert_eq!(doc.layers.len(), 2);
-        assert_eq!(doc.try_get(0).unwrap().paths.len(), 2);
-        assert_eq!(doc.try_get(1).unwrap().paths.len(), 2);
+        assert_eq!(doc.layers.len(), 3);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
+        assert_eq!(doc.try_get(2).unwrap().paths.len(), 2);
+        assert_eq!(doc.try_get(3).unwrap().paths.len(), 1);
     }
 
     #[test]

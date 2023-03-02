@@ -4,11 +4,9 @@
 
 mod cli;
 mod commands;
+mod test_utils;
 pub mod types;
 mod viewer;
-
-#[macro_use]
-mod test_utils;
 
 use crate::commands::command_list;
 use crate::types::Document;
