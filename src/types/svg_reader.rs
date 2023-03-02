@@ -5,7 +5,6 @@ use regex::Regex;
 use std::error::Error;
 use std::fs;
 use std::path;
-use svg::node::element::tag::Type;
 
 use crate::types::{Color, Document, Layer, LayerID, PageSize, Path};
 
@@ -153,7 +152,7 @@ impl Document {
                             nest_level -= 1;
                             None
                         }
-                        Type::Empty => None,
+                        svg::node::element::tag::Type::Empty => None,
                     }
                 }
                 _ => None,
