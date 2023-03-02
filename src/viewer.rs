@@ -86,9 +86,14 @@ impl eframe::App for Viewer {
 
                 //////////////// layer menu
                 ui.menu_button("Layer", |ui| {
-                    for lid in self.document.layers.keys() {
+                    for (lid, layer) in &self.document.layers {
                         let visibility = self.layer_visibility.entry(*lid).or_insert(true);
-                        ui.checkbox(visibility, format!("Layer {lid}"));
+                        let mut label = format!("Layer {lid}");
+                        if !layer.name.is_empty() {
+                            label.push_str(&format!(": {}", layer.name));
+                        }
+
+                        ui.checkbox(visibility, label);
                     }
                 });
 

@@ -171,6 +171,11 @@ impl Document {
                     let id = layer_id_from_attribute(attributes).unwrap_or(top_level_index + 1);
                     top_level_index += 1;
                     parse_group(&child, &transform, doc.get_mut(id));
+
+                    // set layer name
+                    if let Some(name) = attributes.get("inkscape:label") {
+                        doc.get_mut(id).name = name.to_string();
+                    }
                 }
                 usvg::NodeKind::Path(ref path) => {
                     doc.get_mut(0).paths.push(Path::from_svg(path, &transform));

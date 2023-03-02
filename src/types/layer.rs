@@ -7,6 +7,7 @@ pub type Layer = LayerImpl<PathData>;
 #[derive(Default, Clone, Debug)]
 pub struct LayerImpl<T: Default> {
     pub paths: Vec<PathImpl<T>>,
+    pub name: String,
 }
 
 impl<T: Default> LayerImpl<T> {
@@ -20,6 +21,7 @@ impl<T: Default> LayerImpl<T> {
     pub(crate) fn map_paths(self, f: impl Fn(PathImpl<T>) -> PathImpl<T>) -> Self {
         Self {
             paths: self.paths.into_iter().map(f).collect(),
+            ..self
         }
     }
 }
@@ -37,6 +39,7 @@ impl Layer {
 
         FlattenedLayer {
             paths: flattened_paths,
+            name: self.name.clone(),
         }
     }
 
