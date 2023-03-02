@@ -7,7 +7,7 @@ pub(crate) mod test_utils {
     macro_rules! test_file {
         ($fname:expr) => {{
             let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            path.push("resources");
+            path.push("tests");
             path.push("fixtures");
             path.push($fname);
             path

@@ -1,7 +1,7 @@
-use crate::types::flattened_path::Polyline;
-use crate::types::layer::LayerImpl;
-use crate::types::path::PathData;
-use crate::types::PageSize;
+use crate::flattened_path::Polyline;
+use crate::layer::LayerImpl;
+use crate::path::PathData;
+use crate::PageSize;
 use std::collections::BTreeMap;
 
 pub type LayerID = usize;

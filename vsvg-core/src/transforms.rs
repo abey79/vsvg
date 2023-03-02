@@ -1,4 +1,4 @@
-use crate::types::{DocumentImpl, LayerImpl, PathImpl, Polyline};
+use crate::{DocumentImpl, LayerImpl, PathImpl, Polyline};
 use kurbo::{Affine, BezPath};
 
 #[allow(dead_code)]

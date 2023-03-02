@@ -1,6 +1,6 @@
-use crate::types::flattened_layer::FlattenedLayer;
-use crate::types::path::{PathData, PathImpl};
-use crate::types::FlattenedPath;
+use crate::flattened_layer::FlattenedLayer;
+use crate::path::{PathData, PathImpl};
+use crate::FlattenedPath;
 
 pub type Layer = LayerImpl<PathData>;
 

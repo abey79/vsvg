@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fs;
 use std::path;
 
-use crate::types::{Color, Document, Layer, LayerID, PageSize, Path};
+use crate::{Color, Document, Layer, LayerID, PageSize, Path};
 
 use usvg::utils::view_box_to_transform;
 use usvg::{PathSegment, Transform};
@@ -190,8 +190,7 @@ impl Document {
 #[cfg(test)]
 mod tests {
 
-    use crate::test_file;
-    use crate::types::Document;
+    use crate::{test_file, Document};
     use kurbo::BezPath;
 
     #[test]

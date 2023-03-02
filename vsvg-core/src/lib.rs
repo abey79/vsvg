@@ -1,3 +1,7 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_errors_doc)]
+
 mod crop;
 pub mod document;
 pub mod flattened_layer;
@@ -5,12 +9,14 @@ pub mod flattened_path;
 pub mod layer;
 pub mod path;
 mod svg_reader;
+mod test_utils;
 pub mod transforms;
 
 pub use document::*;
 pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;
+pub use transforms::*;
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct PageSize {

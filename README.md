@@ -27,12 +27,13 @@ This project serves me as a training ground and a mean of exploring if/how Rust 
 `vsvg` already supports features that would be highly beneficial to *vpype*, including:
 - a data-model that includes Bézier curve (i.e. there is no loss of accuracy when loading SVG containing curved elements);
 - a linearisation process (when one is needed, e.g. for display purposes) with an improved tolerance handling (the segment size adapts based on the curvature, which minimises the number of point needed when curves are nearly straight).
+- some degree of per-path metadata handling (currently stroke color and width)
 
 *vpype* is currently made of two packages: `vpype` and `vpype-cli`. The former implements the "engine" and the API, that's then used by `vpype-cli` and plug-ins to offer a CLI interface. What this project explores is basically to opportunity to entirely re-implement the `vpype` package in Rust, which would aptly be renamed `vpype-core` in the process. This would dramatically improve the performance of *vpype*, thanks the Rust being a compiled and making concurrency much easier.
 
 The story for *vsketch* is a bit blurrier at this time. I imagine a complete rewrite using the new, fast `vpype-core`, a dynamic GUI using [`egui`](https://www.egui.rs), while keeping a Python front-end for the user (thanks to `vpype-core` Python bindings needed anyway to interface with `vpype-cli`). That would be lots of work, but the difference in performance would be dramatic, potentially enabling smooth animation and other cool stuff.
 
-This would entail adding `vsk`-like APIs to `vpype-core`. Though this isn't needed for *vpype*, it would potentially enable writing *vpype* plugins in the style of *vsketch*, which sounds like a cool idea to me.
+This would entail adding `vsk`-like APIs to `vpype-core` (see [#5](https://github.com/abey79/vsvg/issues/5)). Though this isn't needed for *vpype*, it would potentially enable writing *vpype* plugins in the style of *vsketch*, which sounds like a cool idea to me.
 
 ## Installing
 
@@ -77,14 +78,7 @@ cargo uninstall
 
 ## Design notes
 
-Here are a few design considerations, in the frame of using this project as basis for a future, Rust-based `vpype-core` project.
-
-- [Elementary path structure](https://github.com/abey79/vsvg/issues/1)
-- [Flattened paths](https://github.com/abey79/vsvg/issues/2)
-- [Mutability of Path/Layer/Doc](https://github.com/abey79/vsvg/issues/3)
-- [Metadata handling](https://github.com/abey79/vsvg/issues/4)
-- [Drawer API](https://github.com/abey79/vsvg/issues/5)
-- [SVG import](https://github.com/abey79/vsvg/issues/6)
+A few design considerations can be found [here](https://github.com/abey79/vsvg/issues?q=is%3Aissue+is%3Aopen+label%3Adesign-note). They concern the use of this project as basis for a possible future Rust-based `vpype-core` package.
 
 ## TODO
 
@@ -102,5 +96,5 @@ Here are a few design considerations, in the frame of using this project as basi
 - [x] Implement *vpype*-like layer IDs.
 - [ ] Rename `Path` to `Shape` to denote it being higher level?
 - [ ] Implement some Drawer API + add related commands?
-- [ ] Split into `core` and `gui` crates
+- [x] Split into `core` and `gui` crates
 - [ ] .......

@@ -1,7 +1,7 @@
-use crate::types::transforms::Transforms;
-use crate::types::{document::FlattenedDocument, Document, LayerID, PageSize};
 use std::collections::HashMap;
 use std::error::Error;
+use vsvg_core::Transforms;
+use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -24,10 +24,8 @@ pub(crate) struct Viewer {
     layer_visibility: HashMap<LayerID, bool>,
 }
 
-impl From<crate::types::Color> for egui::ecolor::Color32 {
-    fn from(val: crate::types::Color) -> Self {
-        egui::ecolor::Color32::from_rgba_unmultiplied(val.r, val.g, val.b, val.a)
-    }
+fn vsvg_to_egui_color(val: vsvg_core::Color) -> egui::ecolor::Color32 {
+    egui::ecolor::Color32::from_rgba_unmultiplied(val.r, val.g, val.b, val.a)
 }
 
 impl Viewer {
@@ -174,7 +172,7 @@ impl eframe::App for Viewer {
                                         .copied()
                                         .collect::<egui::plot::PlotPoints>(),
                                 )
-                                .color(path.color)
+                                .color(vsvg_to_egui_color(path.color))
                                 .width(path.stroke_width as f32),
                             );
 
@@ -186,7 +184,7 @@ impl eframe::App for Viewer {
                                             .copied()
                                             .collect::<egui::plot::PlotPoints>(),
                                     )
-                                    .color(path.color)
+                                    .color(vsvg_to_egui_color(path.color))
                                     .radius(path.stroke_width as f32 * 2.0),
                                 );
                             }
@@ -197,8 +195,12 @@ impl eframe::App for Viewer {
     }
 }
 
-impl Document {
-    pub fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
+pub(crate) trait Show {
+    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>>;
+}
+
+impl Show for vsvg_core::Document {
+    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
         let page_size = self.page_size;
         let polylines = self.flatten(tolerance).scale_non_uniform(1.0, -1.0);

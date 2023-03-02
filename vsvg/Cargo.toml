@@ -1,0 +1,22 @@
+[package]
+name = "vsvg"
+description = "An experimental SVG viewer for plotter users."
+authors = ["Antoine Beyeler"]
+version = "0.1.0-alpha.0"
+edition = "2021"
+readme = "../README.md"
+homepage = "https://github.com/abey79/vsvg"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+egui = "0.21.0"
+eframe = { version = "0.21.0", default-features = false, features = [
+    "default_fonts", # Embed the default egui fonts.
+    "wgpu",
+] }
+serde = { version = "1", features = ["derive"] }
+tracing-subscriber = "0.3.16"
+clap = { version = "4.1.6", features = ["cargo"]}
+vsvg-core = { path = "../vsvg-core" }

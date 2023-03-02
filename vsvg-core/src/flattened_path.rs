@@ -1,4 +1,4 @@
-use crate::types::path::PathImpl;
+use crate::path::PathImpl;
 
 pub type Polyline = Vec<[f64; 2]>;
 

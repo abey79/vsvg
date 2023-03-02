@@ -1,6 +1,6 @@
-use crate::types::crop::Crop;
-use crate::types::flattened_path::Polyline;
-use crate::types::{Color, FlattenedPath};
+use crate::crop::Crop;
+use crate::flattened_path::Polyline;
+use crate::{Color, FlattenedPath};
 use kurbo::{BezPath, PathEl};
 use std::cell::RefCell;
 

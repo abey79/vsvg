@@ -1,18 +1,15 @@
-#![warn(clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::missing_errors_doc)]
-
 mod cli;
 mod commands;
-mod test_utils;
-pub mod types;
 mod viewer;
 
 use crate::commands::command_list;
-use crate::types::Document;
+use crate::viewer::Show;
+
 use std::error::Error;
 use std::io::Read;
 use std::path::PathBuf;
+
+use vsvg_core::Document;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let commands = command_list();

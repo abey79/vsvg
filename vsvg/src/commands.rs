@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
-use crate::types::transforms::Transforms;
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
+use vsvg_core::Transforms;
 use CommandValue::Float;
 
 pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {

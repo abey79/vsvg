@@ -4,8 +4,8 @@ use std::error::Error;
 
 use std::fmt::{Debug, Display, Formatter};
 
-use crate::types::Document;
 use std::path::PathBuf;
+use vsvg_core::Document;
 
 /// A trait for types that can be used as command line arguments.
 trait CommandArg: Clone + Into<CommandValue> + Send + Sync + Debug + 'static {}
