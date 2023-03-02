@@ -96,10 +96,11 @@ Here are a few design considerations, in the frame of using this project as basi
 - [x] Crop to page size
 - [x] ~~Test viewbox~~ Fix viewbox handling
 - [x] Fix missing top-level paths
-- [ ] Metadata concept, possibly using `Rc`'s clone-on-write capability
+- [ ] ~~Metadata concept, possibly using `Rc`'s clone-on-write capability~~ No! See [#4](https://github.com/abey79/vsvg/issues/4).
 - [x] Split types.rs into multiple files (e.g. `types/document.rs`, `types/layer.rs`, etc.)
 - [x] Move stuff to `lib.rs`
-- [ ] Implement *vpype*-like layer IDs.
+- [x] Implement *vpype*-like layer IDs.
 - [ ] Rename `Path` to `Shape` to denote it being higher level?
-- [ ] Implement some Drawer API + add related commands? 
+- [ ] Implement some Drawer API + add related commands?
+- [ ] Split into `core` and `gui` crates
 - [ ] .......
