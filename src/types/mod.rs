@@ -4,10 +4,9 @@ pub mod flattened_layer;
 pub mod flattened_path;
 pub mod layer;
 pub mod path;
-pub mod svg_reader;
+mod svg_reader;
 pub mod transforms;
 
-pub use document::*;
 pub use document::*;
 pub use flattened_path::*;
 pub use layer::*;

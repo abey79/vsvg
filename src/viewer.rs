@@ -1,5 +1,5 @@
 use crate::types::transforms::Transforms;
-use crate::types::{document::FlattenedDocument, Document, PageSize};
+use crate::types::{document::FlattenedDocument, Document, LayerID, PageSize};
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -21,7 +21,7 @@ pub(crate) struct Viewer {
 
     /// layer visibility
     #[serde(skip)]
-    layer_visibility: HashMap<usize, bool>,
+    layer_visibility: HashMap<LayerID, bool>,
 }
 
 impl From<crate::types::Color> for egui::ecolor::Color32 {
@@ -84,9 +84,9 @@ impl eframe::App for Viewer {
 
                 //////////////// layer menu
                 ui.menu_button("Layer", |ui| {
-                    for i in 0..self.document.layers.len() {
-                        let visibility = self.layer_visibility.entry(i).or_insert(true);
-                        ui.checkbox(visibility, format!("Layer {}", i));
+                    for lid in self.document.layers.keys() {
+                        let visibility = self.layer_visibility.entry(*lid).or_insert(true);
+                        ui.checkbox(visibility, format!("Layer {}", lid));
                     }
                 });
 
@@ -150,7 +150,7 @@ impl eframe::App for Viewer {
                         );
                     }
 
-                    for (i, layer) in self.document.layers.iter().enumerate() {
+                    for (i, layer) in self.document.layers.iter() {
                         if !self.layer_visibility.get(&i).unwrap_or(&true) {
                             continue;
                         }

@@ -1,6 +1,6 @@
 mod cli;
 mod commands;
-mod types;
+pub mod types;
 mod viewer;
 
 #[macro_use]

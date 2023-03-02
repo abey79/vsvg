@@ -1,10 +1,12 @@
 use kurbo::PathEl;
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::error::Error;
 use std::fs;
 use std::path;
 
-use crate::types::{Color, Document, Layer, PageSize, Path};
+use crate::types::{Color, Document, Layer, LayerID, PageSize, Path};
 
 use usvg::utils::view_box_to_transform;
 use usvg::{PathSegment, Transform};
@@ -54,9 +56,7 @@ impl Path {
     }
 }
 
-fn parse_group(group: &usvg::Node, transform: &Transform) -> Layer {
-    let mut layer = Layer::new();
-
+fn parse_group(group: &usvg::Node, transform: &Transform, layer: &mut Layer) {
     group.children().for_each(|node| {
         let mut child_transform = *transform;
         child_transform.append(&node.borrow().transform());
@@ -66,14 +66,50 @@ fn parse_group(group: &usvg::Node, transform: &Transform) -> Layer {
                 layer.paths.push(Path::from_svg(path, &child_transform));
             }
             usvg::NodeKind::Group(_) => {
-                let sub_layer = parse_group(&node, &child_transform);
-                layer.paths.extend(sub_layer.paths);
+                parse_group(&node, &child_transform, layer);
             }
             _ => {}
         }
     });
+}
 
-    layer
+lazy_static! {
+    static ref DIGITS_RE: Regex = Regex::new(r"\d+").unwrap();
+}
+
+/// Interpret the attributes of a top-level group to determine its layer ID.
+///
+/// See https://github.com/abey79/vsvg/issues/7 for the strategy used here.
+fn layer_id_from_attribute(attributes: &svg::node::Attributes) -> Option<LayerID> {
+    fn extract_id(id: &str) -> Option<LayerID> {
+        DIGITS_RE.find(id).map_or(None, |m| {
+            let mut id = m
+                .as_str()
+                .parse::<usize>()
+                .expect("regex guarantees only digits");
+            if id == 0 {
+                id = 1;
+            }
+
+            Some(id)
+        })
+    }
+
+    if let Some(id) = attributes.get("inkscape:label") {
+        let lid = extract_id(id);
+        if lid.is_some() {
+            return lid;
+        }
+    }
+
+    if let Some(id) = attributes.get("id") {
+        let lid = extract_id(id);
+        if lid.is_some() {
+            return lid;
+        }
+    }
+
+    None
 }
 
 impl Document {
@@ -94,34 +130,55 @@ impl Document {
         let (w, h) = (tree.size.width(), tree.size.height());
         let mut doc = Document::new_with_page_size(PageSize { w, h });
 
-        let mut top_level = Layer::new();
+        // usvg doesn't give us access to original attributes, which we need to access
+        // `inkscape:label` and `inkscape:groupmode`. As a work-around, we must use `svg` and
+        // double-parse the SVG. See https://github.com/abey79/vsvg/issues/6
+        // TODO: consider using roxmltree instead, to avoid double-parsing
+        let mut nest_level = 0;
+        let top_level_groups: Vec<_> = svg::read(&svg)
+            .unwrap()
+            .filter_map(|event| match event {
+                svg::parser::Event::Tag(svg::node::element::tag::Group, tag_type, attributes) => {
+                    match tag_type {
+                        svg::node::element::tag::Type::Start => {
+                            nest_level += 1;
+                            if nest_level == 1 {
+                                Some(attributes)
+                            } else {
+                                None
+                            }
+                        }
+                        svg::node::element::tag::Type::End => {
+                            nest_level -= 1;
+                            None
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            })
+            .collect();
+
+        let mut top_level_index = 0;
         for child in tree.root.children() {
             let mut transform = viewbox_transform;
             transform.append(&child.borrow().transform());
 
             match *child.borrow() {
                 usvg::NodeKind::Group(_) => {
-                    doc.layers.push(parse_group(&child, &transform));
+                    let attributes = &top_level_groups[top_level_index];
+                    let id = layer_id_from_attribute(attributes).unwrap_or(top_level_index + 1);
+                    top_level_index += 1;
+                    parse_group(&child, &transform, doc.get_mut(id));
                 }
                 usvg::NodeKind::Path(ref path) => {
-                    top_level.paths.push(Path::from_svg(path, &transform));
+                    doc.get_mut(0).paths.push(Path::from_svg(path, &transform));
                 }
                 _ => {}
             }
         }
 
-        // insert top-level path in the first layer
-        if !top_level.paths.is_empty() {
-            if let Some(layer) = doc.layers.first_mut() {
-                layer.paths.append(&mut top_level.paths);
-            } else {
-                doc.layers.push(top_level);
-            }
-        }
-
-        let doc = doc.crop(0., 0., w, h);
-
-        Ok(doc)
+        Ok(doc.crop(0., 0., w, h))
     }
 }
 
@@ -135,8 +192,8 @@ mod tests {
     fn test_top_level_path_in_first_layer() {
         let doc = Document::from_svg(test_file!("multilayer.svg")).unwrap();
         assert_eq!(doc.layers.len(), 2);
-        assert_eq!(doc.layers[0].paths.len(), 2);
-        assert_eq!(doc.layers[1].paths.len(), 2);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 2);
+        assert_eq!(doc.try_get(1).unwrap().paths.len(), 2);
     }
 
     #[test]
@@ -153,9 +210,9 @@ mod tests {
         let page_size = doc.page_size.unwrap();
         assert_eq!(page_size.w, 100.);
         assert_eq!(page_size.h, 100.);
-        assert_eq!(doc.layers[0].paths.len(), 1);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
         assert_eq!(
-            doc.layers[0].paths[0].data,
+            doc.try_get(0).unwrap().paths[0].data,
             BezPath::from_svg("M 0 0 L 100 100").unwrap()
         );
     }

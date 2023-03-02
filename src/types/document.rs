@@ -2,13 +2,16 @@ use crate::types::flattened_path::Polyline;
 use crate::types::layer::LayerImpl;
 use crate::types::path::PathData;
 use crate::types::PageSize;
+use std::collections::BTreeMap;
+
+pub type LayerID = usize;
 
 pub type Document = DocumentImpl<PathData>;
 pub type FlattenedDocument = DocumentImpl<Polyline>;
 
 #[derive(Default, Clone, Debug)]
 pub struct DocumentImpl<T: Default> {
-    pub layers: Vec<LayerImpl<T>>,
+    pub layers: BTreeMap<LayerID, LayerImpl<T>>,
     pub page_size: Option<PageSize>,
 }
 
@@ -20,9 +23,17 @@ impl<T: Default> DocumentImpl<T> {
         }
     }
 
+    pub fn try_get(&self, id: LayerID) -> Option<&LayerImpl<T>> {
+        self.layers.get(&id)
+    }
+
+    pub fn get_mut(&mut self, id: LayerID) -> &mut LayerImpl<T> {
+        self.layers.entry(id).or_insert_with(|| LayerImpl::new())
+    }
+
     pub(crate) fn map_layers(self, f: impl Fn(LayerImpl<T>) -> LayerImpl<T>) -> Self {
         Self {
-            layers: self.layers.into_iter().map(f).collect(),
+            layers: self.layers.into_iter().map(|(k, v)| (k, f(v))).collect(),
             ..self
         }
     }
@@ -41,7 +52,7 @@ impl Document {
             layers: self
                 .layers
                 .iter()
-                .map(|layer| layer.flatten(tolerance))
+                .map(|(id, layer)| (*id, layer.flatten(tolerance)))
                 .collect(),
             page_size: self.page_size,
         }
