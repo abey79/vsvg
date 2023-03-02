@@ -65,6 +65,8 @@ impl eframe::App for Viewer {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }*/
 
+    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::cast_possible_truncation)]
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -86,7 +88,7 @@ impl eframe::App for Viewer {
                 ui.menu_button("Layer", |ui| {
                     for lid in self.document.layers.keys() {
                         let visibility = self.layer_visibility.entry(*lid).or_insert(true);
-                        ui.checkbox(visibility, format!("Layer {}", lid));
+                        ui.checkbox(visibility, format!("Layer {lid}"));
                     }
                 });
 
@@ -122,53 +124,63 @@ impl eframe::App for Viewer {
 
                         // shadow
                         plot_ui.polygon(
-                            egui::plot::Polygon::new(egui::plot::PlotPoints::from_iter(
+                            egui::plot::Polygon::new(
                                 page_frame
                                     .iter()
-                                    .map(|p| [p[0] + SHADOW_OFFSET, p[1] - SHADOW_OFFSET]),
-                            ))
+                                    .map(|p| [p[0] + SHADOW_OFFSET, p[1] - SHADOW_OFFSET])
+                                    .collect::<egui::plot::PlotPoints>(),
+                            )
                             .color(egui::Color32::from_rgb(180, 180, 180))
                             .fill_alpha(1.),
                         );
 
                         // background
                         plot_ui.polygon(
-                            egui::plot::Polygon::new(egui::plot::PlotPoints::from_iter(
-                                page_frame.iter().copied(),
-                            ))
+                            egui::plot::Polygon::new(
+                                page_frame
+                                    .iter()
+                                    .copied()
+                                    .collect::<egui::plot::PlotPoints>(),
+                            )
                             .color(egui::Color32::WHITE)
                             .fill_alpha(1.),
                         );
 
                         // frame
                         plot_ui.polygon(
-                            egui::plot::Polygon::new(egui::plot::PlotPoints::from_iter(
-                                page_frame.into_iter(),
-                            ))
+                            egui::plot::Polygon::new(
+                                page_frame.into_iter().collect::<egui::plot::PlotPoints>(),
+                            )
                             .color(egui::Color32::from_rgb(128, 128, 128))
                             .fill_alpha(0.0),
                         );
                     }
 
-                    for (i, layer) in self.document.layers.iter() {
-                        if !self.layer_visibility.get(&i).unwrap_or(&true) {
+                    for (i, layer) in &self.document.layers {
+                        if !self.layer_visibility.get(i).unwrap_or(&true) {
                             continue;
                         }
 
-                        for path in layer.paths.iter() {
+                        for path in &layer.paths {
                             plot_ui.line(
-                                egui::plot::Line::new(egui::plot::PlotPoints::from_iter(
-                                    path.data.iter().copied(),
-                                ))
+                                egui::plot::Line::new(
+                                    path.data
+                                        .iter()
+                                        .copied()
+                                        .collect::<egui::plot::PlotPoints>(),
+                                )
                                 .color(path.color)
                                 .width(path.stroke_width as f32),
                             );
 
                             if self.show_point {
                                 plot_ui.points(
-                                    egui::plot::Points::new(egui::plot::PlotPoints::from_iter(
-                                        path.data.iter().copied(),
-                                    ))
+                                    egui::plot::Points::new(
+                                        path.data
+                                            .iter()
+                                            .copied()
+                                            .collect::<egui::plot::PlotPoints>(),
+                                    )
                                     .color(path.color)
                                     .radius(path.stroke_width as f32 * 2.0),
                                 );

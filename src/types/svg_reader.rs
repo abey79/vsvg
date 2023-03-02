@@ -5,6 +5,7 @@ use regex::Regex;
 use std::error::Error;
 use std::fs;
 use std::path;
+use svg::node::element::tag::Type;
 
 use crate::types::{Color, Document, Layer, LayerID, PageSize, Path};
 
@@ -12,6 +13,7 @@ use usvg::utils::view_box_to_transform;
 use usvg::{PathSegment, Transform};
 
 impl Path {
+    #[must_use]
     pub fn from_svg(svg_path: &usvg::Path, transform: &Transform) -> Self {
         let bezpath = usvg::TransformedPath::new(&svg_path.data, *transform)
             .into_iter()
@@ -79,10 +81,10 @@ lazy_static! {
 
 /// Interpret the attributes of a top-level group to determine its layer ID.
 ///
-/// See https://github.com/abey79/vsvg/issues/7 for the strategy used here.
+/// See <https://github.com/abey79/vsvg/issues/7> for the strategy used here.
 fn layer_id_from_attribute(attributes: &svg::node::Attributes) -> Option<LayerID> {
     fn extract_id(id: &str) -> Option<LayerID> {
-        DIGITS_RE.find(id).map_or(None, |m| {
+        DIGITS_RE.find(id).map(|m| {
             let mut id = m
                 .as_str()
                 .parse::<usize>()
@@ -91,7 +93,7 @@ fn layer_id_from_attribute(attributes: &svg::node::Attributes) -> Option<LayerID
                 id = 1;
             }
 
-            Some(id)
+            id
         })
     }
 
@@ -135,8 +137,7 @@ impl Document {
         // double-parse the SVG. See https://github.com/abey79/vsvg/issues/6
         // TODO: consider using roxmltree instead, to avoid double-parsing
         let mut nest_level = 0;
-        let top_level_groups: Vec<_> = svg::read(&svg)
-            .unwrap()
+        let top_level_groups: Vec<_> = svg::read(svg)?
             .filter_map(|event| match event {
                 svg::parser::Event::Tag(svg::node::element::tag::Group, tag_type, attributes) => {
                     match tag_type {
@@ -152,7 +153,7 @@ impl Document {
                             nest_level -= 1;
                             None
                         }
-                        _ => None,
+                        Type::Empty => None,
                     }
                 }
                 _ => None,

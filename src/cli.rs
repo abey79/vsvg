@@ -123,6 +123,7 @@ impl CommandValue {
         command_desc: &CommandDesc,
         output: &mut BTreeMap<usize, (Id, Self)>,
     ) -> bool {
+        #[allow(clippy::match_same_arms)]
         match matches.try_get_many::<T>(id.as_str()) {
             Ok(Some(_)) => {
                 let occurrences: Vec<Vec<T>> = matches
@@ -137,7 +138,7 @@ impl CommandValue {
                     .collect();
 
                 let mut indices_idx = 0_usize;
-                for value in occurrences.iter() {
+                for value in &occurrences {
                     let index = indices[indices_idx];
 
                     if command_desc.multiple_args {
@@ -158,6 +159,7 @@ impl CommandValue {
                 unreachable!("id came from matches")
             }
             Err(clap::parser::MatchesError::Downcast { .. }) => false,
+
             Err(_) => {
                 unreachable!("id came from matches")
             }
@@ -192,6 +194,6 @@ impl From<f64> for CommandValue {
 
 impl<T: CommandArg> From<Vec<T>> for CommandValue {
     fn from(other: Vec<T>) -> Self {
-        Self::Vector(other.into_iter().map(|v| v.into()).collect())
+        Self::Vector(other.into_iter().map(std::convert::Into::into).collect())
     }
 }

@@ -40,6 +40,7 @@ impl Path {
         }
     }
 
+    #[must_use]
     pub fn flatten(&self, tolerance: f64) -> Vec<FlattenedPath> {
         let mut lines: Vec<FlattenedPath> = vec![];
         let current_line: RefCell<Polyline> = RefCell::new(vec![]);
@@ -55,7 +56,7 @@ impl Path {
             PathEl::LineTo(pt) => current_line.borrow_mut().push([pt.x, pt.y]),
             PathEl::ClosePath => {
                 let pt = current_line.borrow()[0];
-                current_line.borrow_mut().push(pt)
+                current_line.borrow_mut().push(pt);
             }
             _ => unreachable!(),
         });
@@ -67,12 +68,13 @@ impl Path {
 
         for line in &mut lines {
             line.color = self.color;
-            line.stroke_width = self.stroke_width
+            line.stroke_width = self.stroke_width;
         }
 
         lines
     }
 
+    #[must_use]
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
         let new_bezpath = BezPath::from_path_segments(self.data.segments().flat_map(|segment| {
             match segment {

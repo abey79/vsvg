@@ -17,12 +17,14 @@ pub struct DocumentImpl<T: Default> {
 
 impl<T: Default> DocumentImpl<T> {
     #[allow(dead_code)]
+    #[must_use]
     pub fn new() -> Self {
         Self {
             ..Default::default()
         }
     }
 
+    #[must_use]
     pub fn try_get(&self, id: LayerID) -> Option<&LayerImpl<T>> {
         self.layers.get(&id)
     }
@@ -40,6 +42,7 @@ impl<T: Default> DocumentImpl<T> {
 }
 
 impl Document {
+    #[must_use]
     pub fn new_with_page_size(page_size: PageSize) -> Self {
         Self {
             page_size: Some(page_size),
@@ -47,6 +50,7 @@ impl Document {
         }
     }
 
+    #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedDocument {
         FlattenedDocument {
             layers: self
@@ -58,6 +62,7 @@ impl Document {
         }
     }
 
+    #[must_use]
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
         self.map_layers(|layer| layer.crop(x_min, y_min, x_max, y_max))
     }

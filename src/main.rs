@@ -1,3 +1,7 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_errors_doc)]
+
 mod cli;
 mod commands;
 pub mod types;
@@ -36,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Document::from_svg(path)?
     };
     let values = cli::CommandValue::from_matches(&matches, &commands);
-    for (id, value) in values.iter() {
+    for (id, value) in &values {
         let command_desc = commands.get(id).expect("id came from matches");
         doc = (command_desc.action)(value, doc)?;
     }

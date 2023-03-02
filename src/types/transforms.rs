@@ -13,24 +13,29 @@ fn skew_affine(kx: f64, ky: f64) -> Affine {
 
 pub trait Transforms: Sized {
     /// Apply a 2D affine transform
+    #[must_use]
     fn apply_affine(self, affine: Affine) -> Self;
 
     /// Translate the geometry by `dx` and `dy`.
+    #[must_use]
     fn translate(self, dx: f64, dy: f64) -> Self {
         self.apply_affine(Affine::translate((dx, dy)))
     }
 
     /// Scale the geometry by `s` around the origin.
+    #[must_use]
     fn scale(self, s: f64) -> Self {
         self.apply_affine(Affine::scale(s))
     }
 
     /// Scale the geometry by `sx` and `sy` around the origin.
+    #[must_use]
     fn scale_non_uniform(self, sx: f64, sy: f64) -> Self {
         self.apply_affine(Affine::scale_non_uniform(sx, sy))
     }
 
     /// Scale the geometry by `sx` and `sy` around the point `(cx, cy)`.
+    #[must_use]
     fn scale_around(self, sx: f64, sy: f64, cx: f64, cy: f64) -> Self {
         let transform = Affine::translate((cx, cy))
             * Affine::scale_non_uniform(sx, sy)
@@ -39,11 +44,13 @@ pub trait Transforms: Sized {
     }
 
     /// Rotate the geometry by `theta` radians around the origin.
+    #[must_use]
     fn rotate(self, theta: f64) -> Self {
         self.apply_affine(Affine::rotate(theta))
     }
 
     /// Rotate the geometry by `theta` radians around the point `(cx, cy)`.
+    #[must_use]
     fn rotate_around(self, theta: f64, cx: f64, cy: f64) -> Self {
         let transform =
             Affine::translate((cx, cy)) * Affine::rotate(theta) * Affine::translate((-cx, -cy));
@@ -51,11 +58,13 @@ pub trait Transforms: Sized {
     }
 
     /// Skew the geometry by `kx` and `ky` radians around the origin.
+    #[must_use]
     fn skew(self, kx: f64, ky: f64) -> Self {
         self.apply_affine(skew_affine(kx, ky))
     }
 
     /// Skew the geometry by `kx` and `ky` radians around the point `(cx, cy)`.
+    #[must_use]
     fn skew_around(self, kx: f64, ky: f64, cx: f64, cy: f64) -> Self {
         let transform =
             Affine::translate((cx, cy)) * skew_affine(kx, ky) * Affine::translate((-cx, -cy));

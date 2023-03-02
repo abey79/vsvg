@@ -10,6 +10,7 @@ pub struct LayerImpl<T: Default> {
 }
 
 impl<T: Default> LayerImpl<T> {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             ..Default::default()
@@ -24,6 +25,7 @@ impl<T: Default> LayerImpl<T> {
 }
 
 impl Layer {
+    #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedLayer {
         let flattened_paths =
             self.paths
@@ -38,6 +40,7 @@ impl Layer {
         }
     }
 
+    #[must_use]
     pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
         self.map_paths(|path| path.crop(x_min, y_min, x_max, y_max))
     }

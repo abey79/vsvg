@@ -72,6 +72,7 @@ impl Crop<2> for Line {
 
         let mut out = ArrayVec::new();
 
+        #[allow(clippy::float_cmp)]
         if let Some(mut t) = line.line_intersection_t(&lyon_geom::Line {
             point: lyon_geom::point(x, 0.),
             vector: lyon_geom::vector(0., 1.),
@@ -169,6 +170,7 @@ impl Crop<3> for CubicBez {
         let mut merged = ArrayVec::<Range<_>, 4>::new();
         for r in keep_range {
             if let Some(last) = merged.last_mut() {
+                #[allow(clippy::float_cmp)]
                 if last.end == r.start {
                     last.end = r.end;
                     continue;
