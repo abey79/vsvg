@@ -152,10 +152,103 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             |state, sx, sy| state.draw_state.scale_non_uniform(*sx, *sy)
         ),
         command_decl!(
+            arg!(--dskew [X] "Apply a (X, Y) skew to the current transform"),
+            f64,
+            |state, sx, sy| state.draw_state.skew(sx.to_radians(), sy.to_radians())
+        ),
+        command_decl!(
+            arg!(--dcbez [X] "Draw a cubic bezier curve with X, Y, X1, Y1, X2, Y2, X3, Y3"),
+            f64,
+            |state, x1, y1, x2, y2, x3, y3, x4, y4| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .cubic_bezier(*x1, *y1, *x2, *y2, *x3, *y3, *x4, *y4)
+            }
+        ),
+        command_decl!(
+            arg!(--dqbez [X] "Draw a quadratic bezier curve with X, Y, X1, Y1, X2, Y2"),
+            f64,
+            |state, x1, y1, x2, y2, x3, y3| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .quadratic_bezier(*x1, *y1, *x2, *y2, *x3, *y3)
+            }
+        ),
+        command_decl!(
+            arg!(--darc [X] "Draw an arc with X, Y, RX, XY, START, SWEEP, ROT_X"),
+            f64,
+            |state, x, y, rx, ry, start, sweep, rot_x| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .arc(*x, *y, *rx, *ry, start.to_radians(), sweep.to_radians(), rot_x.to_radians())
+            }
+        ),
+        command_decl!(
+            arg!(--dcircle "Draw a circle with X, Y, R"),
+            f64,
+            |state, x, y, r| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .circle(*x, *y, *r)
+            }
+        ),
+        command_decl!(
+            arg!(--dellipse "Draw an ellipse with X, Y, RX, RY, ROT_X"),
+            f64,
+            |state, x, y, rx, ry, rot_x| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .ellipse(*x, *y, *rx, *ry, rot_x.to_radians())
+            }
+        ),
+        command_decl!(
+            arg!(--dline [X] "Draw a line with X, Y, X1, Y1"),
+            f64,
+            |state, x1, y1, x2, y2| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .line(*x1, *y1, *x2, *y2)
+            }
+        ),
+        command_decl!(
             arg!(--drect [X] "Draw a rectangle with X, Y, W, H"),
             f64,
             |state, a, b, c, d| {
                 state.document.get_mut(state.draw_layer).draw(&state.draw_state).rect(*a, *b, *c, *d)
+            }
+        ),
+        command_decl!(
+            arg!(--drrect [X] "Draw a rounded rectangle with X, Y, W, H, TL, TR, BR, BL"),
+            f64,
+            |state, cx, cy, w, h, tl, tr, br, bl| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .rounded_rect(*cx, *cy, *w, *h, *tl, *tr, *br, *bl)
+            }
+        ),
+        command_decl!(
+            arg!(--dsvg [X] "Draw from an SVG path representation"),
+            String,
+            |state, path| {
+                state
+                    .document
+                    .get_mut(state.draw_layer)
+                    .draw(&state.draw_state)
+                    .svg_path(path)?
             }
         ),
     ]
