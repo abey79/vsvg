@@ -10,6 +10,10 @@ pub(crate) struct Viewer {
     #[serde(skip)]
     document: FlattenedDocument,
 
+    /// control points derived from the document
+    #[serde(skip)]
+    control_points: FlattenedDocument,
+
     #[serde(skip)]
     page_size: Option<PageSize>,
 
@@ -18,6 +22,9 @@ pub(crate) struct Viewer {
 
     /// show grid
     show_grid: bool,
+
+    /// show control points
+    show_control_points: bool,
 
     /// layer visibility
     #[serde(skip)]
@@ -33,6 +40,7 @@ impl Viewer {
     pub fn new(
         _cc: &eframe::CreationContext<'_>,
         document: FlattenedDocument,
+        control_points: FlattenedDocument,
         page_size: Option<PageSize>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -47,9 +55,11 @@ impl Viewer {
 
         Viewer {
             document,
+            control_points,
             page_size,
             show_point: false,
             show_grid: false,
+            show_control_points: false,
             layer_visibility: HashMap::new(),
         }
     }
@@ -80,6 +90,7 @@ impl eframe::App for Viewer {
                 ui.menu_button("View", |ui| {
                     ui.checkbox(&mut self.show_point, "Show points");
                     ui.checkbox(&mut self.show_grid, "Show grid");
+                    ui.checkbox(&mut self.show_control_points, "Show control points");
                 });
 
                 //////////////// layer menu
@@ -159,9 +170,38 @@ impl eframe::App for Viewer {
                         );
                     }
 
-                    for (i, layer) in &self.document.layers {
-                        if !self.layer_visibility.get(i).unwrap_or(&true) {
+                    for (lid, layer) in &self.document.layers {
+                        if !self.layer_visibility.get(lid).unwrap_or(&true) {
                             continue;
+                        }
+
+                        // draw control points
+                        if self.show_control_points {
+                            if let Some(control_points) = self.control_points.try_get(*lid) {
+                                for path in &control_points.paths {
+                                    plot_ui.line(
+                                        egui::plot::Line::new(
+                                            path.data
+                                                .iter()
+                                                .copied()
+                                                .collect::<egui::plot::PlotPoints>(),
+                                        )
+                                        .color(egui::Color32::from_rgb(0, 0, 0))
+                                        .width(0.5),
+                                    );
+
+                                    plot_ui.points(
+                                        egui::plot::Points::new(
+                                            path.data
+                                                .iter()
+                                                .copied()
+                                                .collect::<egui::plot::PlotPoints>(),
+                                        )
+                                        .color(egui::Color32::from_rgb(0, 0, 0))
+                                        .radius(1.5),
+                                    );
+                                }
+                            }
                         }
 
                         for path in &layer.paths {
@@ -206,6 +246,9 @@ impl Show for vsvg_core::Document {
         let mut polylines = self.flatten(tolerance);
         polylines.scale_non_uniform(1.0, -1.0);
 
+        let mut control_points = self.control_points();
+        control_points.scale_non_uniform(1.0, -1.0);
+
         eframe::run_native(
             "vsvg",
             native_options,
@@ -215,7 +258,7 @@ impl Show for vsvg_core::Document {
                     ..egui::Style::default()
                 };
                 cc.egui_ctx.set_style(style);
-                Box::new(Viewer::new(cc, polylines, page_size))
+                Box::new(Viewer::new(cc, polylines, control_points, page_size))
             }),
         )?;
 

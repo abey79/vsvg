@@ -1,7 +1,8 @@
+use crate::flattened_layer::FlattenedLayer;
 use crate::flattened_path::Polyline;
 use crate::layer::LayerImpl;
 use crate::path::PathData;
-use crate::PageSize;
+use crate::{PageSize, Path};
 use std::collections::BTreeMap;
 
 pub type LayerID = usize;
@@ -51,6 +52,26 @@ impl Document {
                 .layers
                 .iter()
                 .map(|(id, layer)| (*id, layer.flatten(tolerance)))
+                .collect(),
+            page_size: self.page_size,
+        }
+    }
+
+    #[must_use]
+    pub fn control_points(&self) -> FlattenedDocument {
+        FlattenedDocument {
+            layers: self
+                .layers
+                .iter()
+                .map(|(id, layer)| {
+                    (
+                        *id,
+                        FlattenedLayer {
+                            paths: layer.paths.iter().flat_map(Path::control_points).collect(),
+                            name: layer.name.clone(),
+                        },
+                    )
+                })
                 .collect(),
             page_size: self.page_size,
         }
