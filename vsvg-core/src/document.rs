@@ -29,15 +29,9 @@ impl<T: Default> DocumentImpl<T> {
         self.layers.get(&id)
     }
 
+    #[must_use]
     pub fn get_mut(&mut self, id: LayerID) -> &mut LayerImpl<T> {
         self.layers.entry(id).or_insert_with(|| LayerImpl::new())
-    }
-
-    pub(crate) fn map_layers(self, f: impl Fn(LayerImpl<T>) -> LayerImpl<T>) -> Self {
-        Self {
-            layers: self.layers.into_iter().map(|(k, v)| (k, f(v))).collect(),
-            ..self
-        }
     }
 }
 
@@ -62,8 +56,10 @@ impl Document {
         }
     }
 
-    #[must_use]
-    pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
-        self.map_layers(|layer| layer.crop(x_min, y_min, x_max, y_max))
+    pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {
+        self.layers.iter_mut().for_each(|(_, layer)| {
+            layer.crop(x_min, y_min, x_max, y_max);
+        });
+        self
     }
 }

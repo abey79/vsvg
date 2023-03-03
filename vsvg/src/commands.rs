@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use vsvg_core::Transforms;
+use vsvg_core::{LayerID, Transforms};
 use CommandValue::Float;
 
 pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
@@ -18,8 +18,11 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(2)
                 .display_order(order()),
-            &|val, doc| match val.try_vector()? {
-                [Float(tx), Float(ty)] => Ok(doc.translate(*tx, *ty)),
+            &|val, state| match val.try_vector()? {
+                [Float(tx), Float(ty)] => {
+                    state.document.translate(*tx, *ty);
+                    Ok(())
+                }
                 _ => unreachable!("Clap ensure types are correct"),
             },
         ),
@@ -32,9 +35,10 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(1)
                 .display_order(order()),
-            &|val, doc| {
+            &|val, state| {
                 if let Float(angle) = val {
-                    Ok(doc.rotate(*angle))
+                    state.document.rotate(*angle);
+                    Ok(())
                 } else {
                     unreachable!("Clap ensure types are correct")
                 }
@@ -45,9 +49,10 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(1)
                 .display_order(order()),
-            &|val, doc| {
+            &|val, state| {
                 if let Float(angle) = val {
-                    Ok(doc.rotate(angle.to_radians()))
+                    state.document.rotate(angle.to_radians());
+                    Ok(())
                 } else {
                     unreachable!("Clap ensure types are correct")
                 }
@@ -58,9 +63,15 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(1..=2)
                 .display_order(order()),
-            &|val, doc| match val.try_vector()? {
-                [Float(s)] => Ok(doc.scale(*s)),
-                [Float(sx), Float(sy)] => Ok(doc.scale_non_uniform(*sx, *sy)),
+            &|val, state| match val.try_vector()? {
+                [Float(s)] => {
+                    state.document.scale(*s);
+                    Ok(())
+                }
+                [Float(sx), Float(sy)] => {
+                    state.document.scale_non_uniform(*sx, *sy);
+                    Ok(())
+                }
                 _ => unreachable!("Clap ensure types are correct"),
             },
         ),
@@ -72,9 +83,10 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(4)
                 .display_order(order()),
-            &|val, doc| match val.try_vector()? {
+            &|val, state| match val.try_vector()? {
                 [Float(sx), Float(sy), Float(px), Float(py)] => {
-                    Ok(doc.scale_around(*sx, *sy, *px, *py))
+                    state.document.scale_around(*sx, *sy, *px, *py);
+                    Ok(())
                 }
                 _ => unreachable!("Clap ensure types are correct"),
             },
@@ -84,8 +96,71 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 .value_parser(value_parser!(f64))
                 .num_args(4)
                 .display_order(order()),
-            &|val, doc| match val.try_vector()? {
-                [Float(a), Float(b), Float(c), Float(d)] => Ok(doc.crop(*a, *b, *c, *d)),
+            &|val, state| match val.try_vector()? {
+                [Float(a), Float(b), Float(c), Float(d)] => {
+                    state.document.crop(*a, *b, *c, *d);
+                    Ok(())
+                }
+                _ => unreachable!("Clap ensure types are correct"),
+            },
+        ),
+        CommandDesc::new(
+            arg!(--dlayer [X] "Set target layer for draw operations")
+                .value_parser(value_parser!(LayerID))
+                .num_args(1)
+                .display_order(order()),
+            &|val, state| {
+                if let CommandValue::LayerID(lid) = val {
+                    state.draw_layer = *lid;
+                    Ok(())
+                } else {
+                    unreachable!("Clap ensure types are correct")
+                }
+            },
+        ),
+        CommandDesc::new(
+            arg!(--dtranslate [X] "Apply an X, Y translation to the current transform")
+                .value_parser(value_parser!(f64))
+                .num_args(2)
+                .display_order(order()),
+            &|val, state| match val.try_vector()? {
+                [Float(dx), Float(dy)] => {
+                    state.draw_state.translate(*dx, *dy);
+
+                    Ok(())
+                }
+                _ => unreachable!("Clap ensure types are correct"),
+            },
+        ),
+        CommandDesc::new(
+            arg!(--drotate [X] "Apply a rotation to the current transform")
+                .value_parser(value_parser!(f64))
+                .num_args(1)
+                .display_order(order()),
+            &|val, state| {
+                if let Float(angle) = val {
+                    state.draw_state.rotate(angle.to_radians());
+                    Ok(())
+                } else {
+                    unreachable!("Clap ensure types are correct")
+                }
+            },
+        ),
+        CommandDesc::new(
+            arg!(--drect [X] "Draw a rectangle with X, Y, W, H")
+                .value_parser(value_parser!(f64))
+                .num_args(4)
+                .display_order(order()),
+            &|val, state| match val.try_vector()? {
+                [Float(a), Float(b), Float(c), Float(d)] => {
+                    state
+                        .document
+                        .get_mut(state.draw_layer)
+                        .draw(&state.draw_state)
+                        .rect(*a, *b, *c, *d);
+
+                    Ok(())
+                }
                 _ => unreachable!("Clap ensure types are correct"),
             },
         ),

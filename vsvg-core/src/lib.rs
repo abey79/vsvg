@@ -4,6 +4,7 @@
 
 mod crop;
 pub mod document;
+pub mod draw;
 pub mod flattened_layer;
 pub mod flattened_path;
 pub mod layer;
@@ -13,6 +14,7 @@ mod test_utils;
 pub mod transforms;
 
 pub use document::*;
+pub use draw::*;
 pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;

@@ -27,17 +27,19 @@ impl<T: Default> Default for PathImpl<T> {
 }
 
 impl Path {
-    #[allow(dead_code)]
     pub fn from_shape<T: kurbo::Shape>(path: T) -> Self {
         Self::from_shape_with_tolerance(path, DEFAULT_TOLERANCE)
     }
 
-    #[allow(dead_code)]
     pub fn from_shape_with_tolerance<T: kurbo::Shape>(path: T, tolerance: f64) -> Self {
         Self {
             data: path.into_path(tolerance),
             ..Default::default()
         }
+    }
+
+    pub fn apply_transform(&mut self, transform: kurbo::Affine) {
+        self.data.apply_affine(transform);
     }
 
     #[must_use]
@@ -74,8 +76,7 @@ impl Path {
         lines
     }
 
-    #[must_use]
-    pub fn crop(self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> Self {
+    pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {
         let new_bezpath = BezPath::from_path_segments(self.data.segments().flat_map(|segment| {
             match segment {
                 kurbo::PathSeg::Line(line) => line
@@ -92,9 +93,7 @@ impl Path {
             }
         }));
 
-        Self {
-            data: new_bezpath,
-            ..self
-        }
+        self.data = new_bezpath;
+        self
     }
 }

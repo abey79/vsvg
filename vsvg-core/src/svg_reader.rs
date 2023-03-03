@@ -183,7 +183,8 @@ impl Document {
             }
         }
 
-        Ok(doc.crop(0., 0., w, h))
+        doc.crop(0., 0., w, h);
+        Ok(doc)
     }
 }
 

@@ -9,6 +9,7 @@ use std::error::Error;
 use std::io::Read;
 use std::path::PathBuf;
 
+use crate::cli::State;
 use vsvg_core::Document;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -27,22 +28,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // create and process document
-    let mut doc = if path == PathBuf::from("-") {
-        let mut s = String::new();
-        std::io::stdin().read_to_string(&mut s)?;
-        Document::from_string(s.as_str())?
-    } else {
-        Document::from_svg(path)?
+    let mut state = State {
+        document: if path == PathBuf::from("-") {
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s)?;
+            Document::from_string(s.as_str())?
+        } else {
+            Document::from_svg(path)?
+        },
+        ..Default::default()
     };
+
     let values = cli::CommandValue::from_matches(&matches, &commands);
     for (id, value) in &values {
         let command_desc = commands.get(id).expect("id came from matches");
-        doc = (command_desc.action)(value, doc)?;
+        (command_desc.action)(value, &mut state)?;
     }
 
     // display gui
     if !no_show {
-        doc.show(0.1)?;
+        state.document.show(0.1)?;
     }
 
     Ok(())

@@ -95,6 +95,6 @@ A few design considerations can be found [here](https://github.com/abey79/vsvg/i
 - [x] Move stuff to `lib.rs`
 - [x] Implement *vpype*-like layer IDs.
 - [ ] Rename `Path` to `Shape` to denote it being higher level?
-- [ ] Implement some Drawer API + add related commands?
+- [x] Implement some Drawer API + add related commands?
 - [x] Split into `core` and `gui` crates
 - [ ] .......

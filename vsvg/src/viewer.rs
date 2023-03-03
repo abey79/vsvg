@@ -203,7 +203,8 @@ impl Show for vsvg_core::Document {
     fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
         let page_size = self.page_size;
-        let polylines = self.flatten(tolerance).scale_non_uniform(1.0, -1.0);
+        let mut polylines = self.flatten(tolerance);
+        polylines.scale_non_uniform(1.0, -1.0);
 
         eframe::run_native(
             "vsvg",

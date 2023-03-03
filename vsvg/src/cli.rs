@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use std::path::PathBuf;
-use vsvg_core::Document;
+use vsvg_core::{Document, DrawState, LayerID};
 
 /// A trait for types that can be used as command line arguments.
 trait CommandArg: Clone + Into<CommandValue> + Send + Sync + Debug + 'static {}
@@ -32,7 +32,24 @@ trait ArgCreator {
     fn create_arg(&self, arg: &mut Arg);
 }
 
-type CommandAction = dyn Fn(&CommandValue, Document) -> Result<Document, Box<dyn Error>>;
+#[derive(Debug)]
+pub(crate) struct State {
+    pub document: Document,
+    pub draw_state: DrawState,
+    pub draw_layer: LayerID,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            draw_layer: 1,
+            draw_state: DrawState::default(),
+            document: Document::default(),
+        }
+    }
+}
+
+type CommandAction = dyn Fn(&CommandValue, &mut State) -> Result<(), Box<dyn Error>>;
 
 pub(crate) struct CommandDesc<'a> {
     pub(crate) id: Id,
@@ -80,6 +97,7 @@ pub enum CommandValue {
     String(String),
     Float(f64),
     Vector(Vec<CommandValue>),
+    LayerID(LayerID),
 }
 
 impl CommandValue {
@@ -110,6 +128,9 @@ impl CommandValue {
                 continue;
             }
             if Self::extract::<f64>(matches, id, desc, &mut values) {
+                continue;
+            }
+            if Self::extract::<LayerID>(matches, id, desc, &mut values) {
                 continue;
             }
             unimplemented!("unknown type for {}: {:?}", id, matches);
@@ -189,6 +210,12 @@ impl From<bool> for CommandValue {
 impl From<f64> for CommandValue {
     fn from(other: f64) -> Self {
         Self::Float(other)
+    }
+}
+
+impl From<LayerID> for CommandValue {
+    fn from(other: LayerID) -> Self {
+        Self::LayerID(other)
     }
 }
 
