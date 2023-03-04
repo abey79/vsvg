@@ -4,7 +4,7 @@ use crate::{Color, FlattenedPath};
 use kurbo::{BezPath, PathEl};
 use std::cell::RefCell;
 
-const DEFAULT_TOLERANCE: f64 = 0.1;
+const DEFAULT_TOLERANCE: f64 = 0.05;
 
 pub type PathData = BezPath;
 pub type Path = PathImpl<PathData>;
@@ -81,14 +81,14 @@ impl Path {
         self.data
             .segments()
             .filter_map(|segment| match segment {
-                kurbo::PathSeg::Cubic(cubic) => Some(FlattenedPath::from(vec![
-                    [cubic.p0.x, cubic.p0.y],
-                    [cubic.p1.x, cubic.p1.y],
-                    [cubic.p2.x, cubic.p2.y],
-                    [cubic.p3.x, cubic.p3.y],
-                ])),
+                kurbo::PathSeg::Cubic(cubic) => Some([
+                    vec![[cubic.p0.x, cubic.p0.y], [cubic.p1.x, cubic.p1.y]],
+                    vec![[cubic.p2.x, cubic.p2.y], [cubic.p3.x, cubic.p3.y]],
+                ]),
                 _ => None,
             })
+            .flatten()
+            .map(FlattenedPath::from)
             .collect()
     }
 

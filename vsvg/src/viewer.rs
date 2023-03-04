@@ -186,7 +186,7 @@ impl eframe::App for Viewer {
                                                 .copied()
                                                 .collect::<egui::plot::PlotPoints>(),
                                         )
-                                        .color(egui::Color32::from_rgb(0, 0, 0))
+                                        .color(egui::Color32::GRAY)
                                         .width(0.5),
                                     );
 
@@ -197,7 +197,7 @@ impl eframe::App for Viewer {
                                                 .copied()
                                                 .collect::<egui::plot::PlotPoints>(),
                                         )
-                                        .color(egui::Color32::from_rgb(0, 0, 0))
+                                        .color(egui::Color32::DARK_GRAY)
                                         .radius(1.5),
                                     );
                                 }

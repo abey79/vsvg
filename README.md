@@ -97,4 +97,5 @@ A few design considerations can be found [here](https://github.com/abey79/vsvg/i
 - [ ] Rename `Path` to `Shape` to denote it being higher level?
 - [x] Implement some Drawer API + add related commands?
 - [x] Split into `core` and `gui` crates
+- [ ] Make a "Quicklook" feature to browse SVGs??
 - [ ] .......
