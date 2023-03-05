@@ -122,15 +122,6 @@ impl Document {
 
     /// Create a `Document` based on a string containing SVG data.
     pub fn from_string(svg: &str) -> Result<Self, Box<dyn Error>> {
-        let tree = usvg::Tree::from_str(svg, &usvg::Options::default())?;
-
-        let viewbox_transform =
-            view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
-
-        // add frame for the page
-        let (w, h) = (tree.size.width(), tree.size.height());
-        let mut doc = Document::new_with_page_size(PageSize { w, h });
-
         // usvg doesn't give us access to original attributes, which we need to access
         // `inkscape:label` and `inkscape:groupmode`. As a work-around, we must use `svg` and
         // double-parse the SVG. See https://github.com/abey79/vsvg/issues/6
@@ -167,8 +158,16 @@ impl Document {
             Ok(top_level_groups)
         }
 
-        let top_level_groups = extract_layer_attributes(svg)?;
+        let tree = usvg::Tree::from_str(svg, &usvg::Options::default())?;
 
+        let viewbox_transform =
+            view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
+
+        // add frame for the page
+        let (w, h) = (tree.size.width(), tree.size.height());
+        let mut doc = Document::new_with_page_size(PageSize { w, h });
+
+        let top_level_groups = extract_layer_attributes(svg)?;
         let mut top_level_index = 0;
         for child in tree.root.children() {
             let mut transform = viewbox_transform;

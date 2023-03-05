@@ -1,5 +1,9 @@
+use eframe::Frame;
+use egui::plot::PlotUi;
+use egui::Ui;
 use std::collections::HashMap;
 use std::error::Error;
+use vsvg_core::flattened_layer::FlattenedLayer;
 use vsvg_core::Transforms;
 use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
 
@@ -63,6 +67,165 @@ impl Viewer {
             layer_visibility: HashMap::new(),
         }
     }
+
+    fn plot_page_size(&mut self, plot_ui: &mut PlotUi) {
+        if let Some(page_size) = self.page_size {
+            let page_frame = vec![
+                [0.0, 0.0],
+                [page_size.w, 0.0],
+                [page_size.w, -page_size.h],
+                [0.0, -page_size.h],
+            ];
+
+            // shadow
+            plot_ui.polygon(
+                egui::plot::Polygon::new(
+                    page_frame
+                        .iter()
+                        .map(|p| [p[0] + SHADOW_OFFSET, p[1] - SHADOW_OFFSET])
+                        .collect::<egui::plot::PlotPoints>(),
+                )
+                .color(egui::Color32::from_rgb(180, 180, 180))
+                .fill_alpha(1.),
+            );
+
+            // background
+            plot_ui.polygon(
+                egui::plot::Polygon::new(
+                    page_frame
+                        .iter()
+                        .copied()
+                        .collect::<egui::plot::PlotPoints>(),
+                )
+                .color(egui::Color32::WHITE)
+                .fill_alpha(1.),
+            );
+
+            // frame
+            plot_ui.polygon(
+                egui::plot::Polygon::new(
+                    page_frame.into_iter().collect::<egui::plot::PlotPoints>(),
+                )
+                .color(egui::Color32::from_rgb(128, 128, 128))
+                .fill_alpha(0.0),
+            );
+        }
+    }
+
+    fn plot_control_points(&self, plot_ui: &mut PlotUi, lid: LayerID) {
+        if let Some(control_points) = self.control_points.try_get(lid) {
+            for path in &control_points.paths {
+                plot_ui.line(
+                    egui::plot::Line::new(
+                        path.data
+                            .iter()
+                            .copied()
+                            .collect::<egui::plot::PlotPoints>(),
+                    )
+                    .color(egui::Color32::GRAY)
+                    .width(0.5),
+                );
+
+                plot_ui.points(
+                    egui::plot::Points::new(
+                        path.data
+                            .iter()
+                            .copied()
+                            .collect::<egui::plot::PlotPoints>(),
+                    )
+                    .color(egui::Color32::DARK_GRAY)
+                    .radius(1.5),
+                );
+            }
+        }
+    }
+
+    fn plot_layer(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
+        for path in &layer.paths {
+            plot_ui.line(
+                egui::plot::Line::new(
+                    path.data
+                        .iter()
+                        .copied()
+                        .collect::<egui::plot::PlotPoints>(),
+                )
+                .color(vsvg_to_egui_color(path.color))
+                .width(path.stroke_width as f32),
+            );
+
+            if self.show_point {
+                plot_ui.points(
+                    egui::plot::Points::new(
+                        path.data
+                            .iter()
+                            .copied()
+                            .collect::<egui::plot::PlotPoints>(),
+                    )
+                    .color(vsvg_to_egui_color(path.color))
+                    .radius(path.stroke_width as f32 * 2.0),
+                );
+            }
+        }
+    }
+
+    fn show_viewer(&mut self, ui: &mut Ui) {
+        let mut plot = egui::plot::Plot::new("svg_plot")
+            .data_aspect(1.0)
+            .show_background(false)
+            .auto_bounds_x()
+            .auto_bounds_y();
+
+        if !self.show_grid {
+            plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
+        }
+
+        plot.show(ui, |plot_ui| {
+            self.plot_page_size(plot_ui);
+
+            for (lid, layer) in &self.document.layers {
+                if !self.layer_visibility.get(lid).unwrap_or(&true) {
+                    continue;
+                }
+
+                // draw control points
+                if self.show_control_points {
+                    self.plot_control_points(plot_ui, *lid);
+                }
+
+                self.plot_layer(plot_ui, layer);
+            }
+        });
+    }
+
+    fn menu_file(&self, frame: &mut Frame, ui: &mut Ui) {
+        ui.menu_button("File", |ui| {
+            if ui.button("Quit").clicked() {
+                frame.close();
+            }
+        });
+    }
+
+    fn menu_view(&mut self, ui: &mut Ui) {
+        ui.menu_button("View", |ui| {
+            ui.checkbox(&mut self.show_point, "Show points");
+            ui.checkbox(&mut self.show_grid, "Show grid");
+            ui.checkbox(&mut self.show_control_points, "Show control points");
+        });
+    }
+
+    fn menu_layer(&mut self, ui: &mut Ui) {
+        ui.menu_button("Layer", |ui| {
+            for (lid, layer) in &self.document.layers {
+                let visibility = self.layer_visibility.entry(*lid).or_insert(true);
+                let mut label = format!("Layer {lid}");
+                if !layer.name.is_empty() {
+                    label.push_str(&format!(": {}", layer.name));
+                }
+
+                ui.checkbox(visibility, label);
+            }
+        });
+    }
 }
 
 const SHADOW_OFFSET: f64 = 10.;
@@ -73,39 +236,13 @@ impl eframe::App for Viewer {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }*/
 
-    #[allow(clippy::too_many_lines)]
-    #[allow(clippy::cast_possible_truncation)]
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
-                //////////////// file menu
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        frame.close();
-                    }
-                });
-
-                //////////////// view menu
-                ui.menu_button("View", |ui| {
-                    ui.checkbox(&mut self.show_point, "Show points");
-                    ui.checkbox(&mut self.show_grid, "Show grid");
-                    ui.checkbox(&mut self.show_control_points, "Show control points");
-                });
-
-                //////////////// layer menu
-                ui.menu_button("Layer", |ui| {
-                    for (lid, layer) in &self.document.layers {
-                        let visibility = self.layer_visibility.entry(*lid).or_insert(true);
-                        let mut label = format!("Layer {lid}");
-                        if !layer.name.is_empty() {
-                            label.push_str(&format!(": {}", layer.name));
-                        }
-
-                        ui.checkbox(visibility, label);
-                    }
-                });
-
+                self.menu_file(frame, ui);
+                self.menu_view(ui);
+                self.menu_layer(ui);
                 egui::warn_if_debug_build(ui);
             });
         });
@@ -115,123 +252,7 @@ impl eframe::App for Viewer {
             .fill(egui::Color32::from_rgb(242, 242, 242));
         egui::CentralPanel::default()
             .frame(panel_frame)
-            .show(ctx, |ui| {
-                let mut plot = egui::plot::Plot::new("svg_plot")
-                    .data_aspect(1.0)
-                    .show_background(false)
-                    .auto_bounds_x()
-                    .auto_bounds_y();
-
-                if !self.show_grid {
-                    plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
-                }
-
-                plot.show(ui, |plot_ui| {
-                    // plot page size
-                    if let Some(page_size) = self.page_size {
-                        let page_frame = vec![
-                            [0.0, 0.0],
-                            [page_size.w, 0.0],
-                            [page_size.w, -page_size.h],
-                            [0.0, -page_size.h],
-                        ];
-
-                        // shadow
-                        plot_ui.polygon(
-                            egui::plot::Polygon::new(
-                                page_frame
-                                    .iter()
-                                    .map(|p| [p[0] + SHADOW_OFFSET, p[1] - SHADOW_OFFSET])
-                                    .collect::<egui::plot::PlotPoints>(),
-                            )
-                            .color(egui::Color32::from_rgb(180, 180, 180))
-                            .fill_alpha(1.),
-                        );
-
-                        // background
-                        plot_ui.polygon(
-                            egui::plot::Polygon::new(
-                                page_frame
-                                    .iter()
-                                    .copied()
-                                    .collect::<egui::plot::PlotPoints>(),
-                            )
-                            .color(egui::Color32::WHITE)
-                            .fill_alpha(1.),
-                        );
-
-                        // frame
-                        plot_ui.polygon(
-                            egui::plot::Polygon::new(
-                                page_frame.into_iter().collect::<egui::plot::PlotPoints>(),
-                            )
-                            .color(egui::Color32::from_rgb(128, 128, 128))
-                            .fill_alpha(0.0),
-                        );
-                    }
-
-                    for (lid, layer) in &self.document.layers {
-                        if !self.layer_visibility.get(lid).unwrap_or(&true) {
-                            continue;
-                        }
-
-                        // draw control points
-                        if self.show_control_points {
-                            if let Some(control_points) = self.control_points.try_get(*lid) {
-                                for path in &control_points.paths {
-                                    plot_ui.line(
-                                        egui::plot::Line::new(
-                                            path.data
-                                                .iter()
-                                                .copied()
-                                                .collect::<egui::plot::PlotPoints>(),
-                                        )
-                                        .color(egui::Color32::GRAY)
-                                        .width(0.5),
-                                    );
-
-                                    plot_ui.points(
-                                        egui::plot::Points::new(
-                                            path.data
-                                                .iter()
-                                                .copied()
-                                                .collect::<egui::plot::PlotPoints>(),
-                                        )
-                                        .color(egui::Color32::DARK_GRAY)
-                                        .radius(1.5),
-                                    );
-                                }
-                            }
-                        }
-
-                        for path in &layer.paths {
-                            plot_ui.line(
-                                egui::plot::Line::new(
-                                    path.data
-                                        .iter()
-                                        .copied()
-                                        .collect::<egui::plot::PlotPoints>(),
-                                )
-                                .color(vsvg_to_egui_color(path.color))
-                                .width(path.stroke_width as f32),
-                            );
-
-                            if self.show_point {
-                                plot_ui.points(
-                                    egui::plot::Points::new(
-                                        path.data
-                                            .iter()
-                                            .copied()
-                                            .collect::<egui::plot::PlotPoints>(),
-                                    )
-                                    .color(vsvg_to_egui_color(path.color))
-                                    .radius(path.stroke_width as f32 * 2.0),
-                                );
-                            }
-                        }
-                    }
-                });
-            });
+            .show(ctx, |ui| self.show_viewer(ui));
     }
 }
 
