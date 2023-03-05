@@ -135,11 +135,17 @@ impl Document {
         // `inkscape:label` and `inkscape:groupmode`. As a work-around, we must use `svg` and
         // double-parse the SVG. See https://github.com/abey79/vsvg/issues/6
         // TODO: consider using roxmltree instead, to avoid double-parsing
-        let mut nest_level = 0;
-        let top_level_groups: Vec<_> = svg::read(svg)?
-            .filter_map(|event| match event {
-                svg::parser::Event::Tag(svg::node::element::tag::Group, tag_type, attributes) => {
-                    match tag_type {
+        fn extract_layer_attributes(
+            svg: &str,
+        ) -> Result<Vec<svg::node::Attributes>, Box<dyn Error>> {
+            let mut nest_level = 0;
+            let top_level_groups: Vec<_> = svg::read(svg)?
+                .filter_map(|event| match event {
+                    svg::parser::Event::Tag(
+                        svg::node::element::tag::Group,
+                        tag_type,
+                        attributes,
+                    ) => match tag_type {
                         svg::node::element::tag::Type::Start => {
                             nest_level += 1;
                             if nest_level == 1 {
@@ -153,11 +159,15 @@ impl Document {
                             None
                         }
                         svg::node::element::tag::Type::Empty => None,
-                    }
-                }
-                _ => None,
-            })
-            .collect();
+                    },
+                    _ => None,
+                })
+                .collect();
+
+            Ok(top_level_groups)
+        }
+
+        let top_level_groups = extract_layer_attributes(svg)?;
 
         let mut top_level_index = 0;
         for child in tree.root.children() {
