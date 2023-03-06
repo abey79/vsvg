@@ -73,7 +73,7 @@ impl Viewer {
             show_grid: false,
             show_control_points: false,
             show_fat_lines: true,
-            show_fat_lines_debug: true,
+            show_fat_lines_debug: false,
             layer_visibility: HashMap::new(),
         }
     }
@@ -178,15 +178,18 @@ impl Viewer {
         }
     }
 
+    /// This function computes a triangulation to render fat lines.
     fn build_fat_line(
         line: &Polyline,
-        w: f64,
+        pen_width: f64,
         vertices: &mut Vec<kurbo::Point>,
         triangles: &mut Vec<Triangle>,
     ) {
         //todo: handle closing lines
 
-        if line.len() < 2 {
+        let len = line.len();
+
+        if len < 2 {
             //todo: handle len == 1 => two triangle for a single square
             return;
         }
@@ -200,6 +203,15 @@ impl Viewer {
             triangles.push((i1, i2, i3));
         };
 
+        // The strategy to handle closing lines is the following:
+        // - generate the first two vertices as normal
+        // - append line[1] at the end of the line iterator, so a full extra segment is
+        //   generated (remember: line[0] is already the same as line[len - 1])
+        // - instead of generating the last two vertices, merge the first two vertices
+        let closing = len > 3 && line[0] == line[len - 1];
+
+        let w = pen_width / 2.0;
+
         let mut p1 = kurbo::Point::new(line[0][0], line[0][1]);
         let mut p2 = kurbo::Point::new(line[1][0], line[1][1]);
 
@@ -211,10 +223,25 @@ impl Viewer {
         let mut idx1 = push_v(p1 + w * (-v1 + n1));
         let mut idx2 = push_v(p1 + w * (-v1 - n1));
 
+        // remember those to close the loop
+        let first_idx1 = idx1;
+        let first_idx2 = idx2;
+
         let mut v0: kurbo::Vec2;
         let mut n0: kurbo::Vec2;
         let mut critical_length_0: f64;
-        for new_pt in line[2..].iter() {
+
+        // if `closing`, the iterator has length len-1
+        let iter = line[2..].iter().chain(if closing {
+            line[1..2].iter()
+        } else {
+            [].iter()
+        });
+        let mut post_process_close = true;
+        for (i, new_pt) in iter.enumerate() {
+            // this is when we must "seam" the triangulation back to the first two vertices
+            let finish_close = closing && i == len - 2;
+
             // p0 is where we're departing from, but not actually needed
             p1 = p2;
             p2 = kurbo::Point::new(new_pt[0], new_pt[1]);
@@ -238,14 +265,22 @@ impl Viewer {
                 // two vertices at p1 and aligned with p0, then the two related triangles. Then we
                 // must create two other vertices at p1, aligned with p2, ready for the next point.
 
+                // In case we're closing and we must over-draw, we must emit two new closing
+                // vertices, and related triangles, but skip creating new vertices for the next
+                // point.
+
                 let idx3 = push_v(p1 + w * (v0 + n0));
                 let idx4 = push_v(p1 + w * (v0 - n0));
                 push_t(idx1, idx2, idx3);
                 push_t(idx2, idx3, idx4);
 
-                // prepare for next line
-                idx1 = push_v(p1 + w * (-v1 + n1));
-                idx2 = push_v(p1 + w * (-v1 - n1));
+                if !finish_close {
+                    // prepare for next line
+                    idx1 = push_v(p1 + w * (-v1 + n1));
+                    idx2 = push_v(p1 + w * (-v1 - n1));
+                } else {
+                    post_process_close = false;
+                }
             } else {
                 let idx3: usize;
                 let idx4: usize;
@@ -285,11 +320,20 @@ impl Viewer {
             }
         }
 
-        // finish off the line
-        let idx3 = push_v(p2 + w * (v1 + n1));
-        let idx4 = push_v(p2 + w * (v1 - n1));
-        push_t(idx1, idx2, idx3);
-        push_t(idx2, idx3, idx4);
+        if closing {
+            if post_process_close {
+                // Ideally, those last two vertices could be avoided by reusing the first two. I'm
+                // not sure the additional CPU cycles are worth the memory savings...
+                vertices[first_idx1] = vertices[idx1];
+                vertices[first_idx2] = vertices[idx2];
+            }
+        } else {
+            // finish off the line
+            let idx3 = push_v(p2 + w * (v1 + n1));
+            let idx4 = push_v(p2 + w * (v1 - n1));
+            push_t(idx1, idx2, idx3);
+            push_t(idx2, idx3, idx4);
+        }
     }
 
     fn plot_layer_fat_lines(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
@@ -302,7 +346,7 @@ impl Viewer {
             stroke_width,
         } in &layer.paths
         {
-            Viewer::build_fat_line(path, stroke_width * 0.5, &mut vertices, &mut triangles);
+            Viewer::build_fat_line(path, *stroke_width, &mut vertices, &mut triangles);
         }
 
         // plot triangles
