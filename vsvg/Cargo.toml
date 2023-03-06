@@ -20,3 +20,4 @@ serde = { version = "1", features = ["derive"] }
 tracing-subscriber = "0.3.16"
 clap = { version = "4.1.6", features = ["cargo"]}
 vsvg-core = { path = "../vsvg-core" }
+kurbo = "0.9.1"
