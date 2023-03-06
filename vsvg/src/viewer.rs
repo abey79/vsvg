@@ -38,9 +38,6 @@ pub(crate) struct Viewer {
     /// show fat lines debug
     show_fat_lines_debug: bool,
 
-    /// show fat lines cpu
-    show_fat_lines_cpu: bool,
-
     /// layer visibility
     #[serde(skip)]
     layer_visibility: HashMap<LayerID, bool>,
@@ -75,9 +72,8 @@ impl Viewer {
             show_point: false,
             show_grid: false,
             show_control_points: false,
-            show_fat_lines: false,
-            show_fat_lines_debug: false,
-            show_fat_lines_cpu: true,
+            show_fat_lines: true,
+            show_fat_lines_debug: true,
             layer_visibility: HashMap::new(),
         }
     }
@@ -296,7 +292,7 @@ impl Viewer {
         push_t(idx2, idx3, idx4);
     }
 
-    fn plot_layer_fat_lines_cpu(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
+    fn plot_layer_fat_lines(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
         let mut vertices: Vec<kurbo::Point> = Vec::new(); //opt: pre-allocate
         let mut triangles: Vec<Triangle> = Vec::new(); //opt: pre-allocate
 
@@ -328,240 +324,21 @@ impl Viewer {
         }
 
         // plot debug stuff
-        for FlattenedPath { data: path, .. } in &layer.paths {
-            plot_ui.line(
-                egui::plot::Line::new(path.iter().copied().collect::<egui::plot::PlotPoints>())
-                    .width(1.)
-                    .color(egui::Color32::LIGHT_GREEN),
-            );
+        if self.show_fat_lines_debug {
+            for FlattenedPath { data: path, .. } in &layer.paths {
+                plot_ui.line(
+                    egui::plot::Line::new(path.iter().copied().collect::<egui::plot::PlotPoints>())
+                        .width(1.)
+                        .color(egui::Color32::LIGHT_GREEN),
+                );
 
-            plot_ui.points(
-                egui::plot::Points::new(path.iter().copied().collect::<egui::plot::PlotPoints>())
+                plot_ui.points(
+                    egui::plot::Points::new(
+                        path.iter().copied().collect::<egui::plot::PlotPoints>(),
+                    )
                     .radius(3.)
                     .color(egui::Color32::LIGHT_GREEN),
-            );
-        }
-    }
-
-    fn plot_layer_fat_lines(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
-        fn plot_triangles(
-            plot_ui: &mut PlotUi,
-            strip: &[kurbo::Vec2],
-            color: &egui::Color32,
-            debug: bool,
-        ) {
-            strip.windows(3).for_each(|w| {
-                plot_ui.polygon(
-                    egui::plot::Polygon::new(
-                        w.iter()
-                            .map(|p| [p.x, p.y])
-                            .collect::<egui::plot::PlotPoints>(),
-                    )
-                    .color(*color)
-                    .fill_alpha(0.3)
-                    .width(0.0),
                 );
-
-                if debug {
-                    plot_ui.polygon(
-                        egui::plot::Polygon::new(
-                            w.iter()
-                                .map(|p| [p.x, p.y])
-                                .collect::<egui::plot::PlotPoints>(),
-                        )
-                        .color(*color)
-                        .fill_alpha(0.)
-                        .color(egui::Color32::BLACK),
-                    );
-
-                    plot_ui.points(
-                        egui::plot::Points::new(
-                            w.iter()
-                                .map(|p| [p.x, p.y])
-                                .collect::<egui::plot::PlotPoints>(),
-                        )
-                        .color(egui::Color32::BLACK)
-                        .radius(2.),
-                    );
-                }
-            });
-        }
-
-        fn build_triangles(
-            w: f64,
-            p0: [f64; 2],
-            p1: [f64; 2],
-            p2: [f64; 2],
-            p3: [f64; 2],
-        ) -> [Option<kurbo::Vec2>; 6] {
-            let mut out = [None; 6];
-
-            let p0 = kurbo::Vec2 { x: p0[0], y: p0[1] };
-            let p1 = kurbo::Vec2 { x: p1[0], y: p1[1] };
-            let p2 = kurbo::Vec2 { x: p2[0], y: p2[1] };
-            let p3 = kurbo::Vec2 { x: p3[0], y: p3[1] };
-
-            let v0 = (p1 - p0).normalize(); // !!! divide by zero
-            let v1 = (p2 - p1).normalize();
-            let v2 = (p3 - p2).normalize();
-
-            let v0v1 = kurbo::Vec2::dot(v0, v1);
-            let v1v2 = kurbo::Vec2::dot(v1, v2);
-
-            let d1 = kurbo::Vec2::cross(v0, v1).signum();
-            let d2 = kurbo::Vec2::cross(v1, v2).signum();
-
-            println!("d1: {}, d2: {}", d1, d2);
-
-            let n0 = kurbo::Vec2 { x: -v0.y, y: v0.x };
-            let n1 = kurbo::Vec2 { x: -v1.y, y: v1.x };
-            let n2 = kurbo::Vec2 { x: -v2.y, y: v2.x };
-
-            // should the vn be removed here?
-            let critical_length_mid = (p2 - p1 + w * (n1 + v1)).hypot();
-            let critical_length_a = (p1 - p0 + w * (n0 + v0)).hypot().min(critical_length_mid);
-            let critical_length_b = (p3 - p2 + w * (n2 + v2)).hypot().min(critical_length_mid);
-
-            let miter_a = (n0 + n1).normalize();
-            let miter_b = (n1 + n2).normalize();
-            let length_a = w / kurbo::Vec2::dot(miter_a, n1); // !!! divide by zero
-            let length_b = w / kurbo::Vec2::dot(miter_b, n1);
-
-            let mut idx = 0;
-
-            if (p0 == p1) || (length_a >= critical_length_a) {
-                out[idx] = Some(p1 + w * (-v1 + n1));
-                idx += 1;
-                out[idx] = Some(p1 + w * (-v1 - n1));
-                idx += 1;
-            } else if v0v1 >= 0. {
-                out[idx] = Some(p1 + length_a * miter_a);
-                idx += 1;
-                out[idx] = Some(p1 - length_a * miter_a);
-                idx += 1;
-            } else {
-                out[idx] = Some(p1 + w * (-v1 + -d1 * n1));
-                idx += 1;
-
-                if d1 == -1. {
-                    out[idx] = Some(p1 + w * (-v1 - d1 * n1));
-                    idx += 1;
-                    out[idx] = Some(p1 + d1 * length_a * miter_a);
-                    idx += 1;
-                } else {
-                    out[idx] = Some(p1 + d1 * length_a * miter_a);
-                    idx += 1;
-                    out[idx] = Some(p1 + w * (-v1 - d1 * n1));
-                    idx += 1;
-                }
-            }
-
-            if (p2 == p3) || (length_b >= critical_length_b) {
-                out[idx] = Some(p2 + w * (v1 + n1));
-                idx += 1;
-                out[idx] = Some(p2 + w * (v1 - n1));
-                idx += 1;
-            } else if v1v2 >= 0. {
-                out[idx] = Some(p2 + length_b * miter_b);
-                idx += 1;
-                out[idx] = Some(p2 - length_b * miter_b);
-                idx += 1;
-            } else {
-                if d2 == -1. {
-                    out[idx] = Some(p2 + w * (v1 - d2 * n1));
-                    idx += 1;
-
-                    out[idx] = Some(p2 + d2 * length_b * miter_b);
-                    idx += 1;
-                } else {
-                    out[idx] = Some(p2 + d2 * length_b * miter_b);
-                    idx += 1;
-
-                    out[idx] = Some(p2 + w * (v1 - d2 * n1));
-                    idx += 1;
-                }
-
-                out[idx] = Some(p2 + w * 0.5 * (v1 - d2 * n1 - v2 - d2 * n2));
-                idx += 1;
-            }
-
-            out
-        }
-
-        for FlattenedPath {
-            data: path,
-            color,
-            stroke_width,
-        } in &layer.paths
-        {
-            //TODO: handle closed paths!
-
-            if path.len() == 1 {
-                continue;
-            }
-
-            let color = vsvg_to_egui_color(*color);
-            let w2 = stroke_width * 0.5;
-
-            if path.len() == 2 {
-                plot_triangles(
-                    plot_ui,
-                    &build_triangles(
-                        w2,
-                        [path[0][0], path[0][1]],
-                        [path[0][0], path[0][1]],
-                        [path[1][0], path[1][1]],
-                        [path[1][0], path[1][1]],
-                    )
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<_>>(),
-                    &color,
-                    self.show_fat_lines_debug,
-                );
-            } else {
-                let mut tris: Vec<kurbo::Vec2> = Vec::with_capacity(path.len() * 4);
-
-                tris.extend(
-                    build_triangles(
-                        w2,
-                        [path[0][0], path[0][1]],
-                        [path[0][0], path[0][1]],
-                        [path[1][0], path[1][1]],
-                        [path[2][0], path[2][1]],
-                    )
-                    .into_iter()
-                    .flatten(),
-                );
-
-                // TODO: parallelize this (need an intermediate buffer)
-                tris.extend(
-                    path.windows(4)
-                        .flat_map(|p| build_triangles(w2, p[0], p[1], p[2], p[3]))
-                        .flatten(),
-                );
-
-                // tris.extend(
-                //     path.par_windows(4)
-                //         .flat_map(|p| build_triangles(w2, p[0], p[1], p[2], p[3]))
-                //         .flatten()
-                //         .into_par_iter(),
-                // );
-
-                let l = path.len() - 1;
-                tris.extend(
-                    build_triangles(
-                        w2,
-                        [path[l - 2][0], path[l - 2][1]],
-                        [path[l - 1][0], path[l - 1][1]],
-                        [path[l][0], path[l][1]],
-                        [path[l][0], path[l][1]],
-                    )
-                    .into_iter()
-                    .flatten(),
-                );
-
-                plot_triangles(plot_ui, &tris, &color, self.show_fat_lines_debug);
             }
         }
     }
@@ -590,9 +367,7 @@ impl Viewer {
                     self.plot_control_points(plot_ui, *lid);
                 }
 
-                if self.show_fat_lines_cpu {
-                    self.plot_layer_fat_lines_cpu(plot_ui, layer);
-                } else if self.show_fat_lines {
+                if self.show_fat_lines {
                     self.plot_layer_fat_lines(plot_ui, layer);
                 } else {
                     self.plot_layer(plot_ui, layer);
@@ -614,13 +389,9 @@ impl Viewer {
             ui.checkbox(&mut self.show_point, "Show points");
             ui.checkbox(&mut self.show_grid, "Show grid");
             ui.checkbox(&mut self.show_control_points, "Show control points");
-            ui.checkbox(&mut self.show_fat_lines_cpu, "Show fat lines (CPU)");
+            ui.checkbox(&mut self.show_fat_lines, "Show fat lines");
             ui.add_enabled(
-                !self.show_fat_lines_cpu,
-                egui::Checkbox::new(&mut self.show_fat_lines, "Show fat lines"),
-            );
-            ui.add_enabled(
-                self.show_fat_lines & !self.show_fat_lines_cpu,
+                self.show_fat_lines,
                 egui::Checkbox::new(&mut self.show_fat_lines_debug, "Show fat lines debug lines"),
             );
         });
