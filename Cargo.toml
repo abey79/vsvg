@@ -3,6 +3,7 @@
 members = [
     "vsvg",
     "vsvg-core",
+    "vsvg-viewer",
 ]
 
 resolver = "2"

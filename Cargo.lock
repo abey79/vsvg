@@ -2055,6 +2055,7 @@ dependencies = [
  "serde",
  "tracing-subscriber",
  "vsvg-core",
+ "vsvg-viewer",
 ]
 
 [[package]]
@@ -2071,6 +2072,14 @@ dependencies = [
  "regex",
  "svg",
  "usvg",
+]
+
+[[package]]
+name = "vsvg-viewer"
+version = "0.1.0-alpha.0"
+dependencies = [
+ "kurbo 0.9.1",
+ "vsvg-core",
 ]
 
 [[package]]
