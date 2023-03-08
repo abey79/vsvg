@@ -160,3 +160,40 @@ pub fn build_fat_line(
         push_t(idx2, idx3, idx4);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vsvg_core::flattened_layer::FlattenedLayer;
+    use vsvg_core::Document;
+
+    fn triangulate_prealloc_pessimistic(layer: &FlattenedLayer) {
+        let pts_count = layer
+            .paths
+            .iter()
+            .map(|path| path.data.len())
+            .sum::<usize>();
+
+        let mut v = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
+        let mut t = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
+        for path in layer.paths.iter() {
+            build_fat_line(&path.data, 1.0, &mut v, &mut t);
+        }
+    }
+
+    #[test]
+    fn test_bar_nodef() {
+        const N: usize = 1000;
+
+        let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests");
+        path.push("fixtures");
+        path.push("bar_nodef.svg");
+        let doc = Document::from_svg(path).unwrap().flatten(0.1);
+        let layer = doc.layers.get(&0).unwrap();
+
+        for _ in 0..N {
+            triangulate_prealloc_pessimistic(layer);
+        }
+    }
+}
