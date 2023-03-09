@@ -1,10 +1,10 @@
 use eframe::Frame;
 use egui::plot::PlotUi;
-use egui::Ui;
+use egui::{Pos2, Sense, Shape, Stroke, Ui};
 use std::collections::HashMap;
 use std::error::Error;
 use vsvg_core::flattened_layer::FlattenedLayer;
-use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
+use vsvg_core::{document::FlattenedDocument, LayerID, PageSize, Path};
 use vsvg_core::{FlattenedPath, Transforms};
 use vsvg_viewer::triangulation::{build_fat_line, Triangle};
 
@@ -40,6 +40,14 @@ pub(crate) struct Viewer {
     /// layer visibility
     #[serde(skip)]
     layer_visibility: HashMap<LayerID, bool>,
+
+    /// offset
+    #[serde(skip)]
+    offset: Pos2,
+
+    /// scale
+    #[serde(skip)]
+    scale: f32,
 }
 
 fn vsvg_to_egui_color(val: vsvg_core::Color) -> egui::ecolor::Color32 {
@@ -74,6 +82,8 @@ impl Viewer {
             show_fat_lines: true,
             show_fat_lines_debug: false,
             layer_visibility: HashMap::new(),
+            offset: Pos2::ZERO,
+            scale: 1.0,
         }
     }
 
@@ -261,6 +271,45 @@ impl Viewer {
         });
     }
 
+    fn show_viewer_bis(&mut self, ui: &mut Ui) {
+        let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
+        let rect = response.rect;
+
+        for (lid, layer) in &self.document.layers {
+            if !self.layer_visibility.get(lid).unwrap_or(&true) {
+                continue;
+            }
+
+            painter.extend(layer.paths.iter().map(
+                |FlattenedPath {
+                     data: path,
+                     color,
+                     stroke_width,
+                 }| {
+                    let pts = path
+                        .iter()
+                        .map(|pt| Pos2 {
+                            x: rect.left() + pt[0] as f32,
+                            y: rect.top() - pt[1] as f32,
+                        })
+                        .collect::<Vec<Pos2>>();
+
+                    if path.first() == path.last() {
+                        Shape::closed_line(
+                            pts,
+                            Stroke::new(*stroke_width as f32, vsvg_to_egui_color(*color)),
+                        )
+                    } else {
+                        Shape::line(
+                            pts,
+                            Stroke::new(*stroke_width as f32, vsvg_to_egui_color(*color)),
+                        )
+                    }
+                },
+            ))
+        }
+    }
+
     fn menu_file(&self, frame: &mut Frame, ui: &mut Ui) {
         ui.menu_button("File", |ui| {
             if ui.button("Quit").clicked() {
@@ -321,7 +370,7 @@ impl eframe::App for Viewer {
             .fill(egui::Color32::from_rgb(242, 242, 242));
         egui::CentralPanel::default()
             .frame(panel_frame)
-            .show(ctx, |ui| self.show_viewer(ui));
+            .show(ctx, |ui| self.show_viewer_bis(ui));
     }
 }
 
