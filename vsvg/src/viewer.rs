@@ -1,10 +1,10 @@
 use eframe::Frame;
 use egui::plot::PlotUi;
-use egui::{Pos2, Sense, Shape, Stroke, Ui};
+use egui::{Color32, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
 use std::collections::HashMap;
 use std::error::Error;
 use vsvg_core::flattened_layer::FlattenedLayer;
-use vsvg_core::{document::FlattenedDocument, LayerID, PageSize, Path};
+use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
 use vsvg_core::{FlattenedPath, Transforms};
 use vsvg_viewer::triangulation::{build_fat_line, Triangle};
 
@@ -116,7 +116,7 @@ impl Viewer {
                 egui::plot::Polygon::new(
                     page_frame
                         .iter()
-                        .map(|p| [p[0] + SHADOW_OFFSET, p[1] - SHADOW_OFFSET])
+                        .map(|p| [p[0] + SHADOW_OFFSET as f64, p[1] - SHADOW_OFFSET as f64])
                         .collect::<egui::plot::PlotPoints>(),
                 )
                 .color(egui::Color32::from_rgb(180, 180, 180))
@@ -307,6 +307,34 @@ impl Viewer {
             }
         });
 
+        let to_screen =
+            |p: Pos2| rect.min + (self.offset + Vec2::new(p.x, p.y)).to_vec2() * self.scale;
+
+        // draw page size
+        if let Some(page_size) = self.document.page_size {
+            let page_size = Rect::from_points(&[
+                to_screen(Pos2::ZERO),
+                to_screen(Pos2::new(page_size.w as f32, page_size.h as f32)),
+            ]);
+
+            painter.rect_filled(
+                page_size.clone().translate(Vec2::new(
+                    SHADOW_OFFSET * self.scale,
+                    SHADOW_OFFSET * self.scale,
+                )),
+                0.0,
+                Color32::from_rgb(180, 180, 180),
+            );
+
+            painter.rect(
+                page_size,
+                0.0,
+                Color32::WHITE,
+                Stroke::new(1., Color32::from_rgb(128, 128, 128)),
+            )
+        }
+
+        // draw layer data
         for (lid, layer) in &self.document.layers {
             if !self.layer_visibility.get(lid).unwrap_or(&true) {
                 continue;
@@ -320,9 +348,11 @@ impl Viewer {
                  }| {
                     let pts = path
                         .iter()
-                        .map(|pt| Pos2 {
-                            x: rect.left() + (self.offset.x + pt[0] as f32) * self.scale,
-                            y: rect.top() + (self.offset.y - pt[1] as f32) * self.scale,
+                        .map(|pt| {
+                            to_screen(Pos2 {
+                                x: pt[0] as f32,
+                                y: pt[1] as f32,
+                            })
                         })
                         .collect::<Vec<Pos2>>();
 
@@ -392,7 +422,7 @@ impl Viewer {
     }
 }
 
-const SHADOW_OFFSET: f64 = 10.;
+const SHADOW_OFFSET: f32 = 10.;
 
 impl eframe::App for Viewer {
     /// Called by the framework to save state before shutdown.
@@ -450,11 +480,8 @@ impl Show for vsvg_core::Document {
     fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
         let page_size = self.page_size;
-        let mut polylines = self.flatten(tolerance);
-        polylines.scale_non_uniform(1.0, -1.0);
-
-        let mut control_points = self.control_points();
-        control_points.scale_non_uniform(1.0, -1.0);
+        let polylines = self.flatten(tolerance);
+        let control_points = self.control_points();
 
         eframe::run_native(
             "vsvg",
