@@ -3,13 +3,20 @@ use vsvg_core::Polyline;
 
 pub type Triangle = (usize, usize, usize);
 
+//TODO: make generic over f32 vs f64
+//TODO: add support for reserving space
+//TODO: add support for colors
+pub trait FatLineBuffer {
+    fn push_vertex(&mut self, p: Point) -> usize;
+    fn push_triangle(&mut self, i1: usize, i2: usize, i3: usize);
+    fn set_vertex(&mut self, i: usize, p: Point);
+    fn get_vertex(&self, i: usize) -> Point;
+}
+
 /// This function computes a triangulation to render fat lines.
-pub fn build_fat_line(
-    line: &Polyline,
-    pen_width: f64,
-    vertices: &mut Vec<Point>,
-    triangles: &mut Vec<Triangle>,
-) {
+//FIXME: this approach is a failure, vertices *must* be duplicated as they can't have the same tex
+// coordinates
+pub fn build_fat_line<T: FatLineBuffer>(line: &Polyline, pen_width: f64, buffer: &mut T) {
     let len = line.len();
 
     if len < 2 {
@@ -17,14 +24,14 @@ pub fn build_fat_line(
         return;
     }
 
-    let mut push_v = |p| {
-        vertices.push(p);
-        vertices.len() - 1
-    };
-
-    let mut push_t = |i1, i2, i3| {
-        triangles.push((i1, i2, i3));
-    };
+    // let mut push_v = |p| {
+    //     vertices.push(p);
+    //     vertices.len() - 1
+    // };
+    //
+    // let mut push_t = |i1, i2, i3| {
+    //     triangles.push((i1, i2, i3));
+    // };
 
     // The strategy to handle closing lines is the following:
     // - generate the first two vertices as normal
@@ -44,8 +51,8 @@ pub fn build_fat_line(
     let mut critical_length_1 = (p2 - p1 + w * n1).hypot();
 
     // note: idx1 is always chosen to be on the side of the normal
-    let mut idx1 = push_v(p1 + w * (-v1 + n1));
-    let mut idx2 = push_v(p1 + w * (-v1 - n1));
+    let mut idx1 = buffer.push_vertex(p1 + w * (-v1 + n1));
+    let mut idx2 = buffer.push_vertex(p1 + w * (-v1 - n1));
 
     // remember those to close the loop
     let first_idx1 = idx1;
@@ -93,18 +100,18 @@ pub fn build_fat_line(
             // vertices, and related triangles, but skip creating new vertices for the next
             // point.
 
-            let idx3 = push_v(p1 + w * (v0 + n0));
-            let idx4 = push_v(p1 + w * (v0 - n0));
-            push_t(idx1, idx2, idx3);
-            push_t(idx2, idx3, idx4);
+            let idx3 = buffer.push_vertex(p1 + w * (v0 + n0));
+            let idx4 = buffer.push_vertex(p1 + w * (v0 - n0));
+            buffer.push_triangle(idx1, idx2, idx3);
+            buffer.push_triangle(idx2, idx3, idx4);
 
             if finish_close {
                 // no need to adjust the first two vertices as we must accept the over-draw
                 post_process_close = false;
             } else {
                 // prepare for next line
-                idx1 = push_v(p1 + w * (-v1 + n1));
-                idx2 = push_v(p1 + w * (-v1 - n1));
+                idx1 = buffer.push_vertex(p1 + w * (-v1 + n1));
+                idx2 = buffer.push_vertex(p1 + w * (-v1 - n1));
             }
         } else {
             let idx3: usize;
@@ -112,11 +119,11 @@ pub fn build_fat_line(
 
             if Vec2::dot(v0, v1) >= 0. {
                 // corner is less than 90° => no miter triangle is needed
-                idx3 = push_v(p1 + half_join * miter);
-                idx4 = push_v(p1 - half_join * miter);
+                idx3 = buffer.push_vertex(p1 + half_join * miter);
+                idx4 = buffer.push_vertex(p1 - half_join * miter);
 
-                push_t(idx1, idx2, idx3);
-                push_t(idx2, idx3, idx4);
+                buffer.push_triangle(idx1, idx2, idx3);
+                buffer.push_triangle(idx2, idx3, idx4);
             } else {
                 // corner is more than 90° => miter triangle is needed
                 // TBD: should the limit *really* be at 90°? Triangle count could be limited by
@@ -125,19 +132,19 @@ pub fn build_fat_line(
                 let idx5: usize;
 
                 if turn_cw {
-                    idx3 = push_v(p1 + half_join * miter);
-                    idx4 = push_v(p1 + w * (-v1 - n1));
-                    idx5 = push_v(p1 + w * (v0 - n0));
-                    push_t(idx1, idx2, idx3);
-                    push_t(idx2, idx3, idx5);
+                    idx3 = buffer.push_vertex(p1 + half_join * miter);
+                    idx4 = buffer.push_vertex(p1 + w * (-v1 - n1));
+                    idx5 = buffer.push_vertex(p1 + w * (v0 - n0));
+                    buffer.push_triangle(idx1, idx2, idx3);
+                    buffer.push_triangle(idx2, idx3, idx5);
                 } else {
-                    idx3 = push_v(p1 + w * (-v1 + n1));
-                    idx4 = push_v(p1 - half_join * miter);
-                    idx5 = push_v(p1 + w * (v0 + n0));
-                    push_t(idx1, idx2, idx5);
-                    push_t(idx2, idx4, idx5);
+                    idx3 = buffer.push_vertex(p1 + w * (-v1 + n1));
+                    idx4 = buffer.push_vertex(p1 - half_join * miter);
+                    idx5 = buffer.push_vertex(p1 + w * (v0 + n0));
+                    buffer.push_triangle(idx1, idx2, idx5);
+                    buffer.push_triangle(idx2, idx4, idx5);
                 }
-                push_t(idx3, idx4, idx5);
+                buffer.push_triangle(idx3, idx4, idx5);
             }
 
             idx1 = idx3;
@@ -149,16 +156,59 @@ pub fn build_fat_line(
         if post_process_close {
             // Ideally, those last two vertices could be avoided by reusing the first two. I'm
             // not sure the additional CPU cycles are worth the memory savings...
-            vertices[first_idx1] = vertices[idx1];
-            vertices[first_idx2] = vertices[idx2];
+            buffer.set_vertex(first_idx1, buffer.get_vertex(idx1));
+            buffer.set_vertex(first_idx2, buffer.get_vertex(idx2));
         }
     } else {
         // finish off the line
-        let idx3 = push_v(p2 + w * (v1 + n1));
-        let idx4 = push_v(p2 + w * (v1 - n1));
-        push_t(idx1, idx2, idx3);
-        push_t(idx2, idx3, idx4);
+        let idx3 = buffer.push_vertex(p2 + w * (v1 + n1));
+        let idx4 = buffer.push_vertex(p2 + w * (v1 - n1));
+        buffer.push_triangle(idx1, idx2, idx3);
+        buffer.push_triangle(idx2, idx3, idx4);
     }
+}
+
+pub struct Buffers<'a> {
+    vertices: &'a mut Vec<Point>,
+    triangles: &'a mut Vec<Triangle>,
+}
+
+impl<'a> Buffers<'a> {
+    pub fn new(vertices: &'a mut Vec<Point>, triangles: &'a mut Vec<Triangle>) -> Self {
+        Self {
+            vertices,
+            triangles,
+        }
+    }
+}
+
+impl FatLineBuffer for Buffers<'_> {
+    fn push_vertex(&mut self, p: Point) -> usize {
+        self.vertices.push(p);
+        self.vertices.len() - 1
+    }
+
+    fn push_triangle(&mut self, i1: usize, i2: usize, i3: usize) {
+        self.triangles.push((i1, i2, i3));
+    }
+
+    fn set_vertex(&mut self, i: usize, p: Point) {
+        self.vertices[i] = p;
+    }
+
+    fn get_vertex(&self, i: usize) -> Point {
+        self.vertices[i]
+    }
+}
+
+pub fn build_fat_line_buffers(
+    line: &Polyline,
+    pen_width: f64,
+    vertices: &mut Vec<Point>,
+    triangles: &mut Vec<Triangle>,
+) {
+    let mut buffer = Buffers::new(vertices, triangles);
+    build_fat_line(line, pen_width, &mut buffer);
 }
 
 #[cfg(test)]
@@ -177,7 +227,7 @@ mod tests {
         let mut v = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
         let mut t = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
         for path in &layer.paths {
-            build_fat_line(&path.data, 1.0, &mut v, &mut t);
+            build_fat_line_buffers(&path.data, 1.0, &mut v, &mut t);
         }
     }
 

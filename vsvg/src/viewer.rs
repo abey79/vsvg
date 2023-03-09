@@ -1,13 +1,57 @@
 use eframe::Frame;
 
-use egui::plot::PlotUi;
-use egui::{Color32, Painter, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
+use egui::epaint::Vertex;
+use egui::{Color32, Mesh, Painter, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
+use rand::Rng;
+use rand_chacha::rand_core::SeedableRng;
+use rand_chacha::ChaCha8Rng;
 use std::collections::HashMap;
 use std::error::Error;
 use vsvg_core::flattened_layer::FlattenedLayer;
 use vsvg_core::FlattenedPath;
 use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
-use vsvg_viewer::triangulation::{build_fat_line, Triangle};
+use vsvg_viewer::triangulation::{build_fat_line, FatLineBuffer};
+
+pub struct MeshBuffer<F: Fn(Pos2) -> Pos2> {
+    mesh: Mesh,
+    to_screen: F,
+}
+
+impl<F: Fn(Pos2) -> Pos2> MeshBuffer<F> {
+    pub fn new(to_screen: F) -> Self {
+        Self {
+            mesh: Mesh::default(),
+            to_screen,
+        }
+    }
+}
+
+impl<F: Fn(Pos2) -> Pos2> FatLineBuffer for MeshBuffer<F> {
+    fn push_vertex(&mut self, p: kurbo::Point) -> usize {
+        let len = self.mesh.vertices.len();
+        let mut rng = ChaCha8Rng::seed_from_u64(len as u64);
+
+        self.mesh.vertices.push(Vertex {
+            pos: (self.to_screen)(Pos2::new(p.x as f32, p.y as f32)),
+            uv: Pos2::ZERO,
+            color: Color32::from_rgba_unmultiplied(rng.gen(), rng.gen(), rng.gen(), 70),
+        });
+        len
+    }
+
+    fn push_triangle(&mut self, i1: usize, i2: usize, i3: usize) {
+        self.mesh.indices.extend(&[i1 as u32, i2 as u32, i3 as u32]);
+    }
+
+    fn set_vertex(&mut self, i: usize, p: kurbo::Point) {
+        self.mesh.vertices[i].pos = Pos2::new(p.x as f32, p.y as f32);
+    }
+
+    fn get_vertex(&self, i: usize) -> kurbo::Point {
+        let p = self.mesh.vertices[i].pos;
+        kurbo::Point::new(p.x as f64, p.y as f64)
+    }
+}
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -103,79 +147,6 @@ impl Viewer {
         }
     }
 
-    fn plot_layer_fat_lines(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
-        let mut vertices: Vec<kurbo::Point> = Vec::new(); //opt: pre-allocate
-        let mut triangles: Vec<Triangle> = Vec::new(); //opt: pre-allocate
-
-        for FlattenedPath {
-            data: path,
-            color: _color,
-            stroke_width,
-        } in &layer.paths
-        {
-            build_fat_line(path, *stroke_width, &mut vertices, &mut triangles);
-        }
-
-        // plot triangles
-        for (i1, i2, i3) in triangles {
-            plot_ui.polygon(
-                egui::plot::Polygon::new(
-                    [
-                        [vertices[i1].x, vertices[i1].y],
-                        [vertices[i2].x, vertices[i2].y],
-                        [vertices[i3].x, vertices[i3].y],
-                    ]
-                    .iter()
-                    .copied()
-                    .collect::<egui::plot::PlotPoints>(),
-                )
-                .width(0.0)
-                .fill_alpha(0.3),
-            );
-        }
-
-        // plot debug stuff
-        if self.show_fat_lines_debug {
-            for FlattenedPath { data: path, .. } in &layer.paths {
-                plot_ui.line(
-                    egui::plot::Line::new(path.iter().copied().collect::<egui::plot::PlotPoints>())
-                        .width(1.)
-                        .color(egui::Color32::LIGHT_GREEN),
-                );
-
-                plot_ui.points(
-                    egui::plot::Points::new(
-                        path.iter().copied().collect::<egui::plot::PlotPoints>(),
-                    )
-                    .radius(3.)
-                    .color(egui::Color32::LIGHT_GREEN),
-                );
-            }
-        }
-    }
-
-    fn show_plot_viewer(&mut self, ui: &mut Ui) {
-        let mut plot = egui::plot::Plot::new("svg_plot")
-            .data_aspect(1.0)
-            .show_background(false)
-            .auto_bounds_x()
-            .auto_bounds_y();
-
-        if !self.show_grid {
-            plot = plot.x_grid_spacer(|_| vec![]).y_grid_spacer(|_| vec![]);
-        }
-
-        plot.show(ui, |plot_ui| {
-            for (lid, layer) in &self.document.layers {
-                if !self.layer_visibility.get(lid).unwrap_or(&true) {
-                    continue;
-                }
-
-                self.plot_layer_fat_lines(plot_ui, layer);
-            }
-        });
-    }
-
     fn show_viewer(&mut self, ui: &mut Ui) {
         let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
         let rect = response.rect;
@@ -204,12 +175,17 @@ impl Viewer {
         self.paint_page_size(&painter, to_screen);
 
         // draw layer data
+
         for (lid, layer) in &self.document.layers {
             if !self.layer_visibility.get(lid).unwrap_or(&true) {
                 continue;
             }
 
-            self.paint_layer(&painter, to_screen, layer)
+            if self.show_fat_lines {
+                self.paint_layer_fat_lines(&painter, to_screen, layer);
+            } else {
+                self.paint_layer(&painter, to_screen, layer);
+            }
         }
     }
 
@@ -254,6 +230,42 @@ impl Viewer {
                 }
             },
         ))
+    }
+
+    fn paint_layer_fat_lines<F: Fn(Pos2) -> Pos2>(
+        &self,
+        painter: &Painter,
+        to_screen: F,
+        layer: &FlattenedLayer,
+    ) {
+        let mut buffer = MeshBuffer::new(&to_screen);
+        for FlattenedPath {
+            data: path,
+            color: _color,
+            stroke_width,
+        } in &layer.paths
+        {
+            build_fat_line(path, *stroke_width, &mut buffer);
+        }
+
+        painter.add(buffer.mesh);
+
+        // plot debug stuff
+        if self.show_fat_lines_debug {
+            painter.extend(layer.paths.iter().map(|FlattenedPath { data: path, .. }| {
+                Shape::line(
+                    path.iter()
+                        .map(|pt| {
+                            to_screen(Pos2 {
+                                x: pt[0] as f32,
+                                y: pt[1] as f32,
+                            })
+                        })
+                        .collect::<Vec<Pos2>>(),
+                    Stroke::new(1.0, Color32::LIGHT_GREEN),
+                )
+            }))
+        }
     }
 
     fn paint_page_size<F: Fn(Pos2) -> Pos2>(&self, painter: &Painter, to_screen: F) {
@@ -347,16 +359,10 @@ impl eframe::App for Viewer {
 
         let panel_frame = egui::Frame::central_panel(&ctx.style())
             .inner_margin(egui::style::Margin::same(0.))
-            .fill(egui::Color32::from_rgb(242, 242, 242));
+            .fill(Color32::from_rgb(242, 242, 242));
         egui::CentralPanel::default()
             .frame(panel_frame)
-            .show(ctx, |ui| {
-                if self.show_fat_lines {
-                    self.show_plot_viewer(ui)
-                } else {
-                    self.show_viewer(ui)
-                }
-            });
+            .show(ctx, |ui| self.show_viewer(ui));
 
         egui::Window::new("🔧 Settings")
             .open(&mut self.show_settings)

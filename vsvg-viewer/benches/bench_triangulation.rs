@@ -2,13 +2,13 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use rayon::prelude::*;
 use vsvg_core::flattened_layer::FlattenedLayer;
 use vsvg_core::Document;
-use vsvg_viewer::triangulation::build_fat_line;
+use vsvg_viewer::triangulation::build_fat_line_buffers;
 
 fn triangulate_no_prealloc(layer: &FlattenedLayer) {
     let mut v = Vec::new();
     let mut t = Vec::new();
     for path in layer.paths.iter() {
-        build_fat_line(&path.data, 1.0, &mut v, &mut t);
+        build_fat_line_buffers(&path.data, 1.0, &mut v, &mut t);
     }
 }
 
@@ -22,7 +22,7 @@ fn triangulate_prealloc(layer: &FlattenedLayer) {
     let mut v = Vec::with_capacity(pts_count * 2);
     let mut t = Vec::with_capacity(pts_count * 2);
     for path in layer.paths.iter() {
-        build_fat_line(&path.data, 1.0, &mut v, &mut t);
+        build_fat_line_buffers(&path.data, 1.0, &mut v, &mut t);
     }
 }
 
@@ -36,7 +36,7 @@ fn triangulate_prealloc_pessimistic(layer: &FlattenedLayer) {
     let mut v = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
     let mut t = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
     for path in layer.paths.iter() {
-        build_fat_line(&path.data, 1.0, &mut v, &mut t);
+        build_fat_line_buffers(&path.data, 1.0, &mut v, &mut t);
     }
 }
 
@@ -48,7 +48,7 @@ fn triangulate_rayon_pessimistic(layer: &FlattenedLayer) {
             let pts_count = path.data.len();
             let mut v = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
             let mut t = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
-            build_fat_line(&path.data, 1.0, &mut v, &mut t);
+            build_fat_line_buffers(&path.data, 1.0, &mut v, &mut t);
             (v, t)
         })
         .collect::<Vec<_>>();
