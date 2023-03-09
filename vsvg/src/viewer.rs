@@ -1,11 +1,12 @@
 use eframe::Frame;
+
 use egui::plot::PlotUi;
-use egui::{Color32, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
+use egui::{Color32, Painter, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
 use std::collections::HashMap;
 use std::error::Error;
 use vsvg_core::flattened_layer::FlattenedLayer;
+use vsvg_core::FlattenedPath;
 use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
-use vsvg_core::{FlattenedPath, Transforms};
 use vsvg_viewer::triangulation::{build_fat_line, Triangle};
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -62,8 +63,8 @@ pub(crate) struct Viewer {
     show_memory: bool,
 }
 
-fn vsvg_to_egui_color(val: vsvg_core::Color) -> egui::ecolor::Color32 {
-    egui::ecolor::Color32::from_rgba_unmultiplied(val.r, val.g, val.b, val.a)
+fn vsvg_to_egui_color(val: vsvg_core::Color) -> Color32 {
+    Color32::from_rgba_unmultiplied(val.r, val.g, val.b, val.a)
 }
 
 impl Viewer {
@@ -99,106 +100,6 @@ impl Viewer {
             show_settings: false,
             show_inspection: false,
             show_memory: false,
-        }
-    }
-
-    fn plot_page_size(&mut self, plot_ui: &mut PlotUi) {
-        if let Some(page_size) = self.page_size {
-            let page_frame = vec![
-                [0.0, 0.0],
-                [page_size.w, 0.0],
-                [page_size.w, -page_size.h],
-                [0.0, -page_size.h],
-            ];
-
-            // shadow
-            plot_ui.polygon(
-                egui::plot::Polygon::new(
-                    page_frame
-                        .iter()
-                        .map(|p| [p[0] + SHADOW_OFFSET as f64, p[1] - SHADOW_OFFSET as f64])
-                        .collect::<egui::plot::PlotPoints>(),
-                )
-                .color(egui::Color32::from_rgb(180, 180, 180))
-                .fill_alpha(1.),
-            );
-
-            // background
-            plot_ui.polygon(
-                egui::plot::Polygon::new(
-                    page_frame
-                        .iter()
-                        .copied()
-                        .collect::<egui::plot::PlotPoints>(),
-                )
-                .color(egui::Color32::WHITE)
-                .fill_alpha(1.),
-            );
-
-            // frame
-            plot_ui.polygon(
-                egui::plot::Polygon::new(
-                    page_frame.into_iter().collect::<egui::plot::PlotPoints>(),
-                )
-                .color(egui::Color32::from_rgb(128, 128, 128))
-                .fill_alpha(0.0),
-            );
-        }
-    }
-
-    fn plot_control_points(&self, plot_ui: &mut PlotUi, lid: LayerID) {
-        if let Some(control_points) = self.control_points.try_get(lid) {
-            for path in &control_points.paths {
-                plot_ui.line(
-                    egui::plot::Line::new(
-                        path.data
-                            .iter()
-                            .copied()
-                            .collect::<egui::plot::PlotPoints>(),
-                    )
-                    .color(egui::Color32::GRAY)
-                    .width(0.5),
-                );
-
-                plot_ui.points(
-                    egui::plot::Points::new(
-                        path.data
-                            .iter()
-                            .copied()
-                            .collect::<egui::plot::PlotPoints>(),
-                    )
-                    .color(egui::Color32::DARK_GRAY)
-                    .radius(1.5),
-                );
-            }
-        }
-    }
-
-    fn plot_layer(&self, plot_ui: &mut PlotUi, layer: &FlattenedLayer) {
-        for path in &layer.paths {
-            plot_ui.line(
-                egui::plot::Line::new(
-                    path.data
-                        .iter()
-                        .copied()
-                        .collect::<egui::plot::PlotPoints>(),
-                )
-                .color(vsvg_to_egui_color(path.color))
-                .width(path.stroke_width as f32),
-            );
-
-            if self.show_point {
-                plot_ui.points(
-                    egui::plot::Points::new(
-                        path.data
-                            .iter()
-                            .copied()
-                            .collect::<egui::plot::PlotPoints>(),
-                    )
-                    .color(vsvg_to_egui_color(path.color))
-                    .radius(path.stroke_width as f32 * 2.0),
-                );
-            }
         }
     }
 
@@ -253,7 +154,7 @@ impl Viewer {
         }
     }
 
-    fn show_viewer(&mut self, ui: &mut Ui) {
+    fn show_plot_viewer(&mut self, ui: &mut Ui) {
         let mut plot = egui::plot::Plot::new("svg_plot")
             .data_aspect(1.0)
             .show_background(false)
@@ -265,28 +166,17 @@ impl Viewer {
         }
 
         plot.show(ui, |plot_ui| {
-            self.plot_page_size(plot_ui);
-
             for (lid, layer) in &self.document.layers {
                 if !self.layer_visibility.get(lid).unwrap_or(&true) {
                     continue;
                 }
 
-                // draw control points
-                if self.show_control_points {
-                    self.plot_control_points(plot_ui, *lid);
-                }
-
-                if self.show_fat_lines {
-                    self.plot_layer_fat_lines(plot_ui, layer);
-                } else {
-                    self.plot_layer(plot_ui, layer);
-                }
+                self.plot_layer_fat_lines(plot_ui, layer);
             }
         });
     }
 
-    fn show_viewer_bis(&mut self, ui: &mut Ui) {
+    fn show_viewer(&mut self, ui: &mut Ui) {
         let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
         let rect = response.rect;
 
@@ -307,10 +197,66 @@ impl Viewer {
             }
         });
 
-        let to_screen =
-            |p: Pos2| rect.min + (self.offset + Vec2::new(p.x, p.y)).to_vec2() * self.scale;
+        let (off, sc) = (self.offset, self.scale);
+        let to_screen = |p: Pos2| rect.min + (off + Vec2::new(p.x, p.y)).to_vec2() * sc;
 
         // draw page size
+        self.paint_page_size(&painter, &to_screen);
+
+        // draw layer data
+        for (lid, layer) in &self.document.layers {
+            if !self.layer_visibility.get(lid).unwrap_or(&true) {
+                continue;
+            }
+
+            self.paint_layer(&painter, to_screen, layer)
+        }
+    }
+
+    fn paint_layer<F: Fn(Pos2) -> Pos2>(
+        &self,
+        painter: &Painter,
+        to_screen: F,
+        layer: &FlattenedLayer,
+    ) {
+        painter.extend(layer.paths.iter().map(
+            |FlattenedPath {
+                 data: path,
+                 color,
+                 stroke_width,
+             }| {
+                let pts = path
+                    .iter()
+                    .map(|pt| {
+                        to_screen(Pos2 {
+                            x: pt[0] as f32,
+                            y: pt[1] as f32,
+                        })
+                    })
+                    .collect::<Vec<Pos2>>();
+
+                if path.first() == path.last() {
+                    Shape::closed_line(
+                        pts,
+                        Stroke::new(
+                            *stroke_width as f32 * self.scale,
+                            vsvg_to_egui_color(*color),
+                        ),
+                    )
+                } else {
+                    Shape::line(
+                        pts,
+                        Stroke::new(
+                            *stroke_width as f32 * self.scale,
+                            vsvg_to_egui_color(*color),
+                        ),
+                    )
+                }
+            },
+        ))
+    }
+
+    fn paint_page_size<F: Fn(Pos2) -> Pos2>(&self, painter: &Painter, to_screen: F) {
         if let Some(page_size) = self.document.page_size {
             let page_size = Rect::from_points(&[
                 to_screen(Pos2::ZERO),
@@ -332,49 +278,6 @@ impl Viewer {
                 Color32::WHITE,
                 Stroke::new(1., Color32::from_rgb(128, 128, 128)),
             )
-        }
-
-        // draw layer data
-        for (lid, layer) in &self.document.layers {
-            if !self.layer_visibility.get(lid).unwrap_or(&true) {
-                continue;
-            }
-
-            painter.extend(layer.paths.iter().map(
-                |FlattenedPath {
-                     data: path,
-                     color,
-                     stroke_width,
-                 }| {
-                    let pts = path
-                        .iter()
-                        .map(|pt| {
-                            to_screen(Pos2 {
-                                x: pt[0] as f32,
-                                y: pt[1] as f32,
-                            })
-                        })
-                        .collect::<Vec<Pos2>>();
-
-                    if path.first() == path.last() {
-                        Shape::closed_line(
-                            pts,
-                            Stroke::new(
-                                *stroke_width as f32 * self.scale,
-                                vsvg_to_egui_color(*color),
-                            ),
-                        )
-                    } else {
-                        Shape::line(
-                            pts,
-                            Stroke::new(
-                                *stroke_width as f32 * self.scale,
-                                vsvg_to_egui_color(*color),
-                            ),
-                        )
-                    }
-                },
-            ))
         }
     }
 
@@ -447,7 +350,13 @@ impl eframe::App for Viewer {
             .fill(egui::Color32::from_rgb(242, 242, 242));
         egui::CentralPanel::default()
             .frame(panel_frame)
-            .show(ctx, |ui| self.show_viewer_bis(ui));
+            .show(ctx, |ui| {
+                if self.show_fat_lines {
+                    self.show_plot_viewer(ui)
+                } else {
+                    self.show_viewer(ui)
+                }
+            });
 
         egui::Window::new("🔧 Settings")
             .open(&mut self.show_settings)
