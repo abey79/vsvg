@@ -1,5 +1,6 @@
 use eframe::Frame;
 
+use crate::frame_history::FrameHistory;
 use egui::epaint::Vertex;
 use egui::{Color32, Mesh, Painter, Pos2, Rect, Sense, Shape, Stroke, Ui, Vec2};
 use rand::Rng;
@@ -105,6 +106,10 @@ pub(crate) struct Viewer {
 
     /// Show memory window.
     show_memory: bool,
+
+    /// Record frame performance
+    #[serde(skip)]
+    frame_history: FrameHistory,
 }
 
 fn vsvg_to_egui_color(val: vsvg_core::Color) -> Color32 {
@@ -144,6 +149,7 @@ impl Viewer {
             show_settings: false,
             show_inspection: false,
             show_memory: false,
+            frame_history: FrameHistory::default(),
         }
     }
 
@@ -353,6 +359,7 @@ impl eframe::App for Viewer {
                 self.menu_view(ui);
                 self.menu_layer(ui);
                 self.menu_debug(ui);
+                self.frame_history.ui(ui);
                 egui::warn_if_debug_build(ui);
             });
         });
@@ -384,6 +391,9 @@ impl eframe::App for Viewer {
             .show(ctx, |ui| {
                 ctx.memory_ui(ui);
             });
+
+        self.frame_history
+            .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
     }
 }
 

@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod frame_history;
 mod viewer;
 
 use crate::commands::command_list;
