@@ -41,13 +41,25 @@ pub(crate) struct Viewer {
     #[serde(skip)]
     layer_visibility: HashMap<LayerID, bool>,
 
-    /// offset
+    /// pan offset
+    ///
+    /// The offset is expressed in SVG coordinates, not in pixels. `self.scale` can be used for
+    /// conversion.
     #[serde(skip)]
     offset: Pos2,
 
-    /// scale
+    /// scale factor
     #[serde(skip)]
     scale: f32,
+
+    /// Show settings window.
+    show_settings: bool,
+
+    /// Show inspection window.
+    show_inspection: bool,
+
+    /// Show memory window.
+    show_memory: bool,
 }
 
 fn vsvg_to_egui_color(val: vsvg_core::Color) -> egui::ecolor::Color32 {
@@ -84,6 +96,9 @@ impl Viewer {
             layer_visibility: HashMap::new(),
             offset: Pos2::ZERO,
             scale: 1.0,
+            show_settings: false,
+            show_inspection: false,
+            show_memory: false,
         }
     }
 
@@ -275,6 +290,23 @@ impl Viewer {
         let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
         let rect = response.rect;
 
+        // handle mouse input
+        response.ctx.input(|i| {
+            self.offset += response.drag_delta() / self.scale;
+
+            if let Some(mut pos) = response.hover_pos() {
+                self.offset += i.scroll_delta / self.scale;
+
+                let old_scale = self.scale;
+                self.scale *= i.zoom_delta();
+
+                // zoom around mouse
+                pos -= rect.min.to_vec2();
+                let dz = 1. / old_scale - 1. / self.scale;
+                self.offset -= pos.to_vec2() * dz;
+            }
+        });
+
         for (lid, layer) in &self.document.layers {
             if !self.layer_visibility.get(lid).unwrap_or(&true) {
                 continue;
@@ -289,20 +321,26 @@ impl Viewer {
                     let pts = path
                         .iter()
                         .map(|pt| Pos2 {
-                            x: rect.left() + pt[0] as f32,
-                            y: rect.top() - pt[1] as f32,
+                            x: rect.left() + (self.offset.x + pt[0] as f32) * self.scale,
+                            y: rect.top() + (self.offset.y - pt[1] as f32) * self.scale,
                         })
                         .collect::<Vec<Pos2>>();
 
                     if path.first() == path.last() {
                         Shape::closed_line(
                             pts,
-                            Stroke::new(*stroke_width as f32, vsvg_to_egui_color(*color)),
+                            Stroke::new(
+                                *stroke_width as f32 * self.scale,
+                                vsvg_to_egui_color(*color),
+                            ),
                         )
                     } else {
                         Shape::line(
                             pts,
-                            Stroke::new(*stroke_width as f32, vsvg_to_egui_color(*color)),
+                            Stroke::new(
+                                *stroke_width as f32 * self.scale,
+                                vsvg_to_egui_color(*color),
+                            ),
                         )
                     }
                 },
@@ -344,6 +382,14 @@ impl Viewer {
             }
         });
     }
+
+    fn menu_debug(&mut self, ui: &mut Ui) {
+        ui.menu_button("Debug", |ui| {
+            ui.checkbox(&mut self.show_settings, "Show settings");
+            ui.checkbox(&mut self.show_inspection, "Show inspection");
+            ui.checkbox(&mut self.show_memory, "Show memory");
+        });
+    }
 }
 
 const SHADOW_OFFSET: f64 = 10.;
@@ -361,6 +407,7 @@ impl eframe::App for Viewer {
                 self.menu_file(frame, ui);
                 self.menu_view(ui);
                 self.menu_layer(ui);
+                self.menu_debug(ui);
                 egui::warn_if_debug_build(ui);
             });
         });
@@ -371,6 +418,27 @@ impl eframe::App for Viewer {
         egui::CentralPanel::default()
             .frame(panel_frame)
             .show(ctx, |ui| self.show_viewer_bis(ui));
+
+        egui::Window::new("🔧 Settings")
+            .open(&mut self.show_settings)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ctx.settings_ui(ui);
+            });
+
+        egui::Window::new("🔍 Inspection")
+            .open(&mut self.show_inspection)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ctx.inspection_ui(ui);
+            });
+
+        egui::Window::new("📝 Memory")
+            .open(&mut self.show_memory)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ctx.memory_ui(ui);
+            });
     }
 }
 
