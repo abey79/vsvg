@@ -176,7 +176,7 @@ mod tests {
 
         let mut v = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
         let mut t = Vec::with_capacity((pts_count as f64 * 2.5) as usize);
-        for path in layer.paths.iter() {
+        for path in &layer.paths {
             build_fat_line(&path.data, 1.0, &mut v, &mut t);
         }
     }

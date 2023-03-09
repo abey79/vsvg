@@ -92,7 +92,7 @@ impl Viewer {
             show_point: false,
             show_grid: false,
             show_control_points: false,
-            show_fat_lines: true,
+            show_fat_lines: false,
             show_fat_lines_debug: false,
             layer_visibility: HashMap::new(),
             offset: Pos2::ZERO,
@@ -201,7 +201,7 @@ impl Viewer {
         let to_screen = |p: Pos2| rect.min + (off + Vec2::new(p.x, p.y)).to_vec2() * sc;
 
         // draw page size
-        self.paint_page_size(&painter, &to_screen);
+        self.paint_page_size(&painter, to_screen);
 
         // draw layer data
         for (lid, layer) in &self.document.layers {
@@ -264,7 +264,7 @@ impl Viewer {
             ]);
 
             painter.rect_filled(
-                page_size.clone().translate(Vec2::new(
+                page_size.translate(Vec2::new(
                     SHADOW_OFFSET * self.scale,
                     SHADOW_OFFSET * self.scale,
                 )),
