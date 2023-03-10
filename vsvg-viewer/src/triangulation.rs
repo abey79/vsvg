@@ -231,9 +231,10 @@ mod tests {
         }
     }
 
+    #[ignore] // for benchmarking only
     #[test]
     fn test_bar_nodef() {
-        const N: usize = 1000;
+        const N: usize = 10;
 
         let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("tests");
