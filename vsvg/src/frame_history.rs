@@ -1,4 +1,5 @@
 use egui::util::History;
+use egui::Label;
 
 pub(crate) struct FrameHistory {
     frame_times: History<f32>,
@@ -29,11 +30,17 @@ impl FrameHistory {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.label(format!("Frames #: {}", self.frame_times.total_count()));
+        ui.add_enabled(
+            false,
+            Label::new(format!("Frames #: {}", self.frame_times.total_count())),
+        );
 
-        ui.label(format!(
-            "Mean CPU: {:.2} ms / frame",
-            1e3 * self.mean_frame_time()
-        ));
+        ui.add_enabled(
+            false,
+            Label::new(format!(
+                "Mean CPU: {:.2} ms / frame",
+                1e3 * self.mean_frame_time()
+            )),
+        );
     }
 }

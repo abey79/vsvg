@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use vsvg_core::flattened_layer::FlattenedLayer;
 use vsvg_core::FlattenedPath;
-use vsvg_core::{document::FlattenedDocument, LayerID, PageSize};
+use vsvg_core::{document::FlattenedDocument, LayerID};
 use vsvg_viewer::triangulation::{build_fat_line, FatLineBuffer};
 
 pub struct MeshBuffer<F: Fn(Pos2) -> Pos2> {
@@ -65,9 +65,6 @@ pub(crate) struct Viewer {
     #[serde(skip)]
     control_points: FlattenedDocument,
 
-    #[serde(skip)]
-    page_size: Option<PageSize>,
-
     /// show points
     show_point: bool,
 
@@ -98,6 +95,10 @@ pub(crate) struct Viewer {
     #[serde(skip)]
     scale: f32,
 
+    /// should fit to view flag
+    #[serde(skip)]
+    must_fit_to_view: bool,
+
     /// Show settings window.
     show_settings: bool,
 
@@ -122,7 +123,6 @@ impl Viewer {
         _cc: &eframe::CreationContext<'_>,
         document: FlattenedDocument,
         control_points: FlattenedDocument,
-        page_size: Option<PageSize>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
@@ -137,7 +137,6 @@ impl Viewer {
         Viewer {
             document,
             control_points,
-            page_size,
             show_point: false,
             show_grid: false,
             show_control_points: false,
@@ -146,6 +145,7 @@ impl Viewer {
             layer_visibility: HashMap::new(),
             offset: Pos2::ZERO,
             scale: 1.0,
+            must_fit_to_view: true,
             show_settings: false,
             show_inspection: false,
             show_memory: false,
@@ -153,11 +153,47 @@ impl Viewer {
         }
     }
 
+    fn fit_to_view(&mut self, viewport: &Rect) {
+        let bounds = if let Some(page_size) = self.document.page_size {
+            if page_size.w != 0.0 && page_size.h != 0.0 {
+                Some(kurbo::Rect::from_points(
+                    (0., 0.),
+                    (page_size.w, page_size.h),
+                ))
+            } else {
+                self.document.bounds()
+            }
+        } else {
+            self.document.bounds()
+        };
+
+        if bounds.is_none() {
+            return;
+        }
+        let bounds = bounds.expect("bounds is not none");
+
+        let (w, h) = (bounds.width() as f32, bounds.height() as f32);
+        let (view_w, view_h) = (viewport.width(), viewport.height());
+
+        self.scale = 0.95 * f32::min(view_w / w, view_h / h);
+        self.offset = Pos2::new(
+            bounds.x0 as f32 + (view_w / self.scale - w) / 2.0,
+            bounds.y0 as f32 + (view_h / self.scale - h) / 2.0,
+        );
+    }
+
     fn show_viewer(&mut self, ui: &mut Ui) {
         let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
         let rect = response.rect;
 
+        // fit to view on request
+        if self.must_fit_to_view {
+            self.fit_to_view(&rect);
+        }
+
         // handle mouse input
+        let old_offset = self.offset;
+        let old_scale = self.scale;
         response.ctx.input(|i| {
             self.offset += response.drag_delta() / self.scale;
 
@@ -173,6 +209,10 @@ impl Viewer {
                 self.offset -= pos.to_vec2() * dz;
             }
         });
+
+        if old_offset != self.offset || old_scale != self.scale {
+            self.must_fit_to_view = false;
+        }
 
         let (off, sc) = (self.offset, self.scale);
         let to_screen = |p: Pos2| rect.min + (off + Vec2::new(p.x, p.y)).to_vec2() * sc;
@@ -317,6 +357,10 @@ impl Viewer {
                 self.show_fat_lines,
                 egui::Checkbox::new(&mut self.show_fat_lines_debug, "Show fat lines debug lines"),
             );
+            ui.separator();
+            if ui.button("Fit to view").clicked() {
+                self.must_fit_to_view = true;
+            }
         });
     }
 
@@ -404,7 +448,6 @@ pub(crate) trait Show {
 impl Show for vsvg_core::Document {
     fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
-        let page_size = self.page_size;
         let polylines = self.flatten(tolerance);
         let control_points = self.control_points();
 
@@ -417,7 +460,7 @@ impl Show for vsvg_core::Document {
                     ..egui::Style::default()
                 };
                 cc.egui_ctx.set_style(style);
-                Box::new(Viewer::new(cc, polylines, control_points, page_size))
+                Box::new(Viewer::new(cc, polylines, control_points))
             }),
         )?;
 
