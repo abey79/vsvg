@@ -2,7 +2,7 @@ use crate::flattened_layer::FlattenedLayer;
 use crate::flattened_path::Polyline;
 use crate::layer::LayerImpl;
 use crate::path::PathData;
-use crate::{PageSize, Path};
+use crate::{PageSize, Path, PathType};
 use std::collections::BTreeMap;
 
 pub type LayerID = usize;
@@ -11,12 +11,12 @@ pub type Document = DocumentImpl<PathData>;
 pub type FlattenedDocument = DocumentImpl<Polyline>;
 
 #[derive(Default, Clone, Debug)]
-pub struct DocumentImpl<T: Default> {
+pub struct DocumentImpl<T: PathType> {
     pub layers: BTreeMap<LayerID, LayerImpl<T>>,
     pub page_size: Option<PageSize>,
 }
 
-impl<T: Default> DocumentImpl<T> {
+impl<T: PathType> DocumentImpl<T> {
     #[allow(dead_code)]
     #[must_use]
     pub fn new() -> Self {
@@ -33,6 +33,22 @@ impl<T: Default> DocumentImpl<T> {
     #[must_use]
     pub fn get_mut(&mut self, id: LayerID) -> &mut LayerImpl<T> {
         self.layers.entry(id).or_insert_with(|| LayerImpl::new())
+    }
+
+    #[must_use]
+    pub fn bounds(&self) -> Option<kurbo::Rect> {
+        if self.layers.is_empty() {
+            return None;
+        }
+
+        let mut values = self.layers.values();
+        let first = values.next().expect("not empty").bounds();
+        values.fold(first, |acc, layer| match (acc, layer.bounds()) {
+            (Some(acc), Some(layer)) => Some(acc.union(layer)),
+            (Some(acc), None) => Some(acc),
+            (None, Some(path)) => Some(path),
+            (None, None) => None,
+        })
     }
 }
 
@@ -82,5 +98,37 @@ impl Document {
             layer.crop(x_min, y_min, x_max, y_max);
         });
         self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::Layer;
+
+    #[test]
+    fn test_document_bounds() {
+        let mut doc = Document::new();
+        assert_eq!(doc.bounds(), None);
+
+        let layer1 = Layer::new();
+        doc.layers.insert(1, layer1);
+        assert_eq!(doc.bounds(), None);
+
+        let mut layer2 = Layer::new();
+        layer2
+            .paths
+            .push(Path::from_shape(kurbo::Line::new((10., 10.), (25., 53.))));
+        let layer2_bounds = layer2.bounds();
+        doc.layers.insert(2, layer2);
+        assert_eq!(doc.bounds(), layer2_bounds);
+
+        let mut layer3 = Layer::new();
+        layer3.paths.push(Path::from_shape(kurbo::Line::new(
+            (25., -100.),
+            (250., 54.),
+        )));
+        doc.layers.insert(3, layer3);
+        assert_eq!(doc.bounds(), Some(kurbo::Rect::new(10., -100., 250., 54.)));
     }
 }

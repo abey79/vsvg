@@ -10,19 +10,35 @@ pub type PathData = BezPath;
 pub type Path = PathImpl<PathData>;
 
 #[derive(Clone, Debug)]
-pub struct PathImpl<T: Default> {
+pub struct PathImpl<T: Default + PathType> {
     pub data: T,
     pub color: Color,
     pub stroke_width: f64,
 }
 
-impl<T: Default> Default for PathImpl<T> {
+pub trait PathType: Default {
+    fn bounds(&self) -> kurbo::Rect;
+}
+
+impl PathType for PathData {
+    fn bounds(&self) -> kurbo::Rect {
+        kurbo::Shape::bounding_box(self)
+    }
+}
+
+impl<T: PathType> Default for PathImpl<T> {
     fn default() -> Self {
         Self {
             data: T::default(),
             color: Color::default(),
             stroke_width: 1.0,
         }
+    }
+}
+
+impl<T: PathType> PathImpl<T> {
+    pub fn bounds(&self) -> kurbo::Rect {
+        self.data.bounds()
     }
 }
 
@@ -111,5 +127,29 @@ impl Path {
 
         self.data = new_bezpath;
         self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use kurbo::Line;
+
+    #[test]
+    fn test_path_crop() {
+        let mut path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        path.crop(0.5, 0.5, 1.5, 1.5);
+        let mut it = path.data.segments();
+        assert_eq!(
+            it.next().unwrap(),
+            kurbo::PathSeg::Line(Line::new((0.5, 0.5), (1.0, 1.0)))
+        );
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_path_bounds() {
+        let path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        assert_eq!(path.bounds(), kurbo::Rect::new(0.0, 0.0, 1.0, 1.0));
     }
 }

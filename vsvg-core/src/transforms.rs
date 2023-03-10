@@ -1,4 +1,4 @@
-use crate::{DocumentImpl, LayerImpl, PathImpl, Polyline};
+use crate::{DocumentImpl, LayerImpl, PathImpl, PathType, Polyline};
 use kurbo::{Affine, BezPath};
 
 #[allow(dead_code)]
@@ -79,13 +79,13 @@ impl Transforms for Polyline {
     }
 }
 
-impl<T: Transforms + Default> Transforms for PathImpl<T> {
+impl<T: Transforms + PathType> Transforms for PathImpl<T> {
     fn apply_affine(&mut self, affine: &Affine) {
         self.data.apply_affine(affine);
     }
 }
 
-impl<T: Transforms + Default> Transforms for LayerImpl<T> {
+impl<T: Transforms + PathType> Transforms for LayerImpl<T> {
     fn apply_affine(&mut self, affine: &Affine) {
         self.paths.iter_mut().for_each(|path| {
             path.apply_affine(affine);
@@ -93,7 +93,7 @@ impl<T: Transforms + Default> Transforms for LayerImpl<T> {
     }
 }
 
-impl<T: Transforms + Default> Transforms for DocumentImpl<T> {
+impl<T: Transforms + PathType> Transforms for DocumentImpl<T> {
     fn apply_affine(&mut self, affine: &Affine) {
         self.layers.iter_mut().for_each(|(_, layer)| {
             layer.apply_affine(affine);
