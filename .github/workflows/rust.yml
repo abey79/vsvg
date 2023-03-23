@@ -13,7 +13,10 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup component add rustfmt clippy
+          components: rustfmt, clippy
+          
+      - uses: Swatinem/rust-cache@v2
+
       - uses: actions-rs/cargo@v1
         with:
           command: check
