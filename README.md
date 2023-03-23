@@ -16,7 +16,7 @@ On my computer (a 2021 MacBook Pro M1 Max), *vpype* takes about 570ms *just to s
 
 As of today `vsvg` takes ~3.6ms to start and load the same SVG file. It feels instantaneous.
 
-In another test with a rather pathological 90MB SVG, `vsvg` takes 1.4s to load the file, where it takes upward of 30s for *vpype*. 
+In another test with a rather pathological 90MB SVG, `vsvg` takes 1.4s to load the file, where it takes upward of 30s for *vpype*.
 
 ## Why?
 
@@ -45,7 +45,7 @@ First, install Rust by running the command provided by [the official Rust websit
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Normally, this will add `$HOME/.cargo/bin` in your path. 
+Normally, this will add `$HOME/.cargo/bin` in your path.
 
 Then, download the `vsvg` source code:
 
@@ -83,7 +83,7 @@ A few design considerations can be found [here](https://github.com/abey79/vsvg/i
 ## TODO
 
 - [x] Sort out page orientation and check that rotation, etc. work the same as with vpype
-- [ ] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer. 
+- [ ] ~~egui plot viewer cannot display zoom-aware fat lines :(~~ I'll deal with the viewer at a later stage—vpype 2 could keep the existing viewer.
 - [ ] ~~Properly handle Y axis (currently it's flipped)~~ (probably pointless if we move to a custom viewer)
   - [ ] ~~Custom y_axis_formatter~~
 - [x] Add support for color and line width (but width is not zoom-aware)
