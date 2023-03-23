@@ -75,6 +75,10 @@ pub(crate) fn cli(command_descs: &HashMap<Id, CommandDesc>) -> Command {
         .args([
             arg!(<PATH> "Path to the SVG file (or '-' for stdin)")
                 .value_parser(value_parser!(PathBuf)),
+            Arg::new("single-layer")
+                .long("single")
+                .help("Single layer mode")
+                .num_args(0),
             Arg::new("no-show")
                 .long("no-show")
                 .help("Don't show the GUI")

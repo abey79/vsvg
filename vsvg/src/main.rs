@@ -23,6 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("PATH is a required arg");
     let no_show = matches.remove_one::<bool>("no-show").unwrap();
     let verbose = matches.remove_one::<bool>("verbose").unwrap();
+    let single_layer = matches.remove_one::<bool>("single-layer").unwrap();
 
     if verbose {
         tracing_subscriber::fmt::init();
@@ -33,9 +34,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         document: if path == PathBuf::from("-") {
             let mut s = String::new();
             std::io::stdin().read_to_string(&mut s)?;
-            Document::from_string(s.as_str())?
+            Document::from_string(s.as_str(), single_layer)?
         } else {
-            Document::from_svg(path)?
+            Document::from_svg(path, single_layer)?
         },
         ..Default::default()
     };
