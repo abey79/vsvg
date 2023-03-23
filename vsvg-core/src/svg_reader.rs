@@ -15,7 +15,6 @@ impl Path {
     #[must_use]
     pub fn from_svg(svg_path: &usvg::Path, transform: &Transform) -> Self {
         let bezpath = usvg::TransformedPath::new(&svg_path.data, *transform)
-            .into_iter()
             .map(|elem| match elem {
                 PathSegment::MoveTo { x, y } => PathEl::MoveTo(kurbo::Point::new(x, y)),
                 PathSegment::LineTo { x, y } => PathEl::LineTo(kurbo::Point::new(x, y)),
