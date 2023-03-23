@@ -9,7 +9,7 @@ use std::path;
 use crate::{Color, Document, Layer, LayerID, PageSize, Path};
 
 use usvg::utils::view_box_to_transform;
-use usvg::{PathSegment, Transform};
+use usvg::{GroupMode, PathSegment, Transform};
 
 impl Path {
     #[must_use]
@@ -81,7 +81,7 @@ lazy_static! {
 /// Interpret the attributes of a top-level group to determine its layer ID.
 ///
 /// See <https://github.com/abey79/vsvg/issues/7> for the strategy used here.
-fn layer_id_from_attribute(attributes: &svg::node::Attributes) -> Option<LayerID> {
+fn layer_id_from_attribute(id: &str, label: Option<&str>) -> Option<LayerID> {
     fn extract_id(id: &str) -> Option<LayerID> {
         DIGITS_RE.find(id).map(|m| {
             let mut id = m
@@ -96,21 +96,14 @@ fn layer_id_from_attribute(attributes: &svg::node::Attributes) -> Option<LayerID
         })
     }
 
-    if let Some(id) = attributes.get("inkscape:label") {
+    if let Some(id) = label {
         let lid = extract_id(id);
         if lid.is_some() {
             return lid;
         }
     }
 
-    if let Some(id) = attributes.get("id") {
-        let lid = extract_id(id);
-        if lid.is_some() {
-            return lid;
-        }
-    }
-
-    None
+    extract_id(id)
 }
 
 impl Document {
@@ -122,42 +115,6 @@ impl Document {
 
     /// Create a `Document` based on a string containing SVG data.
     pub fn from_string(svg: &str) -> Result<Self, Box<dyn Error>> {
-        // usvg doesn't give us access to original attributes, which we need to access
-        // `inkscape:label` and `inkscape:groupmode`. As a work-around, we must use `svg` and
-        // double-parse the SVG. See https://github.com/abey79/vsvg/issues/6
-        // TODO: consider using roxmltree instead, to avoid double-parsing
-        fn extract_layer_attributes(
-            svg: &str,
-        ) -> Result<Vec<svg::node::Attributes>, Box<dyn Error>> {
-            let mut nest_level = 0;
-            let top_level_groups: Vec<_> = svg::read(svg)?
-                .filter_map(|event| match event {
-                    svg::parser::Event::Tag(
-                        svg::node::element::tag::Group,
-                        tag_type,
-                        attributes,
-                    ) => match tag_type {
-                        svg::node::element::tag::Type::Start => {
-                            nest_level += 1;
-                            if nest_level == 1 {
-                                Some(attributes)
-                            } else {
-                                None
-                            }
-                        }
-                        svg::node::element::tag::Type::End => {
-                            nest_level -= 1;
-                            None
-                        }
-                        svg::node::element::tag::Type::Empty => None,
-                    },
-                    _ => None,
-                })
-                .collect();
-
-            Ok(top_level_groups)
-        }
-
         let tree = usvg::Tree::from_str(svg, &usvg::Options::default())?;
 
         let viewbox_transform =
@@ -167,22 +124,51 @@ impl Document {
         let (w, h) = (tree.size.width(), tree.size.height());
         let mut doc = Document::new_with_page_size(PageSize { w, h });
 
-        let top_level_groups = extract_layer_attributes(svg)?;
         let mut top_level_index = 0;
         for child in tree.root.children() {
             let mut transform = viewbox_transform;
             transform.append(&child.borrow().transform());
 
             match *child.borrow() {
-                usvg::NodeKind::Group(_) => {
-                    let attributes = &top_level_groups[top_level_index];
-                    let id = layer_id_from_attribute(attributes).unwrap_or(top_level_index + 1);
-                    top_level_index += 1;
-                    parse_group(&child, &transform, doc.get_mut(id));
+                usvg::NodeKind::Group(ref group_info) => {
+                    let layer_id;
+                    let layer_name;
+                    match group_info.mode {
+                        // top-level group without layer information
+                        GroupMode::Normal => {
+                            top_level_index += 1;
+                            layer_id = layer_id_from_attribute(&group_info.id, None);
+                            layer_name = if group_info.id.is_empty() {
+                                None
+                            } else {
+                                Some(&group_info.id)
+                            }
+                        }
+                        // top-level group with inkscape layer information
+                        GroupMode::Layer(ref label) => {
+                            top_level_index += 1;
+                            layer_id = layer_id_from_attribute(&group_info.id, Some(label));
+                            layer_name = if !label.is_empty() {
+                                Some(label)
+                            } else if !group_info.id.is_empty() {
+                                Some(&group_info.id)
+                            } else {
+                                None
+                            }
+                        }
+                        // this is a top-level path that was embedded in a group by usvg
+                        GroupMode::Virtual => {
+                            layer_id = Some(0);
+                            layer_name = None;
+                        }
+                    }
+
+                    let layer = doc.get_mut(layer_id.unwrap_or(top_level_index));
+                    parse_group(&child, &transform, layer);
 
                     // set layer name
-                    if let Some(name) = attributes.get("inkscape:label") {
-                        doc.get_mut(id).name = name.to_string();
+                    if let Some(name) = layer_name {
+                        layer.name = name.clone();
                     }
                 }
                 usvg::NodeKind::Path(ref path) => {
@@ -204,7 +190,7 @@ mod tests {
     use kurbo::BezPath;
 
     #[test]
-    fn test_top_level_path_in_first_layer() {
+    fn test_top_level_path_in_layer_0() {
         let doc = Document::from_svg(test_file!("multilayer.svg")).unwrap();
         assert_eq!(doc.layers.len(), 3);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
@@ -213,13 +199,92 @@ mod tests {
     }
 
     #[test]
+    fn test_single_layer() {
+        let doc = Document::from_svg(test_file!("singlelayer.svg")).unwrap();
+        assert_eq!(doc.layers.len(), 1);
+        assert_eq!(doc.try_get(3).unwrap().paths.len(), 1);
+    }
+
+    #[test]
+    fn test_virtual_group() {
+        // this SVG triggers the creation of a virtual group by usvg, which should not be considered
+        // a top-level group and should not be assigned a layer ID
+        let doc = Document::from_svg(test_file!("spurious_group.svg")).unwrap();
+        assert_eq!(doc.layers.len(), 1);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 2);
+    }
+
+    #[test]
+    fn test_layer_names() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="50 50 10 10">
+                <g id="layer10" inkscape:label="Layer 10" inkscape:groupmode="layer">
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <g id="layer11" >
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <g inkscape:label="Hello" inkscape:groupmode="layer">
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <g id="world">
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <g id="notaname" inkscape:label="layer_name" inkscape:groupmode="layer">
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+            </svg>"#,
+        )
+        .unwrap();
+
+        assert_eq!(doc.layers.len(), 5);
+        assert_eq!(doc.try_get(10).unwrap().name, "Layer 10");
+        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().name, "Hello");
+        assert_eq!(doc.try_get(4).unwrap().name, "world");
+        assert_eq!(doc.try_get(5).unwrap().name, "layer_name");
+    }
+
+    #[test]
+    fn test_layer_numbering() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="50 50 10 10">
+                <g id="layer_one" >
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <!-- this should trigger a virtual layer -->
+                <line x1="50" y1="50" x2="60" y2="60" opacity="0.5" />
+                <g id="layer11" >
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+                <g id="layer_three" >
+                  <line x1="50" y1="50" x2="60" y2="60" />
+                </g>
+            </svg>"#,
+        )
+        .unwrap();
+
+        assert_eq!(doc.layers.len(), 4);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
+        assert_eq!(doc.try_get(1).unwrap().name, "layer_one");
+        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().name, "layer_three");
+    }
+
+    #[test]
     fn test_viewbox() {
         let doc = Document::from_string(
-            "<?xml version=\"1.0\"?>
-            <svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\"
-               width=\"100\" height=\"100\" viewBox=\"50 50 10 10\">
-               <line x1=\"50\" y1=\"50\" x2=\"60\" y2=\"60\" />
-            </svg>",
+            r#"<?xml version="1.0"?>
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="50 50 10 10">
+               <line x1="50" y1="50" x2="60" y2="60" />
+            </svg>"#,
         )
         .unwrap();
 

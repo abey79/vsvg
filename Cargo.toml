@@ -7,3 +7,7 @@ members = [
 ]
 
 resolver = "2"
+
+[patch.crates-io]
+usvg = { git = "https://github.com/abey79/resvg", branch="vsvg" }
+rosvgtree = { git = "https://github.com/abey79/resvg", branch="vsvg" }

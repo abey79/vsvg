@@ -1097,15 +1097,6 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a53776d271cfb873b17c618af0298445c88afc52837f3e948fa3fafd131f449"
-dependencies = [
- "arrayvec",
-]
-
-[[package]]
-name = "kurbo"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db8c31eaef73f18e0d938785e01ab471ec73e3f90c3389e84335ade689ba953b"
@@ -1784,8 +1775,7 @@ checksum = "f1382d1f0a252c4bf97dc20d979a2fdd05b024acd7c2ed0f7595d7817666a157"
 [[package]]
 name = "rosvgtree"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdc23d1ace03d6b8153c7d16f0708cd80b61ee8e80304954803354e67e40d150"
+source = "git+https://github.com/abey79/resvg?branch=vsvg#6f04aa6fe7ae87248b61b5f71f6fe0c18181d483"
 dependencies = [
  "log",
  "roxmltree",
@@ -2006,18 +1996,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
-name = "svg"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e715e0c3fc987f4c435dc7189641fd9caa6919a74675ace605c38e201d278001"
-
-[[package]]
 name = "svgtypes"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9ee29c1407a5b18ccfe5f6ac82ac11bab3b14407e09c209a6c1a32098b19734"
+checksum = "98ffacedcdcf1da6579c907279b4f3c5492fbce99fbbf227f5ed270a589c2765"
 dependencies = [
- "kurbo 0.8.3",
+ "kurbo",
  "siphasher",
 ]
 
@@ -2252,14 +2236,13 @@ dependencies = [
 [[package]]
 name = "usvg"
 version = "0.29.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63b6bb4e62619d9f68aa2d8a823fea2bff302340a1f2d45c264d5b0be170832e"
+source = "git+https://github.com/abey79/resvg?branch=vsvg#6f04aa6fe7ae87248b61b5f71f6fe0c18181d483"
 dependencies = [
  "base64",
  "data-url",
  "flate2",
  "imagesize",
- "kurbo 0.9.1",
+ "kurbo",
  "log",
  "rctree",
  "rosvgtree",
@@ -2291,7 +2274,7 @@ dependencies = [
  "clap 4.1.6",
  "eframe",
  "egui",
- "kurbo 0.9.1",
+ "kurbo",
  "rand",
  "rand_chacha",
  "serde",
@@ -2306,13 +2289,13 @@ version = "0.1.0-alpha.0"
 dependencies = [
  "approx",
  "arrayvec",
- "kurbo 0.9.1",
+ "kurbo",
  "lazy_static",
  "lyon_geom",
  "rayon",
  "rctree",
  "regex",
- "svg",
+ "rosvgtree",
  "usvg",
 ]
 
@@ -2321,7 +2304,7 @@ name = "vsvg-viewer"
 version = "0.1.0-alpha.0"
 dependencies = [
  "criterion",
- "kurbo 0.9.1",
+ "kurbo",
  "rayon",
  "vsvg-core",
 ]
