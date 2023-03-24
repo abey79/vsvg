@@ -8,7 +8,10 @@ pub mod draw;
 pub mod flattened_layer;
 pub mod flattened_path;
 pub mod layer;
+pub mod optimization;
 pub mod path;
+pub mod point;
+pub mod spatial_index;
 mod svg_reader;
 mod test_utils;
 pub mod transforms;
@@ -26,7 +29,7 @@ pub struct PageSize {
     pub h: f64,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Color {
     pub r: u8,
     pub g: u8,

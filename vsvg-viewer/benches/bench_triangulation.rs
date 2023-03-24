@@ -79,7 +79,7 @@ pub fn bench_bar_nodef(c: &mut Criterion) {
     path.push("tests");
     path.push("fixtures");
     path.push("bar_nodef.svg");
-    let doc = Document::from_svg(path).unwrap().flatten(0.1);
+    let doc = Document::from_svg(path, false).unwrap().flatten(0.1);
     let layer = doc.layers.get(&0).unwrap();
 
     let mut group = c.benchmark_group("triangulation");

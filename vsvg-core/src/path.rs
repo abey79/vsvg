@@ -1,28 +1,70 @@
 use crate::crop::Crop;
 use crate::flattened_path::Polyline;
+use crate::point::Point;
 use crate::{Color, FlattenedPath};
 use kurbo::{BezPath, PathEl};
 use std::cell::RefCell;
+use std::error::Error;
+use std::fmt::Debug;
 
 const DEFAULT_TOLERANCE: f64 = 0.05;
 
 pub type PathData = BezPath;
 pub type Path = PathImpl<PathData>;
 
-#[derive(Clone, Debug)]
-pub struct PathImpl<T: Default + PathType> {
+#[derive(Clone, Debug, PartialEq)]
+pub struct PathImpl<T: PathType> {
     pub data: T,
     pub color: Color,
     pub stroke_width: f64,
 }
 
-pub trait PathType: Default {
+pub trait PathType: Default + Clone + PartialEq + Debug {
     fn bounds(&self) -> kurbo::Rect;
+    fn start(&self) -> Option<Point>;
+    fn end(&self) -> Option<Point>;
+    fn is_point(&self) -> bool;
+    fn flip(&mut self);
 }
 
 impl PathType for PathData {
     fn bounds(&self) -> kurbo::Rect {
         kurbo::Shape::bounding_box(self)
+    }
+
+    fn start(&self) -> Option<Point> {
+        if let Some(PathEl::MoveTo(pt)) = self.elements().first() {
+            Some(pt.into())
+        } else {
+            None
+        }
+    }
+
+    fn end(&self) -> Option<Point> {
+        match self.elements().last()? {
+            PathEl::MoveTo(pt)
+            | PathEl::LineTo(pt)
+            | PathEl::QuadTo(_, pt)
+            | PathEl::CurveTo(_, _, pt) => Some(pt.into()),
+            PathEl::ClosePath => {
+                // since this may be a compound path, we must search backwards
+                for el in self.elements().iter().rev() {
+                    if let PathEl::MoveTo(pt) = el {
+                        return Some(pt.into());
+                    }
+                }
+
+                None
+            }
+        }
+    }
+
+    fn is_point(&self) -> bool {
+        matches!(self.elements(), [PathEl::MoveTo(a), PathEl::LineTo(b)] if a == b)
+    }
+
+    fn flip(&mut self) {
+        todo!()
     }
 }
 
@@ -54,6 +96,13 @@ impl Path {
         }
     }
 
+    pub fn from_svg(path: &str) -> Result<Self, Box<dyn Error>> {
+        Ok(Self {
+            data: BezPath::from_svg(path)?,
+            ..Default::default()
+        })
+    }
+
     pub fn apply_transform(&mut self, transform: kurbo::Affine) {
         self.data.apply_affine(transform);
     }
@@ -69,9 +118,9 @@ impl Path {
                     // lines.push(Polyline::from(current_line.replace(vec![])));
                     lines.push(FlattenedPath::from(current_line.replace(vec![])));
                 }
-                current_line.borrow_mut().push([pt.x, pt.y]);
+                current_line.borrow_mut().push(pt.into());
             }
-            PathEl::LineTo(pt) => current_line.borrow_mut().push([pt.x, pt.y]),
+            PathEl::LineTo(pt) => current_line.borrow_mut().push(pt.into()),
             PathEl::ClosePath => {
                 let pt = current_line.borrow()[0];
                 current_line.borrow_mut().push(pt);
@@ -98,8 +147,8 @@ impl Path {
             .segments()
             .filter_map(|segment| match segment {
                 kurbo::PathSeg::Cubic(cubic) => Some([
-                    vec![[cubic.p0.x, cubic.p0.y], [cubic.p1.x, cubic.p1.y]],
-                    vec![[cubic.p2.x, cubic.p2.y], [cubic.p3.x, cubic.p3.y]],
+                    vec![cubic.p0.into(), cubic.p1.into()],
+                    vec![cubic.p2.into(), cubic.p3.into()],
                 ]),
                 _ => None,
             })
@@ -151,5 +200,33 @@ mod test {
     fn test_path_bounds() {
         let path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
         assert_eq!(path.bounds(), kurbo::Rect::new(0.0, 0.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn test_path_start_end() {
+        let path = Path::from_svg("M 0,0 L 50,110").unwrap();
+        assert_eq!(path.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(path.data.end(), Some(Point::new(50.0, 110.0)));
+
+        let path = Path::from_svg("M 0,0 C 50,110 50,140 60,78").unwrap();
+        assert_eq!(path.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(path.data.end(), Some(Point::new(60.0, 78.0)));
+
+        let path = Path::from_svg("M 0,0 C 50,110 50,140 60,78 Z").unwrap();
+        assert_eq!(path.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(path.data.end(), Some(Point::new(0.0, 0.0)));
+
+        let path = Path::from_svg("M 0,0 C 50,110 50,140 60,78 M60,43 l30,50 Z").unwrap();
+        assert_eq!(path.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(path.data.end(), Some(Point::new(60.0, 43.0)));
+    }
+
+    #[test]
+    fn test_path_is_point() {
+        let path = Path::from_svg("M 10,0 l 0,0").unwrap();
+        assert!(path.data.is_point());
+
+        let path = Path::from_svg("M 10,0 L 10,0").unwrap();
+        assert!(path.data.is_point());
     }
 }

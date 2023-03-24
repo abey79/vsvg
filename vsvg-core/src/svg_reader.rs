@@ -13,7 +13,7 @@ use usvg::{GroupMode, PathSegment, Transform, Tree};
 
 impl Path {
     #[must_use]
-    pub fn from_svg(svg_path: &usvg::Path, transform: &Transform) -> Self {
+    fn from_usvg(svg_path: &usvg::Path, transform: &Transform) -> Self {
         let bezpath = usvg::TransformedPath::new(&svg_path.data, *transform)
             .map(|elem| match elem {
                 PathSegment::MoveTo { x, y } => PathEl::MoveTo(kurbo::Point::new(x, y)),
@@ -63,7 +63,7 @@ fn parse_group(group: &usvg::Node, transform: &Transform, layer: &mut Layer) {
 
         match *node.borrow() {
             usvg::NodeKind::Path(ref path) => {
-                layer.paths.push(Path::from_svg(path, &child_transform));
+                layer.paths.push(Path::from_usvg(path, &child_transform));
             }
             usvg::NodeKind::Group(_) => {
                 parse_group(&node, &child_transform, layer);
@@ -162,7 +162,7 @@ impl Document {
                     parse_group(&child, &transform, layer);
                 }
                 usvg::NodeKind::Path(ref path) => {
-                    layer.paths.push(Path::from_svg(path, &transform));
+                    layer.paths.push(Path::from_usvg(path, &transform));
                 }
                 _ => {}
             }
@@ -221,7 +221,9 @@ impl Document {
                     }
                 }
                 usvg::NodeKind::Path(ref path) => {
-                    self.get_mut(0).paths.push(Path::from_svg(path, &transform));
+                    self.get_mut(0)
+                        .paths
+                        .push(Path::from_usvg(path, &transform));
                 }
                 _ => {}
             }
@@ -232,7 +234,7 @@ impl Document {
 #[cfg(test)]
 mod tests {
 
-    use crate::{test_file, Document};
+    use crate::{test_file, Document, PathType};
     use kurbo::BezPath;
 
     #[test]
@@ -332,6 +334,42 @@ mod tests {
         assert_eq!(doc.try_get(1).unwrap().name, "layer_one");
         assert_eq!(doc.try_get(11).unwrap().name, "layer11");
         assert_eq!(doc.try_get(3).unwrap().name, "layer_three");
+    }
+
+    #[test]
+    fn test_empty_path() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="50 50 10 10">
+                <path d="" />
+                <path d="M 0 0" />
+            </svg>"#,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(doc.layers.len(), 0);
+    }
+
+    #[ignore] //TODO: this needs to be fixed in usvg
+    #[test]
+    fn test_point_path() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="50 50 10 10">
+                <path d="M 10,0 L 10,0" />
+            </svg>"#,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(doc.layers.len(), 1);
+        assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
+        assert!(doc.try_get(0).unwrap().paths[0].data.is_point());
     }
 
     #[test]

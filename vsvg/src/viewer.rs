@@ -251,8 +251,8 @@ impl Viewer {
                     .iter()
                     .map(|pt| {
                         to_screen(Pos2 {
-                            x: pt[0] as f32,
-                            y: pt[1] as f32,
+                            x: pt.x as f32,
+                            y: pt.y as f32,
                         })
                     })
                     .collect::<Vec<Pos2>>();
@@ -303,8 +303,8 @@ impl Viewer {
                     path.iter()
                         .map(|pt| {
                             to_screen(Pos2 {
-                                x: pt[0] as f32,
-                                y: pt[1] as f32,
+                                x: pt.x as f32,
+                                y: pt.y as f32,
                             })
                         })
                         .collect::<Vec<Pos2>>(),

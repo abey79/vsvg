@@ -1,5 +1,5 @@
 use crate::{Color, Layer, Path, Transforms};
-use kurbo::{Affine, Point, Shape, Vec2};
+use kurbo::{Affine, Shape, Vec2};
 
 #[derive(Debug)]
 pub struct DrawState {
@@ -90,7 +90,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
         x_rot: f64,
     ) -> &Self {
         self.add_shape(kurbo::Arc {
-            center: Point { x, y },
+            center: kurbo::Point { x, y },
             radii: Vec2 { x: rx, y: ry },
             start_angle: start,
             sweep_angle: sweep,
@@ -100,7 +100,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
 
     /// Draw a circle centered on (`x`, `y`) with radius `r`.
     pub fn circle(&mut self, x: f64, y: f64, r: f64) -> &Self {
-        self.add_shape(kurbo::Circle::new(Point { x, y }, r))
+        self.add_shape(kurbo::Circle::new(kurbo::Point { x, y }, r))
     }
 
     /// Draw an ellipse centered on (`x`, `y`) with radii `rx` and `ry`. `x_rot` is the rotation of

@@ -16,6 +16,8 @@ arrayvec = "0.7.2"
 lyon_geom = "1.0.4"
 regex = "1.7.1"
 lazy_static = "1.4.0"
+indexmap = {version = "1.9.2", features = ["rayon"]}
+kiddo = "2.0.0-beta.5"
 
 [dev-dependencies]
 approx = "0.5.1"

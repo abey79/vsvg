@@ -72,9 +72,7 @@ impl Transforms for BezPath {
 impl Transforms for Polyline {
     fn apply_affine(&mut self, affine: &Affine) {
         for point in self.iter_mut() {
-            let new_pt = *affine * kurbo::Point::new(point[0], point[1]);
-            point[0] = new_pt.x;
-            point[1] = new_pt.y;
+            *point = *affine * *point;
         }
     }
 }

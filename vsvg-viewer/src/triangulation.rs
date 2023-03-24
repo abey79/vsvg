@@ -43,8 +43,8 @@ pub fn build_fat_line<T: FatLineBuffer>(line: &Polyline, pen_width: f64, buffer:
 
     let w = pen_width / 2.0;
 
-    let mut p1 = Point::new(line[0][0], line[0][1]);
-    let mut p2 = Point::new(line[1][0], line[1][1]);
+    let mut p1: Point = line[0].into();
+    let mut p2: Point = line[1].into();
 
     let mut v1 = (p2 - p1).normalize();
     let mut n1 = Vec2 { x: -v1.y, y: v1.x };
@@ -75,7 +75,7 @@ pub fn build_fat_line<T: FatLineBuffer>(line: &Polyline, pen_width: f64, buffer:
 
         // p0 is where we're departing from, but not actually needed
         p1 = p2;
-        p2 = Point::new(new_pt[0], new_pt[1]);
+        p2 = new_pt.into();
 
         v0 = v1;
         n0 = n1;
