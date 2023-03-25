@@ -133,7 +133,17 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
         command_decl!(
             arg!(--linesort <FLIP> "Reorder paths to minimize pen-up distance"),
             bool,
-            |state, b| state.document.for_each(|layer| layer.sort(*b))
+            |state, b| state.document.for_each(|layer| layer.sort(*b, 1000))
+        ),
+        command_decl!(
+            arg!(--linesortnoflip <THRES> "Reorder paths to minimize pen-up distance"),
+            LayerID, // hack
+            |state, b| state.document.for_each(|layer| layer.sort(false, *b))
+        ),
+        command_decl!(
+            arg!(--linesortflip <THRES> "Reorder paths to minimize pen-up distance"),
+            LayerID, // hack
+            |state, b| state.document.for_each(|layer| layer.sort(true, *b))
         ),
         command_decl!(
             arg!(--dlayer [X] "Set target layer for draw operations"),

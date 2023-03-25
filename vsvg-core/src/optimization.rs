@@ -1,5 +1,5 @@
 use crate::point::Point;
-use crate::spatial_index::PathIndex;
+use crate::spatial_index::{PathIndex, PathIndexSettings, ReindexStrategy};
 use crate::{LayerImpl, PathType};
 
 impl<T: PathType> LayerImpl<T> {
@@ -7,15 +7,21 @@ impl<T: PathType> LayerImpl<T> {
     ///
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
     /// cannot be spatially indexed (empty or otherwise degenerate) is moved at the end.
-    pub fn sort(&mut self, flip: bool) {
+    pub fn sort(&mut self, flip: bool, reindex_threshold: usize) {
         if self.paths.len() <= 1 {
             return;
         }
 
         let mut new_paths = Vec::with_capacity(self.paths.len());
-        let mut index = PathIndex::new(&self.paths, flip);
+        let mut index = PathIndex::new(
+            &self.paths,
+            PathIndexSettings::default()
+                .flip(flip)
+                .strategy(ReindexStrategy::Threshold(reindex_threshold)),
+        );
 
         let mut pos = Point::ZERO;
+        let mut cnt = 0;
         while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
             new_paths.push((*path_item.path).clone());
             if reverse {
@@ -23,6 +29,11 @@ impl<T: PathType> LayerImpl<T> {
                 new_paths.last_mut().expect("just inserted").data.flip();
             } else {
                 pos = path_item.end.unwrap_or(pos);
+            }
+            cnt += 1;
+
+            if cnt % 100 == 0 {
+                println!("{} / {}", cnt, self.paths.len());
             }
         }
 
@@ -56,7 +67,7 @@ mod tests {
         layer.paths.push(p3.clone());
         layer.paths.push(p4.clone());
 
-        layer.sort(false);
+        layer.sort(false, 1000);
 
         assert_eq!(layer.paths[0], p3);
         assert_eq!(layer.paths[1], p4);
@@ -78,7 +89,7 @@ mod tests {
         layer.paths.push(p3.clone());
         layer.paths.push(p4.clone());
 
-        layer.sort(true);
+        layer.sort(true, 1000);
 
         p3.data.flip();
         assert_eq!(layer.paths[0], p3);
@@ -88,10 +99,10 @@ mod tests {
         assert_eq!(layer.paths[3], p1);
     }
 
-    #[ignore] // this test fails with kiddo 2.0.0-beta.5
+    //#[ignore] // this test fails with kiddo 2.0.0-beta.5
     #[test]
     fn test_sort_problematic_case() {
         let mut doc = Document::from_svg(test_file!("random_100_sort.svg"), false).unwrap();
-        doc.get_mut(1).sort(true);
+        doc.get_mut(1).sort(true, 1000);
     }
 }
