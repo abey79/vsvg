@@ -35,6 +35,13 @@ impl<T: PathType> DocumentImpl<T> {
         self.layers.entry(id).or_insert_with(|| LayerImpl::new())
     }
 
+    pub fn for_each<F>(&mut self, f: F)
+    where
+        F: Fn(&mut LayerImpl<T>),
+    {
+        self.layers.values_mut().for_each(f);
+    }
+
     #[must_use]
     pub fn bounds(&self) -> Option<kurbo::Rect> {
         if self.layers.is_empty() {

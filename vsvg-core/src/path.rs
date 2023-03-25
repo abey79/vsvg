@@ -64,7 +64,8 @@ impl PathType for PathData {
     }
 
     fn flip(&mut self) {
-        todo!()
+        let segs: Vec<kurbo::PathSeg> = self.segments().collect();
+        *self = BezPath::from_path_segments(segs.into_iter().rev().map(|seg| seg.reverse()));
     }
 }
 

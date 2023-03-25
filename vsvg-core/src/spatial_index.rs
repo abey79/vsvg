@@ -28,6 +28,19 @@ impl<'a, T: PathType> From<&'a PathImpl<T>> for PathItem<'a, T> {
     }
 }
 
+fn tree_add(tree: &mut KdTree<f64, 2>, point: &[f64; 2], idx: usize) {
+    println!("add {:>7}: {:>10.6} {:>10.6}", idx, point[0], point[1]);
+    tree.add(point, idx);
+}
+
+fn tree_remove(tree: &mut KdTree<f64, 2>, point: &[f64; 2], idx: usize) {
+    let res = tree.remove(point, idx);
+    println!(
+        "rem {:>7}: {:>10.6} {:>10.6} {:>10}",
+        idx, point[0], point[1], res
+    );
+}
+
 impl<'a, T: PathType> PathIndex<'a, T> {
     /// Create an index from a list of paths
     ///
@@ -36,17 +49,20 @@ impl<'a, T: PathType> PathIndex<'a, T> {
     pub fn new(paths: &'a [PathImpl<T>], bidirectional: bool) -> Self {
         let mut pi = Self {
             paths: IndexMap::with_capacity(paths.len()),
-            tree: KdTree::with_capacity(if bidirectional {
-                paths.len() * 2
-            } else {
-                paths.len()
-            }),
+            tree: KdTree::with_capacity(
+                if bidirectional {
+                    paths.len() * 2
+                } else {
+                    paths.len()
+                }
+                .max(1),
+            ),
             bidirectional,
         };
 
         for (idx, path) in paths.iter().rev().enumerate() {
             let path_item = path.into();
-            pi.tree_operation(&path_item, idx, KdTree::add);
+            pi.tree_operation(&path_item, idx, tree_add);
             pi.paths.insert(idx, path_item);
         }
 
@@ -85,7 +101,7 @@ impl<'a, T: PathType> PathIndex<'a, T> {
     pub fn pop_first(&mut self) -> Option<PathItem<T>> {
         // since the paths were reversed upon insertion, the pop operation corresponds to pop_first
         let (idx, path_item) = self.paths.pop()?;
-        self.tree_operation(&path_item, idx, KdTree::remove);
+        self.tree_operation(&path_item, idx, tree_remove);
         Some(path_item)
     }
 
@@ -111,11 +127,13 @@ impl<'a, T: PathType> PathIndex<'a, T> {
         let (_, tree_idx) = self.tree.nearest_one(&point.into(), &squared_euclidean);
         let (idx, reversed) = self.tree_to_map_index(tree_idx);
 
+        println!("fnd {tree_idx:>7}: {idx:>10} {reversed:>10}");
+
         let path_item = self
             .paths
             .shift_remove(&idx)
             .expect("path cannot be in tree but not in map");
-        self.tree_operation(&path_item, idx, KdTree::remove);
+        self.tree_operation(&path_item, idx, tree_remove);
 
         Some((path_item, reversed))
     }
@@ -189,5 +207,54 @@ mod tests {
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[2], true);
         assert!(pi.pop_nearest(&Point::new(0.0, 0.0)).is_none());
         assert!(pi.pop_first().is_none());
+    }
+
+    #[ignore] // this test fails with kiddo 2.0.0-beta.5
+    #[test]
+    fn test_kiddo_bug() {
+        let pts = vec![
+            [19.2023, 7.1812],
+            [7.6427, 22.5779],
+            [26.6314, 34.8920],
+            [36.7890, 27.2663],
+            [28.3226, 8.5047],
+            [5.3914, 28.1360],
+            [5.0978, 3.6814],
+            [0.5114, 11.6552],
+            [4.7981, 21.6210],
+            [29.0030, 9.6799],
+            [35.5580, 1.8891],
+            [3.9160, 25.5702],
+            [22.2497, 31.6140],
+            [30.7110, 36.7514],
+            [0.2828, 12.4298],
+            [20.0206, 3.0635],
+            [30.6153, 2.8582],
+            [23.7179, 6.2048],
+            [13.0438, 4.2319],
+            [4.6433, 30.9660],
+            [5.0588, 5.2028],
+            [19.2023, 23.7406],
+            [37.3171, 32.7523],
+            [12.6957, 15.7080],
+            [15.6001, 14.3995],
+            [36.0203, 21.0366],
+            [6.3956, 2.7644],
+            [3.1719, 8.7039],
+            [0.9159, 12.2299],
+            [23.8157, 14.0699],
+            [27.7757, 7.3597],
+            [28.4198, 31.3427],
+            [2.3290, 6.2364],
+            [10.1126, 7.7009],
+        ];
+
+        let mut tree = KdTree::<f64, 2>::new();
+
+        for (i, pt) in pts.iter().enumerate() {
+            tree.add(pt, i);
+        }
+
+        assert_eq!(tree.remove(&pts[0], 0), 1);
     }
 }

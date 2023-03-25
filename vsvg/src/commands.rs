@@ -131,6 +131,11 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             |state, a, b, c, d| state.document.crop(*a, *b, *c, *d)
         ),
         command_decl!(
+            arg!(--linesort <FLIP> "Reorder paths to minimize pen-up distance"),
+            bool,
+            |state, b| state.document.for_each(|layer| layer.sort(*b))
+        ),
+        command_decl!(
             arg!(--dlayer [X] "Set target layer for draw operations"),
             LayerID,
             |state, lid| state.draw_layer = *lid

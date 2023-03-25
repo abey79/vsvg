@@ -8,6 +8,10 @@ impl<T: PathType> LayerImpl<T> {
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
     /// cannot be spatially indexed (empty or otherwise degenerate) is moved at the end.
     pub fn sort(&mut self, flip: bool) {
+        if self.paths.len() <= 1 {
+            return;
+        }
+
         let mut new_paths = Vec::with_capacity(self.paths.len());
         let mut index = PathIndex::new(&self.paths, flip);
 
@@ -36,7 +40,7 @@ mod tests {
     use super::*;
     use crate::flattened_layer::FlattenedLayer;
     use crate::point::Point;
-    use crate::FlattenedPath;
+    use crate::{test_file, Document, FlattenedPath};
 
     #[test]
     fn test_sort() {
@@ -82,5 +86,12 @@ mod tests {
         assert_eq!(layer.paths[1], p4);
         assert_eq!(layer.paths[2], p2);
         assert_eq!(layer.paths[3], p1);
+    }
+
+    #[ignore] // this test fails with kiddo 2.0.0-beta.5
+    #[test]
+    fn test_sort_problematic_case() {
+        let mut doc = Document::from_svg(test_file!("random_100_sort.svg"), false).unwrap();
+        doc.get_mut(1).sort(true);
     }
 }

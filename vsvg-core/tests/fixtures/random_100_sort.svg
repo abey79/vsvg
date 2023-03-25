@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="tiny" height="0.99484948cm" version="1.2" viewBox="0 0 37.43850054823843 37.60061042817898" width="0.99056033cm">
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:source>vpype -s 304 random -n 100 write vsvg-core/tests/fixtures/random_100_sort.svg
+</dc:source>
+        <dc:date>2023-03-25T09:10:29.166414</dc:date>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs/>
+  <!-- This file would fail an initial implementation of PathIndex -->
+  <g fill="none" id="layer1" inkscape:groupmode="layer" inkscape:label="1" stroke="#0000ff" style="display:inline">
+    <!-- has been minimized while keeping the issue -->
+    <line x1="2.329" x2="10.1126" y1="6.2364" y2="7.7009"/>
+    <line x1="27.7757" x2="28.4198" y1="7.3597" y2="31.3427"/>
+    <line x1="0.9159" x2="23.8157" y1="12.2299" y2="14.0699"/>
+    <line x1="6.3956" x2="3.1719" y1="2.7644" y2="8.7039"/>
+    <line x1="15.6001" x2="36.0203" y1="14.3995" y2="21.0366"/>
+    <line x1="37.3171" x2="12.6957" y1="32.7523" y2="15.708"/>
+    <line x1="5.0588" x2="19.2023" y1="5.2028" y2="23.7406"/>
+    <line x1="13.0438" x2="4.6433" y1="4.2319" y2="30.966"/>
+    <line x1="30.6153" x2="23.7179" y1="2.8582" y2="6.2048"/>
+    <line x1="0.2828" x2="20.0206" y1="12.4298" y2="3.0635"/>
+    <line x1="22.2497" x2="30.711" y1="31.614" y2="36.7514"/>
+    <line x1="35.558" x2="3.916" y1="1.8891" y2="25.5702"/>
+    <line x1="4.7981" x2="29.003" y1="21.621" y2="9.6799"/>
+    <line x1="5.0978" x2="0.5114" y1="3.6814" y2="11.6552"/>
+    <line x1="28.3226" x2="5.3914" y1="8.5047" y2="28.136"/>
+    <line x1="26.6314" x2="36.789" y1="34.892" y2="27.2663"/>
+    <line x1="19.2023" x2="7.6427" y1="7.1812" y2="22.5779"/>
+  </g>
+</svg>
