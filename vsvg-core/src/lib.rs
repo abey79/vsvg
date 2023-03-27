@@ -22,6 +22,7 @@ pub use draw::*;
 pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;
+pub use path_index::IndexBuilder;
 pub use transforms::*;
 
 #[derive(Default, Clone, Copy, Debug)]

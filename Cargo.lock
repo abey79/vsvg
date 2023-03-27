@@ -2340,6 +2340,8 @@ dependencies = [
  "kurbo",
  "lazy_static",
  "lyon_geom",
+ "rand",
+ "rand_chacha",
  "rayon",
  "rctree",
  "regex",

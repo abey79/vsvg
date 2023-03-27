@@ -99,7 +99,7 @@ impl ReindexAgent {
             missed_accesses: 0,
             total_count,
             threshold: match strategy {
-                // default is 40% of total count, see
+                // default is 40% of total count, see https://github.com/abey79/vsvg/issues/12
                 ReindexStrategy::Default => (total_count * 2 / 5).max(Self::MIN_THRESHOLD),
                 ReindexStrategy::Never => usize::MAX,
                 ReindexStrategy::Threshold(t) => t,

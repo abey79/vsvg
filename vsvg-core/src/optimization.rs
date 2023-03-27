@@ -1,4 +1,4 @@
-use crate::path_index::{IndexBuilder, ReindexStrategy};
+use crate::path_index::IndexBuilder;
 use crate::point::Point;
 use crate::{LayerImpl, PathType};
 
@@ -7,12 +7,8 @@ impl<T: PathType> LayerImpl<T> {
     ///
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
     /// cannot be spatially indexed (empty or otherwise degenerate) is moved at the end.
-    pub fn sort(&mut self, flip: bool, reindex_threshold: usize) {
-        self.sort_with_builder(
-            IndexBuilder::default()
-                .flip(flip)
-                .strategy(ReindexStrategy::Threshold(reindex_threshold)),
-        );
+    pub fn sort(&mut self, flip: bool) {
+        self.sort_with_builder(IndexBuilder::default().flip(flip));
     }
 
     pub fn sort_with_builder(&mut self, builder: IndexBuilder) {
@@ -64,7 +60,7 @@ mod tests {
         layer.paths.push(p3.clone());
         layer.paths.push(p4.clone());
 
-        layer.sort(false, 1000);
+        layer.sort(false);
 
         assert_eq!(layer.paths[0], p3);
         assert_eq!(layer.paths[1], p4);
@@ -86,7 +82,7 @@ mod tests {
         layer.paths.push(p3.clone());
         layer.paths.push(p4.clone());
 
-        layer.sort(true, 1000);
+        layer.sort(true);
 
         p3.data.flip();
         assert_eq!(layer.paths[0], p3);
@@ -100,6 +96,6 @@ mod tests {
     #[test]
     fn test_sort_problematic_case() {
         let mut doc = Document::from_svg(test_file!("random_100_sort.svg"), false).unwrap();
-        doc.get_mut(1).sort(true, 1000);
+        doc.get_mut(1).sort(true);
     }
 }

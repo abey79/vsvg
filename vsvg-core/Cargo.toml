@@ -26,6 +26,8 @@ egui = { version ="*", optional = true}
 [dev-dependencies]
 approx = "0.5.1"
 criterion = "0.4.0"
+rand = "0.8.5"
+rand_chacha = "0.3.1"
 
 [[bench]]
 name = "bench_path_index"
