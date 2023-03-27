@@ -13,7 +13,7 @@ pub struct PathIndex<'a, T: PathType> {
     paths: IndexMap<usize, PathItem<'a, T>>,
     occupancy: BitVec,
     tree: KdTree,
-    settings: PathIndexSettings,
+    settings: IndexBuilder,
     reindex_agent: ReindexAgent,
 }
 
@@ -44,13 +44,18 @@ pub enum ReindexStrategy {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
-pub struct PathIndexSettings {
+pub struct IndexBuilder {
     pub flip: bool,
     pub reindex_strategy: ReindexStrategy,
     pub strict_order: bool,
 }
 
-impl PathIndexSettings {
+impl IndexBuilder {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     #[must_use]
     pub fn flip(mut self, flip: bool) -> Self {
         self.flip = flip;
@@ -68,9 +73,15 @@ impl PathIndexSettings {
         self.strict_order = val;
         self
     }
+
+    #[must_use]
+    pub fn build<T: PathType>(self, paths: &[PathImpl<T>]) -> PathIndex<T> {
+        PathIndex::new(paths, self)
+    }
 }
 
 #[allow(unused)]
+#[derive(Debug, Clone, Copy, Default)]
 struct ReindexAgent {
     strategy: ReindexStrategy,
     missed_accesses: usize,
@@ -88,7 +99,8 @@ impl ReindexAgent {
             missed_accesses: 0,
             total_count,
             threshold: match strategy {
-                ReindexStrategy::Default => (total_count / 5).max(Self::MIN_THRESHOLD),
+                // default is 40% of total count, see
+                ReindexStrategy::Default => (total_count * 2 / 5).max(Self::MIN_THRESHOLD),
                 ReindexStrategy::Never => usize::MAX,
                 ReindexStrategy::Threshold(t) => t,
                 #[allow(
@@ -123,21 +135,19 @@ impl<'a, T: PathType> PathIndex<'a, T> {
     ///
     /// The order of the paths is reversed such as to have an efficient implementation of
     /// [`pop_first`] based on [`IndexMap::pop`].
-    pub fn new(paths: &'a [PathImpl<T>], settings: PathIndexSettings) -> Self {
+    fn new(paths: &'a [PathImpl<T>], settings: IndexBuilder) -> Self {
         let mut path_map = IndexMap::with_capacity(paths.len());
         for (idx, path) in paths.iter().rev().enumerate() {
             let path_item = path.into();
             path_map.insert(idx, path_item);
         }
 
-        let reindex_agent = ReindexAgent::new(settings.reindex_strategy, paths.len());
-
         let mut pi = Self {
             paths: path_map,
             occupancy: BitVec::repeat(true, paths.len()),
             tree: KdTree::new(2),
             settings,
-            reindex_agent,
+            reindex_agent: ReindexAgent::default(), // will be overwritten in reindex
         };
 
         pi.reindex();
@@ -146,8 +156,16 @@ impl<'a, T: PathType> PathIndex<'a, T> {
     }
 
     fn reindex(&mut self) {
-        self.tree = KdTree::new(2);
+        // update reindex agent
+        let total_count = if self.settings.flip {
+            self.paths.len() * 2
+        } else {
+            self.paths.len()
+        };
+        self.reindex_agent = ReindexAgent::new(self.settings.reindex_strategy, total_count);
 
+        // update k-d tree
+        self.tree = KdTree::new(2);
         for (idx, path_item) in self.paths.iter() {
             if let Some(ref start) = path_item.start {
                 if self.settings.flip {
@@ -242,7 +260,7 @@ mod tests {
                 Point::new(2.0, 2.0),
             ]),
         ];
-        let mut pi = PathIndex::new(&paths, PathIndexSettings::default());
+        let mut pi = IndexBuilder::new().build(&paths);
         assert_eq!(pi.pop_first().unwrap().path, &paths[0]);
         assert_eq!(pi.pop_first().unwrap().path, &paths[1]);
         assert_eq!(pi.pop_first().unwrap().path, &paths[2]);
@@ -266,7 +284,7 @@ mod tests {
             PathImpl::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
             PathImpl::from(vec![Point::new(5.0, 0.0), Point::new(6.0, 2.0)]),
         ];
-        let mut pi = PathIndex::new(&paths, PathIndexSettings::default());
+        let mut pi = IndexBuilder::new().build(&paths);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[1], false);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[0], false);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[2], false);
@@ -281,7 +299,7 @@ mod tests {
             PathImpl::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
             PathImpl::from(vec![Point::new(15.0, 0.0), Point::new(6.0, 2.0)]),
         ];
-        let mut pi = PathIndex::new(&paths, PathIndexSettings::default().flip(true));
+        let mut pi = IndexBuilder::new().flip(true).build(&paths);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[1], false);
         assert_nearest(pi.pop_nearest(&Point::new(2.0, 2.1)), &paths[0], true);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[2], true);

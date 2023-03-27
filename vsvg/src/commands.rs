@@ -39,6 +39,7 @@ macro_rules! command_impl {
     ($arg:expr, $t1:ty, $t2:ident, |$state:ident, $x:ident| $action:expr) => {
         CommandDesc::new(
             $arg.value_parser(value_parser!($t1)).num_args(1).display_order(order()),
+            #[allow(unused_variables)]
             &|val, $state| {
                 if let CommandValue::$t2($x) = val {
                     $action;
@@ -264,6 +265,13 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                     .get_mut(state.draw_layer)
                     .draw(&state.draw_state)
                     .svg_path(path)?
+            }
+        ),
+        command_decl!(
+            arg!(--stats "Print stats"),
+            bool,
+            |state, b| {
+                println!("{:?}", state.document.stats());
             }
         ),
     ]

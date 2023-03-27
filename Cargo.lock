@@ -2333,6 +2333,8 @@ dependencies = [
  "approx",
  "arrayvec",
  "bitvec",
+ "criterion",
+ "egui",
  "indexmap",
  "kdtree",
  "kurbo",

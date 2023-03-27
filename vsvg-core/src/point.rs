@@ -31,6 +31,13 @@ impl Point {
     pub fn y(&self) -> f64 {
         self.data[1]
     }
+
+    #[must_use]
+    pub fn distance(&self, other: &Self) -> f64 {
+        let dx = self.x() - other.x();
+        let dy = self.y() - other.y();
+        dx.hypot(dy)
+    }
 }
 
 impl From<(f64, f64)> for Point {
@@ -96,6 +103,22 @@ impl From<&Point> for kurbo::Point {
 impl From<&kurbo::Point> for Point {
     fn from(p: &kurbo::Point) -> Self {
         Self::new(p.x, p.y)
+    }
+}
+
+#[cfg(feature = "egui")]
+impl From<Point> for egui::Pos2 {
+    fn from(p: Point) -> Self {
+        #[allow(clippy::cast_possible_truncation)]
+        egui::pos2(p.x() as f32, p.y() as f32)
+    }
+}
+
+#[cfg(feature = "egui")]
+impl From<&Point> for egui::Pos2 {
+    fn from(p: &Point) -> Self {
+        #[allow(clippy::cast_possible_truncation)]
+        egui::pos2(p.x() as f32, p.y() as f32)
     }
 }
 

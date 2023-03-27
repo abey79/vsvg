@@ -1,5 +1,6 @@
 use crate::flattened_layer::FlattenedLayer;
 use crate::path::{PathData, PathImpl};
+use crate::point::Point;
 use crate::{FlattenedPath, PathType};
 
 pub type Layer = LayerImpl<PathData>;
@@ -31,6 +32,25 @@ impl<T: PathType> LayerImpl<T> {
                 .skip(1)
                 .fold(first, |acc, path| acc.union(path.bounds())),
         )
+    }
+
+    #[must_use]
+    pub fn pen_up_trajectories(&self) -> Vec<(Point, Point)> {
+        self.paths
+            .windows(2)
+            .filter_map(|w| {
+                if let Some(ref start) = w[0].data.end() {
+                    #[allow(clippy::manual_map)]
+                    if let Some(ref end) = w[1].data.start() {
+                        Some((*start, *end))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
 

@@ -68,6 +68,9 @@ pub(crate) struct Viewer {
     /// show points
     show_point: bool,
 
+    /// show pen-up trajectories
+    show_pen_up: bool,
+
     /// show grid
     show_grid: bool,
 
@@ -140,6 +143,7 @@ impl Viewer {
             show_point: false,
             show_grid: false,
             show_control_points: false,
+            show_pen_up: false,
             show_fat_lines: false,
             show_fat_lines_debug: false,
             layer_visibility: HashMap::new(),
@@ -232,6 +236,10 @@ impl Viewer {
             } else {
                 self.paint_layer(&painter, to_screen, layer);
             }
+
+            if self.show_pen_up {
+                self.paint_pen_up_trajectories(&painter, to_screen, layer);
+            }
         }
     }
 
@@ -276,6 +284,21 @@ impl Viewer {
                 }
             },
         ))
+    }
+
+    fn paint_pen_up_trajectories<F: Fn(Pos2) -> Pos2>(
+        &self,
+        painter: &Painter,
+        to_screen: F,
+        layer: &FlattenedLayer,
+    ) {
+        let pen_up = layer.pen_up_trajectories();
+        painter.extend(pen_up.iter().map(|(a, b)| {
+            Shape::line_segment(
+                [to_screen(a.into()), to_screen(b.into())],
+                Stroke::new(1.0, Color32::RED),
+            )
+        }))
     }
 
     fn paint_layer_fat_lines<F: Fn(Pos2) -> Pos2>(
@@ -350,6 +373,7 @@ impl Viewer {
     fn menu_view(&mut self, ui: &mut Ui) {
         ui.menu_button("View", |ui| {
             ui.checkbox(&mut self.show_point, "Show points");
+            ui.checkbox(&mut self.show_pen_up, "Show pen-up trajectories");
             ui.checkbox(&mut self.show_grid, "Show grid");
             ui.checkbox(&mut self.show_control_points, "Show control points");
             ui.checkbox(&mut self.show_fat_lines, "Show fat lines");

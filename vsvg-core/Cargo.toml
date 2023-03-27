@@ -20,5 +20,13 @@ indexmap = {version = "1.9.2", features = ["rayon"]}
 kdtree = "0.7.0"
 bitvec = "1.0.1"
 
+# optional dependencies, mainly for Point interop.
+egui = { version ="*", optional = true}
+
 [dev-dependencies]
 approx = "0.5.1"
+criterion = "0.4.0"
+
+[[bench]]
+name = "bench_path_index"
+harness = false

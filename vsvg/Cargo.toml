@@ -19,7 +19,7 @@ eframe = { version = "0.21.0", default-features = false, features = [
 serde = { version = "1", features = ["derive"] }
 tracing-subscriber = "0.3.16"
 clap = { version = "4.1.6", features = ["cargo"]}
-vsvg-core = { path = "../vsvg-core" }
+vsvg-core = { path = "../vsvg-core", features = ["egui"] }
 vsvg-viewer = { path = "../vsvg-viewer"}
 kurbo = "0.9.1"
 rand = "0.8.5"

@@ -10,10 +10,11 @@ pub mod flattened_path;
 pub mod layer;
 pub mod optimization;
 pub mod path;
+pub mod path_index;
 pub mod point;
-pub mod spatial_index;
+pub mod stats;
 mod svg_reader;
-mod test_utils;
+pub mod test_utils;
 pub mod transforms;
 
 pub use document::*;

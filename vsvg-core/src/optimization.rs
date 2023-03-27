@@ -1,5 +1,5 @@
+use crate::path_index::{IndexBuilder, ReindexStrategy};
 use crate::point::Point;
-use crate::spatial_index::{PathIndex, PathIndexSettings, ReindexStrategy};
 use crate::{LayerImpl, PathType};
 
 impl<T: PathType> LayerImpl<T> {
@@ -8,20 +8,22 @@ impl<T: PathType> LayerImpl<T> {
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
     /// cannot be spatially indexed (empty or otherwise degenerate) is moved at the end.
     pub fn sort(&mut self, flip: bool, reindex_threshold: usize) {
+        self.sort_with_builder(
+            IndexBuilder::default()
+                .flip(flip)
+                .strategy(ReindexStrategy::Threshold(reindex_threshold)),
+        );
+    }
+
+    pub fn sort_with_builder(&mut self, builder: IndexBuilder) {
         if self.paths.len() <= 1 {
             return;
         }
 
         let mut new_paths = Vec::with_capacity(self.paths.len());
-        let mut index = PathIndex::new(
-            &self.paths,
-            PathIndexSettings::default()
-                .flip(flip)
-                .strategy(ReindexStrategy::Threshold(reindex_threshold)),
-        );
+        let mut index = builder.build(&self.paths);
 
         let mut pos = Point::ZERO;
-        let mut cnt = 0;
         while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
             new_paths.push((*path_item.path).clone());
             if reverse {
@@ -29,11 +31,6 @@ impl<T: PathType> LayerImpl<T> {
                 new_paths.last_mut().expect("just inserted").data.flip();
             } else {
                 pos = path_item.end.unwrap_or(pos);
-            }
-            cnt += 1;
-
-            if cnt % 100 == 0 {
-                println!("{} / {}", cnt, self.paths.len());
             }
         }
 
