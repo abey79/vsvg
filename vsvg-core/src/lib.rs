@@ -14,6 +14,7 @@ pub mod path_index;
 pub mod point;
 pub mod stats;
 mod svg_reader;
+pub mod svg_writer;
 pub mod test_utils;
 pub mod transforms;
 
@@ -23,6 +24,8 @@ pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;
 pub use path_index::IndexBuilder;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 pub use transforms::*;
 
 #[derive(Default, Clone, Copy, Debug)]
@@ -47,5 +50,15 @@ impl Default for Color {
             b: 0,
             a: 255,
         }
+    }
+}
+
+impl Display for Color {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "#{:02x}{:02x}{:02x}{:02x}",
+            self.r, self.g, self.b, self.a
+        )
     }
 }

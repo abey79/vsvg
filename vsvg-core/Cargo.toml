@@ -10,6 +10,7 @@ edition = "2021"
 usvg = "0.29.0"
 rosvgtree = "0.1.0"
 rctree = "*"  # Let usvg decide on the version
+svg = "0.13.1"
 rayon = "1.6.1"
 kurbo = "0.9.0"
 arrayvec = "0.7.2"
@@ -19,6 +20,7 @@ lazy_static = "1.4.0"
 indexmap = {version = "1.9.2", features = ["rayon"]}
 kdtree = "0.7.0"
 bitvec = "1.0.1"
+time = {version="0.3.20", features = ["formatting"]}
 
 # optional dependencies, mainly for Point interop.
 egui = { version ="*", optional = true}

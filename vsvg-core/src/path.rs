@@ -85,11 +85,21 @@ impl<T: PathType> PathImpl<T> {
     }
 }
 
-impl Path {
-    pub fn from_shape<T: kurbo::Shape>(path: T) -> Self {
-        Self::from_shape_with_tolerance(path, DEFAULT_TOLERANCE)
+/// This enables adding a [`kurbo::Shape`] directly to a [Layer]:
+/// ```
+/// use vsvg_core::Layer;
+/// use kurbo::Circle;
+///
+/// let mut layer = Layer::new();
+/// layer.paths.push(Circle::new((0.0, 0.0), 1.0).into());
+/// ```
+impl<T: kurbo::Shape> From<T> for Path {
+    fn from(value: T) -> Self {
+        Self::from_shape_with_tolerance(value, DEFAULT_TOLERANCE)
     }
+}
 
+impl Path {
     pub fn from_shape_with_tolerance<T: kurbo::Shape>(path: T, tolerance: f64) -> Self {
         Self {
             data: path.into_path(tolerance),
@@ -187,7 +197,7 @@ mod test {
 
     #[test]
     fn test_path_crop() {
-        let mut path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        let mut path: Path = Line::new((0.0, 0.0), (1.0, 1.0)).into();
         path.crop(0.5, 0.5, 1.5, 1.5);
         let mut it = path.data.segments();
         assert_eq!(
@@ -199,7 +209,7 @@ mod test {
 
     #[test]
     fn test_path_bounds() {
-        let path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        let path: Path = Line::new((0.0, 0.0), (1.0, 1.0)).into();
         assert_eq!(path.bounds(), kurbo::Rect::new(0.0, 0.0, 1.0, 1.0));
     }
 

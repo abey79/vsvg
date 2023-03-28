@@ -89,16 +89,14 @@ mod test {
         let mut layer = Layer::new();
         assert_eq!(layer.bounds(), None);
 
-        layer.paths.push(PathImpl::from_shape(kurbo::Line::new(
-            (0.0, 0.0),
-            (10., 15.),
-        )));
+        layer
+            .paths
+            .push(kurbo::Line::new((0.0, 0.0), (10., 15.)).into());
         assert_eq!(layer.bounds(), Some(kurbo::Rect::new(0.0, 0.0, 10.0, 15.0)));
 
-        layer.paths.push(PathImpl::from_shape(kurbo::Line::new(
-            (25.0, 53.0),
-            (-10., -150.),
-        )));
+        layer
+            .paths
+            .push(kurbo::Line::new((25.0, 53.0), (-10., -150.)).into());
         assert_eq!(
             layer.bounds(),
             Some(kurbo::Rect::new(-10.0, -150.0, 25.0, 53.0))

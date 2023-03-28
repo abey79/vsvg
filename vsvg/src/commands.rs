@@ -1,6 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
+use std::io::Write;
 use vsvg_core::{IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
@@ -265,6 +266,18 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                     .get_mut(state.draw_layer)
                     .draw(&state.draw_state)
                     .svg_path(path)?
+            }
+        ),
+        command_decl!(
+            arg!(--write [FILE] "Write the current document to a file"),
+            String,
+            |state, file| {
+                if file == "-" {
+                    println!("{}", state.document);
+                } else {
+                    let mut file = std::fs::File::create(file)?;
+                    write!(file, "{}", state.document)?;
+                }
             }
         ),
         command_decl!(

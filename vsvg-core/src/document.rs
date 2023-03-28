@@ -14,6 +14,7 @@ pub type FlattenedDocument = DocumentImpl<Polyline>;
 pub struct DocumentImpl<T: PathType> {
     pub layers: BTreeMap<LayerID, LayerImpl<T>>,
     pub page_size: Option<PageSize>,
+    pub source: Option<String>,
 }
 
 impl<T: PathType> DocumentImpl<T> {
@@ -77,6 +78,10 @@ impl Document {
                 .map(|(id, layer)| (*id, layer.flatten(tolerance)))
                 .collect(),
             page_size: self.page_size,
+            source: Some(format!(
+                "{} (flattened)",
+                self.source.as_deref().unwrap_or("<empty>")
+            )),
         }
     }
 
@@ -97,6 +102,10 @@ impl Document {
                 })
                 .collect(),
             page_size: self.page_size,
+            source: Some(format!(
+                "{} (control points)",
+                self.source.as_deref().unwrap_or("<empty>")
+            )),
         }
     }
 
@@ -125,16 +134,15 @@ mod test {
         let mut layer2 = Layer::new();
         layer2
             .paths
-            .push(Path::from_shape(kurbo::Line::new((10., 10.), (25., 53.))));
+            .push(kurbo::Line::new((10., 10.), (25., 53.)).into());
         let layer2_bounds = layer2.bounds();
         doc.layers.insert(2, layer2);
         assert_eq!(doc.bounds(), layer2_bounds);
 
         let mut layer3 = Layer::new();
-        layer3.paths.push(Path::from_shape(kurbo::Line::new(
-            (25., -100.),
-            (250., 54.),
-        )));
+        layer3
+            .paths
+            .push(kurbo::Line::new((25., -100.), (250., 54.)).into());
         doc.layers.insert(3, layer3);
         assert_eq!(doc.bounds(), Some(kurbo::Rect::new(10., -100., 250., 54.)));
     }

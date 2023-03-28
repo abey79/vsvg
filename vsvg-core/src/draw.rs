@@ -154,7 +154,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
     }
 
     fn add_shape<T: Shape>(&mut self, shape: T) -> &Self {
-        let mut path = Path::from_shape(shape);
+        let mut path: Path = shape.into();
         path.color = self.state.color;
         path.stroke_width = self.state.stroke_width;
         path.apply_transform(self.state.transform);
