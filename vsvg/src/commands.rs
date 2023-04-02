@@ -275,7 +275,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
                 if file == "-" {
                     println!("{}", state.document);
                 } else {
-                    let mut file = std::fs::File::create(file)?;
+                    let mut file = std::io::BufWriter::new(std::fs::File::create(file)?);
                     write!(file, "{}", state.document)?;
                 }
             }
