@@ -1,3 +1,4 @@
+use cgmath::EuclideanSpace;
 use std::mem;
 use wgpu::util::DeviceExt;
 use wgpu::{
@@ -176,6 +177,14 @@ impl Engine {
 
     fn pan(&mut self, delta: cgmath::Vector2<f32>) {
         self.origin -= delta / self.scale;
+    }
+
+    fn zoom(&mut self, zoom: f32, mouse: cgmath::Vector2<f32>) {
+        let new_scale = self.scale * (1.0 + zoom);
+
+        let dz = 1. / self.scale - 1. / new_scale;
+        self.origin = (self.origin + mouse * dz).into();
+        self.scale = new_scale;
     }
 
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
@@ -480,15 +489,17 @@ impl Painter for LinePainter {
 
 // ======================================================================================
 
-struct PanHelper {
+struct ZoomPanHelper {
     panning: bool,
+    cursor_position: cgmath::Vector2<f32>,
     last_cursor_position: Option<cgmath::Vector2<f32>>,
 }
 
-impl PanHelper {
+impl ZoomPanHelper {
     fn new() -> Self {
         Self {
             panning: false,
+            cursor_position: cgmath::vec2(0.0, 0.0),
             last_cursor_position: None,
         }
     }
@@ -502,15 +513,19 @@ impl PanHelper {
         self.panning = false;
     }
 
+    fn cursor(&self) -> cgmath::Vector2<f32> {
+        self.cursor_position
+    }
+
     fn update(&mut self, cursor_position: PhysicalPosition<f64>) -> Option<cgmath::Vector2<f32>> {
+        self.cursor_position = cgmath::vec2(cursor_position.x as f32, cursor_position.y as f32);
         if self.panning {
-            let cursor_position = cgmath::vec2(cursor_position.x as f32, cursor_position.y as f32);
             if let Some(last_cursor_position) = self.last_cursor_position {
-                let delta = cursor_position - last_cursor_position;
-                self.last_cursor_position = Some(cursor_position);
+                let delta = self.cursor_position - last_cursor_position;
+                self.last_cursor_position = Some(self.cursor_position);
                 Some(delta)
             } else {
-                self.last_cursor_position = Some(cursor_position);
+                self.last_cursor_position = Some(self.cursor_position);
                 None
             }
         } else {
@@ -524,7 +539,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     engine.resize(window.inner_size());
     engine.rebuild();
 
-    let mut pan_helper = PanHelper::new();
+    let mut pan_helper = ZoomPanHelper::new();
 
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
@@ -570,6 +585,14 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     engine.pan(delta);
                     engine.render();
                 }
+            }
+            Event::WindowEvent {
+                event: WindowEvent::TouchpadMagnify { delta, .. },
+                ..
+            } => {
+                //println!("{event:?}");
+                engine.zoom(delta as f32, pan_helper.cursor());
+                engine.render();
             }
             Event::RedrawRequested(_) => {
                 engine.render();
