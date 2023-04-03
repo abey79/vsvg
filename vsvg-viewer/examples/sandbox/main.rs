@@ -1,8 +1,8 @@
 use std::mem;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, vertex_attr_array, Adapter, Buffer, Device, Instance, Queue, RenderPass,
-    RenderPipeline, Surface,
+    include_wgsl, vertex_attr_array, Adapter, Buffer, ColorTargetState, Device, Instance,
+    PrimitiveTopology, Queue, RenderPass, RenderPipeline, Surface,
 };
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton};
@@ -31,10 +31,13 @@ struct Engine {
     pub adapter: Adapter,
     pub queue: Queue,
     pub config: wgpu::SurfaceConfiguration,
+
+    // camera stuff
     pub camera_uniform: CameraUniform,
     pub camera_buffer: Buffer,
     pub camera_bind_group_layout: wgpu::BindGroupLayout,
     pub camera_bind_group: wgpu::BindGroup,
+
     // viewport stuff
     pub origin: cgmath::Point2<f32>,
     pub scale: f32,
@@ -184,8 +187,9 @@ impl Engine {
 
     fn rebuild(&mut self) {
         self.painters.clear();
-        self.painters
-            .push(Box::new(InstancedTrianglePainter::new(self)));
+        // self.painters
+        //     .push(Box::new(InstancedTrianglePainter::new(self)));
+        self.painters.push(Box::new(LinePainter::new(self)));
     }
 
     fn render(&mut self) {
@@ -348,6 +352,129 @@ impl Painter for InstancedTrianglePainter {
         rpass.set_bind_group(0, camera_bind_group, &[]);
         rpass.set_vertex_buffer(0, self.instance_buffer.slice(..));
         rpass.draw(0..3, 0..3);
+    }
+}
+
+// ======================================================================================
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Point {
+    position: [f32; 2],
+}
+
+struct LinePainter {
+    render_pipeline: RenderPipeline,
+    instance_buffer: Buffer,
+}
+
+impl LinePainter {
+    const LINE: &'static [Point] = &[
+        Point {
+            position: [200.0, 200.0],
+        },
+        Point {
+            position: [200.0, 200.0],
+        },
+        Point {
+            position: [400.5, 200.0],
+        },
+        Point {
+            position: [300.5, 300.0],
+        },
+        Point {
+            position: [700.0, 400.0],
+        },
+        Point {
+            position: [700.0, 400.0],
+        },
+    ];
+
+    fn new(engine: &Engine) -> Self {
+        let instance_buffer = engine
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&Self::LINE),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<Point>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &vertex_attr_array![
+                0 => Float32x2,
+                1 => Float32x2,
+                2 => Float32x2,
+                3 => Float32x2,
+            ],
+        };
+
+        let swapchain_capabilities = engine.surface.get_capabilities(&engine.adapter);
+        let swapchain_format = swapchain_capabilities.formats[0];
+
+        let shader = engine
+            .device
+            .create_shader_module(include_wgsl!("line.wgsl"));
+
+        let pipeline_layout =
+            engine
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &[&engine.camera_bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        // enable alpha blending
+        let mut target: ColorTargetState = swapchain_format.into();
+        target.blend = Some(wgpu::BlendState {
+            color: wgpu::BlendComponent {
+                src_factor: wgpu::BlendFactor::SrcAlpha,
+                dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                operation: wgpu::BlendOperation::Add,
+            },
+            alpha: wgpu::BlendComponent::OVER,
+        });
+
+        let render_pipeline =
+            engine
+                .device
+                .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: Some("line pipeline"),
+                    layout: Some(&pipeline_layout),
+                    vertex: wgpu::VertexState {
+                        module: &shader,
+                        entry_point: "vs_main",
+                        buffers: &[buffer_layout],
+                    },
+                    fragment: Some(wgpu::FragmentState {
+                        module: &shader,
+                        entry_point: "fs_main",
+                        targets: &[Some(target)],
+                    }),
+                    primitive: wgpu::PrimitiveState {
+                        topology: PrimitiveTopology::TriangleStrip,
+                        ..Default::default()
+                    },
+                    depth_stencil: None,
+                    multisample: wgpu::MultisampleState::default(),
+                    multiview: None,
+                });
+
+        Self {
+            render_pipeline,
+            instance_buffer,
+        }
+    }
+}
+
+impl Painter for LinePainter {
+    fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup) {
+        rpass.set_pipeline(&self.render_pipeline);
+        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_vertex_buffer(0, self.instance_buffer.slice(..));
+        rpass.draw(0..4, 0..3);
     }
 }
 
