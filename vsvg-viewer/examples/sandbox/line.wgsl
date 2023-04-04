@@ -126,17 +126,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     var distance = abs(in.tex_coords.y);
 
     // draw miter points
-//    let dm0 = length(in.tex_coords - W/2.*in.m0);
-//    if (dm0 < 2.)
-//    {
-//        return vec4<f32>(0.2, 0.1, 0.1, 1.0);
-//    }
-//
-//    let dm2 = length(in.tex_coords - vec2<f32>(in.distance, 0.) - W/2.*in.m2);
-//    if (2. < dm2 && dm2 < 4.)
-//    {
-//        return vec4<f32>(0.1, 0.1, 0.3, 1.0);
-//    }
+    if (false)
+    {
+        let dm0 = length(in.tex_coords - W/2.*in.m0);
+        if (dm0 < 2.) {
+            return vec4<f32>(0.2, 0.1, 0.1, 1.0);
+        }
+
+        let dm2 = length(in.tex_coords - vec2<f32>(in.distance, 0.) - W/2.*in.m2);
+        if (2. < dm2 && dm2 < 4.) {
+            return vec4<f32>(0.1, 0.1, 0.3, 1.0);
+        }
+    }
 
 
     if (any(in.m0 != 0.)) {

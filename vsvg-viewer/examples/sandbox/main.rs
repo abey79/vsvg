@@ -1,4 +1,3 @@
-use cgmath::EuclideanSpace;
 use std::mem;
 use wgpu::util::DeviceExt;
 use wgpu::{
@@ -199,8 +198,6 @@ impl Engine {
 
     fn rebuild(&mut self) {
         self.painters.clear();
-        // self.painters
-        //     .push(Box::new(InstancedTrianglePainter::new(self)));
         self.painters.push(Box::new(LinePainter::new(self)));
     }
 
@@ -270,104 +267,6 @@ impl Engine {
 
 trait Painter {
     fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup);
-}
-
-// ======================================================================================
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Location {
-    position: [f32; 3],
-}
-
-struct InstancedTrianglePainter {
-    render_pipeline: RenderPipeline,
-    instance_buffer: Buffer,
-}
-
-impl InstancedTrianglePainter {
-    const LOCATIONS: [Location; 3] = [
-        Location {
-            position: [400.0, 300.0, 0.0],
-        },
-        Location {
-            position: [600.0, 500.0, 0.0],
-        },
-        Location {
-            position: [800.0, 200.0, 0.0],
-        },
-    ];
-
-    fn new(engine: &Engine) -> Self {
-        let instance_buffer = engine
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&Self::LOCATIONS),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
-
-        let buffer_layout = wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Location>() as wgpu::BufferAddress,
-            // We need to switch from using a step mode of Vertex to Instance
-            // This means that our shaders will only change to use the next
-            // instance when the shader starts processing a new instance
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &vertex_attr_array![0 => Float32x3],
-        };
-
-        let swapchain_capabilities = engine.surface.get_capabilities(&engine.adapter);
-        let swapchain_format = swapchain_capabilities.formats[0];
-
-        let shader = engine
-            .device
-            .create_shader_module(include_wgsl!("instanced_triangle.wgsl"));
-
-        let pipeline_layout =
-            engine
-                .device
-                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: None,
-                    bind_group_layouts: &[&engine.camera_bind_group_layout],
-                    push_constant_ranges: &[],
-                });
-
-        let render_pipeline =
-            engine
-                .device
-                .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                    label: Some("instanced triangle"),
-                    layout: Some(&pipeline_layout),
-                    vertex: wgpu::VertexState {
-                        module: &shader,
-                        entry_point: "vs_main",
-                        buffers: &[buffer_layout],
-                    },
-                    fragment: Some(wgpu::FragmentState {
-                        module: &shader,
-                        entry_point: "fs_main",
-                        targets: &[Some(swapchain_format.into())],
-                    }),
-                    primitive: wgpu::PrimitiveState::default(),
-                    depth_stencil: None,
-                    multisample: wgpu::MultisampleState::default(),
-                    multiview: None,
-                });
-
-        Self {
-            render_pipeline,
-            instance_buffer,
-        }
-    }
-}
-
-impl Painter for InstancedTrianglePainter {
-    fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup) {
-        rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_bind_group(0, camera_bind_group, &[]);
-        rpass.set_vertex_buffer(0, self.instance_buffer.slice(..));
-        rpass.draw(0..3, 0..3);
-    }
 }
 
 // ======================================================================================
