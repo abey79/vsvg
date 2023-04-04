@@ -17,11 +17,14 @@ use winit::{
 #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 struct CameraUniform {
     projection: [[f32; 4]; 4],
+    scale: f32,
+    _padding: [u8; 12], // WGSL uniform buffer requires 16-byte alignment
 }
 
 impl CameraUniform {
-    fn update(&mut self, m: cgmath::Matrix4<f32>) {
+    fn update(&mut self, m: cgmath::Matrix4<f32>, scale: f32) {
         self.projection = m.into();
+        self.scale = scale;
     }
 }
 
@@ -127,7 +130,7 @@ impl Engine {
         let origin = cgmath::Point2::new(0.0, 0.0);
         let scale = 1.0;
         let mut camera_uniform = CameraUniform::default();
-        camera_uniform.update(projection(origin, scale, width as f32, height as f32));
+        camera_uniform.update(projection(origin, scale, width as f32, height as f32), 1.0);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -139,7 +142,7 @@ impl Engine {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -213,12 +216,15 @@ impl Engine {
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         // update camera uniform buffer
-        self.camera_uniform.update(projection(
-            self.origin,
+        self.camera_uniform.update(
+            projection(
+                self.origin,
+                self.scale,
+                self.config.width as f32,
+                self.config.height as f32,
+            ),
             self.scale,
-            self.config.width as f32,
-            self.config.height as f32,
-        ));
+        );
         self.queue.write_buffer(
             &self.camera_buffer,
             0,
