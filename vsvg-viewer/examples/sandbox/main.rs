@@ -290,6 +290,14 @@ impl From<&Point> for Vertex {
     }
 }
 
+impl From<Point> for Vertex {
+    fn from(point: Point) -> Self {
+        Self {
+            position: [point.x() as f32, point.y() as f32],
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Attribute {
@@ -306,6 +314,9 @@ impl Attribute {
     }
 }
 
+/// Renders paths as scale-aware lines with variable width and color.
+///
+/// TODO: explain how this works
 struct LinePainter {
     render_pipeline: RenderPipeline,
     points_buffer: Buffer,
@@ -433,10 +444,15 @@ impl LinePainter {
 
         fn add_path(path: FlattenedPath, vertices: &mut Vec<Vertex>, attribs: &mut Vec<Attribute>) {
             if path.data.len() > 1 {
-                //TODO: handle closed paths
-                vertices.push(path.data.first().expect("length checked").into());
-                vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
-                vertices.push(path.data.last().expect("length checked").into());
+                if path.data.len() > 2 && path.data.first() == path.data.last() {
+                    vertices.push(path.data[path.data.len() - 2].into());
+                    vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
+                    vertices.push(path.data[1].into());
+                } else {
+                    vertices.push(path.data.first().expect("length checked").into());
+                    vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
+                    vertices.push(path.data.last().expect("length checked").into());
+                }
 
                 let attr = Attribute {
                     color: path.color.to_rgba(),
