@@ -1,5 +1,6 @@
-use std::mem;
-use vsvg_core::Document;
+use std::{env, mem, process};
+use vsvg_core::point::Point;
+use vsvg_core::{Document, FlattenedPath};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Adapter, Buffer, ColorTargetState, Device, Instance,
@@ -73,8 +74,8 @@ impl Engine {
         window: &W,
     ) -> Self {
         // TODO: cleaner way to deal with that?
-        let width = 1;
-        let height = 1;
+        let width = 4;
+        let height = 4;
         // Handle to some wgpu API, can specify which backend(s) to make available
         // metal only on Mac. vulkan or dx12 on windows. etc.
         let instance = Instance::default();
@@ -277,8 +278,16 @@ trait Painter {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Point {
+struct Vertex {
     position: [f32; 2],
+}
+
+impl From<&Point> for Vertex {
+    fn from(point: &Point) -> Self {
+        Self {
+            position: [point.x() as f32, point.y() as f32],
+        }
+    }
 }
 
 #[repr(C)]
@@ -301,93 +310,28 @@ struct LinePainter {
     render_pipeline: RenderPipeline,
     points_buffer: Buffer,
     attributes_buffer: Buffer,
+    instance_count: u32,
 }
 
 impl LinePainter {
-    const LINE: &'static [Point] = &[
-        // open line, 3 segs
-        Point {
-            position: [200.0, 200.0],
-        },
-        Point {
-            position: [200.0, 200.0],
-        },
-        Point {
-            position: [400.5, 200.0],
-        },
-        Point {
-            position: [300.5, 300.0],
-        },
-        Point {
-            position: [700.0, 400.0],
-        },
-        Point {
-            position: [700.0, 400.0],
-        },
-        // closed line, 3 segs
-        Point {
-            position: [200.0, 700.0],
-        },
-        Point {
-            position: [200.0, 500.0],
-        },
-        Point {
-            position: [400.0, 700.0],
-        },
-        Point {
-            position: [200.0, 700.0],
-        },
-        Point {
-            position: [200.0, 500.0],
-        },
-        Point {
-            position: [400.0, 700.0],
-        },
-    ];
+    fn new<I>(engine: &Engine, paths: I) -> Self
+    where
+        I: IntoIterator<Item = FlattenedPath>,
+    {
+        let (vertices, attribs) = Self::build_buffers(paths);
 
-    const ATTRIBUTES: &'static [Attribute] = &[
-        Attribute {
-            color: 0x770000FF,
-            width: 25.0,
-        },
-        Attribute {
-            color: 0x770000FF,
-            width: 25.0,
-        },
-        Attribute {
-            color: 0x770000FF,
-            width: 25.0,
-        },
-        Attribute::empty(),
-        Attribute::empty(),
-        Attribute::empty(),
-        Attribute {
-            color: 0x7700FF00,
-            width: 50.0,
-        },
-        Attribute {
-            color: 0x7700FF00,
-            width: 50.0,
-        },
-        Attribute {
-            color: 0x7700FF00,
-            width: 50.0,
-        },
-    ];
-
-    fn new(engine: &Engine) -> Self {
         // prepare point buffer
         let points_buffer = engine
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Point instance buffer"),
-                contents: bytemuck::cast_slice(&Self::LINE),
+                contents: bytemuck::cast_slice(vertices.as_slice()),
                 usage: wgpu::BufferUsages::VERTEX,
             });
 
         // key insight: the stride is one point, but we expose 4 points at once!
         let points_buffer_layout = wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Point>() as wgpu::BufferAddress,
+            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &vertex_attr_array![
                 0 => Float32x2,
@@ -403,7 +347,7 @@ impl LinePainter {
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Attributes instance Buffer"),
-                    contents: bytemuck::cast_slice(&Self::ATTRIBUTES),
+                    contents: bytemuck::cast_slice(attribs.as_slice()),
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 
@@ -472,7 +416,50 @@ impl LinePainter {
             render_pipeline,
             points_buffer,
             attributes_buffer,
+            instance_count: attribs.len() as u32,
         }
+    }
+
+    fn build_buffers<I>(paths: I) -> (Vec<Vertex>, Vec<Attribute>)
+    where
+        I: IntoIterator<Item = FlattenedPath>,
+    {
+        let mut iter = paths.into_iter();
+        let min_size = 1000.min(iter.size_hint().0 * 4);
+
+        // build the data buffers
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(min_size);
+        let mut attribs = Vec::with_capacity(min_size);
+
+        fn add_path(path: FlattenedPath, vertices: &mut Vec<Vertex>, attribs: &mut Vec<Attribute>) {
+            if path.data.len() > 1 {
+                //TODO: handle closed paths
+                vertices.push(path.data.first().expect("length checked").into());
+                vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
+                vertices.push(path.data.last().expect("length checked").into());
+
+                let attr = Attribute {
+                    color: path.color.to_rgba(),
+                    width: path.stroke_width as f32,
+                };
+
+                for _ in 0..path.data.len() - 1 {
+                    attribs.push(attr);
+                }
+            }
+        }
+
+        if let Some(path) = iter.next() {
+            add_path(path, &mut vertices, &mut attribs);
+            for path in iter {
+                attribs.push(Attribute::empty());
+                attribs.push(Attribute::empty());
+                attribs.push(Attribute::empty());
+                add_path(path, &mut vertices, &mut attribs);
+            }
+        }
+
+        (vertices, attribs)
     }
 }
 
@@ -482,7 +469,7 @@ impl Painter for LinePainter {
         rpass.set_bind_group(0, camera_bind_group, &[]);
         rpass.set_vertex_buffer(0, self.points_buffer.slice(..));
         rpass.set_vertex_buffer(1, self.attributes_buffer.slice(..));
-        rpass.draw(0..4, 0..9);
+        rpass.draw(0..4, 0..self.instance_count);
     }
 }
 
@@ -544,7 +531,7 @@ impl<'a> Viewer<'a> {
 }
 
 impl Viewer<'_> {
-    async fn run_loop(&self, event_loop: EventLoop<()>, window: Window, doc: &Document) {
+    async fn run_loop(&self, event_loop: EventLoop<()>, window: Window) {
         let mut engine = Engine::new(&window).await;
         engine.resize(window.inner_size());
         self.rebuild(&mut engine);
@@ -618,7 +605,13 @@ impl Viewer<'_> {
 
     fn rebuild(&self, engine: &mut Engine) {
         engine.clear_painters();
-        engine.add_painter(Box::new(LinePainter::new(engine)));
+        const TOLERANCE: f64 = 0.1;
+        for (_, layer) in self.doc.layers.iter() {
+            engine.add_painter(Box::new(LinePainter::new(
+                engine,
+                layer.flatten(TOLERANCE).paths,
+            )));
+        }
     }
 
     pub fn show(&self) {
@@ -626,14 +619,19 @@ impl Viewer<'_> {
         let window = Window::new(&event_loop).unwrap();
         env_logger::init();
 
-        pollster::block_on(self.run_loop(event_loop, window, self.doc));
+        pollster::block_on(self.run_loop(event_loop, window));
     }
 }
 
 // ======================================================================================
 
 fn main() {
-    let mut doc = vsvg_core::Document::new();
+    let path = env::args().nth(1).unwrap_or_else(|| {
+        println!("Usage: cargo run --release --example -- <svg-file>");
+        process::exit(1);
+    });
+
+    let doc = Document::from_svg(path, false).unwrap();
 
     let viewer = Viewer::new(&doc);
     viewer.show();

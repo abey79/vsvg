@@ -62,3 +62,13 @@ impl Display for Color {
         )
     }
 }
+
+impl Color {
+    #[must_use]
+    pub fn to_rgba(&self) -> u32 {
+        u32::from(self.r)
+            | u32::from(self.g) << 8
+            | u32::from(self.b) << 16
+            | u32::from(self.a) << 24
+    }
+}
