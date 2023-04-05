@@ -46,7 +46,7 @@ impl Path {
                     r: c.red,
                     g: c.green,
                     b: c.blue,
-                    a: 255,
+                    a: stroke.opacity.to_u8(),
                 };
             }
             res.stroke_width = stroke.width.get();
