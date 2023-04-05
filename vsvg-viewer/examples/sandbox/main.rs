@@ -1,4 +1,5 @@
 use std::mem;
+use vsvg_core::Document;
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Adapter, Buffer, ColorTargetState, Device, Instance,
@@ -196,9 +197,12 @@ impl Engine {
         self.surface.configure(&self.device, &self.config);
     }
 
-    fn rebuild(&mut self) {
+    fn clear_painters(&mut self) {
         self.painters.clear();
-        self.painters.push(Box::new(LinePainter::new(self)));
+    }
+
+    fn add_painter(&mut self, painter: Box<dyn Painter>) {
+        self.painters.push(painter);
     }
 
     fn render(&mut self) {
@@ -277,13 +281,31 @@ struct Point {
     position: [f32; 2],
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Attribute {
+    color: u32,
+    width: f32,
+}
+
+impl Attribute {
+    const fn empty() -> Self {
+        Self {
+            color: 0,
+            width: 1.0,
+        }
+    }
+}
+
 struct LinePainter {
     render_pipeline: RenderPipeline,
-    instance_buffer: Buffer,
+    points_buffer: Buffer,
+    attributes_buffer: Buffer,
 }
 
 impl LinePainter {
     const LINE: &'static [Point] = &[
+        // open line, 3 segs
         Point {
             position: [200.0, 200.0],
         },
@@ -302,18 +324,69 @@ impl LinePainter {
         Point {
             position: [700.0, 400.0],
         },
+        // closed line, 3 segs
+        Point {
+            position: [200.0, 700.0],
+        },
+        Point {
+            position: [200.0, 500.0],
+        },
+        Point {
+            position: [400.0, 700.0],
+        },
+        Point {
+            position: [200.0, 700.0],
+        },
+        Point {
+            position: [200.0, 500.0],
+        },
+        Point {
+            position: [400.0, 700.0],
+        },
+    ];
+
+    const ATTRIBUTES: &'static [Attribute] = &[
+        Attribute {
+            color: 0x770000FF,
+            width: 25.0,
+        },
+        Attribute {
+            color: 0x770000FF,
+            width: 25.0,
+        },
+        Attribute {
+            color: 0x770000FF,
+            width: 25.0,
+        },
+        Attribute::empty(),
+        Attribute::empty(),
+        Attribute::empty(),
+        Attribute {
+            color: 0x7700FF00,
+            width: 50.0,
+        },
+        Attribute {
+            color: 0x7700FF00,
+            width: 50.0,
+        },
+        Attribute {
+            color: 0x7700FF00,
+            width: 50.0,
+        },
     ];
 
     fn new(engine: &Engine) -> Self {
-        let instance_buffer = engine
+        // prepare point buffer
+        let points_buffer = engine
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
+                label: Some("Point instance buffer"),
                 contents: bytemuck::cast_slice(&Self::LINE),
                 usage: wgpu::BufferUsages::VERTEX,
             });
 
-        let buffer_layout = wgpu::VertexBufferLayout {
+        // key insight: the stride is one point, but we expose 4 points at once!
+        let points_buffer_layout = wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<Point>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &vertex_attr_array![
@@ -321,6 +394,25 @@ impl LinePainter {
                 1 => Float32x2,
                 2 => Float32x2,
                 3 => Float32x2,
+            ],
+        };
+
+        // prepare color buffer
+        let attributes_buffer =
+            engine
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Attributes instance Buffer"),
+                    contents: bytemuck::cast_slice(&Self::ATTRIBUTES),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+
+        let attributes_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<Attribute>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &vertex_attr_array![
+                4 => Uint32,
+                5 => Float32,
             ],
         };
 
@@ -360,7 +452,7 @@ impl LinePainter {
                     vertex: wgpu::VertexState {
                         module: &shader,
                         entry_point: "vs_main",
-                        buffers: &[buffer_layout],
+                        buffers: &[points_buffer_layout, attributes_buffer_layout],
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader,
@@ -378,7 +470,8 @@ impl LinePainter {
 
         Self {
             render_pipeline,
-            instance_buffer,
+            points_buffer,
+            attributes_buffer,
         }
     }
 }
@@ -387,8 +480,9 @@ impl Painter for LinePainter {
     fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup) {
         rpass.set_pipeline(&self.render_pipeline);
         rpass.set_bind_group(0, camera_bind_group, &[]);
-        rpass.set_vertex_buffer(0, self.instance_buffer.slice(..));
-        rpass.draw(0..4, 0..3);
+        rpass.set_vertex_buffer(0, self.points_buffer.slice(..));
+        rpass.set_vertex_buffer(1, self.attributes_buffer.slice(..));
+        rpass.draw(0..4, 0..9);
     }
 }
 
@@ -439,85 +533,108 @@ impl ZoomPanHelper {
     }
 }
 
-async fn run(event_loop: EventLoop<()>, window: Window) {
-    let mut engine = Engine::new(&window).await;
-    engine.resize(window.inner_size());
-    engine.rebuild();
+pub struct Viewer<'a> {
+    doc: &'a Document,
+}
 
-    let mut pan_helper = ZoomPanHelper::new();
+impl<'a> Viewer<'a> {
+    pub fn new(doc: &'a Document) -> Self {
+        Self { doc }
+    }
+}
 
-    event_loop.run(move |event, _, control_flow| {
-        // Have the closure take ownership of the resources.
-        // `event_loop.run` never returns, therefore we must do this to ensure
-        // the resources are properly cleaned up.
+impl Viewer<'_> {
+    async fn run_loop(&self, event_loop: EventLoop<()>, window: Window, doc: &Document) {
+        let mut engine = Engine::new(&window).await;
+        engine.resize(window.inner_size());
+        self.rebuild(&mut engine);
 
-        *control_flow = ControlFlow::Wait;
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::Resized(size),
-                ..
-            }
-            | Event::WindowEvent {
-                event:
-                    WindowEvent::ScaleFactorChanged {
-                        new_inner_size: &mut size,
-                        ..
-                    },
-                ..
-            } => {
-                engine.resize(size);
+        let mut pan_helper = ZoomPanHelper::new();
 
-                // On macOS the window needs to be redrawn manually after resizing
-                window.request_redraw();
-            }
-            Event::WindowEvent {
-                event: WindowEvent::MouseInput { state, button, .. },
-                ..
-            } => {
-                if button == MouseButton::Left {
-                    if state == ElementState::Pressed {
-                        pan_helper.start();
-                    } else {
-                        pan_helper.stop();
+        event_loop.run(move |event, _, control_flow| {
+            // Have the closure take ownership of the resources.
+            // `event_loop.run` never returns, therefore we must do this to ensure
+            // the resources are properly cleaned up.
+
+            *control_flow = ControlFlow::Wait;
+            match event {
+                Event::WindowEvent {
+                    event: WindowEvent::Resized(size),
+                    ..
+                }
+                | Event::WindowEvent {
+                    event:
+                        WindowEvent::ScaleFactorChanged {
+                            new_inner_size: &mut size,
+                            ..
+                        },
+                    ..
+                } => {
+                    engine.resize(size);
+
+                    // On macOS the window needs to be redrawn manually after resizing
+                    window.request_redraw();
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::MouseInput { state, button, .. },
+                    ..
+                } => {
+                    if button == MouseButton::Left {
+                        if state == ElementState::Pressed {
+                            pan_helper.start();
+                        } else {
+                            pan_helper.stop();
+                        }
                     }
                 }
-            }
-            Event::WindowEvent {
-                event: WindowEvent::CursorMoved { position, .. },
-                ..
-            } => {
-                if let Some(delta) = pan_helper.update(position) {
-                    engine.pan(delta);
+                Event::WindowEvent {
+                    event: WindowEvent::CursorMoved { position, .. },
+                    ..
+                } => {
+                    if let Some(delta) = pan_helper.update(position) {
+                        engine.pan(delta);
+                        engine.render();
+                    }
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::TouchpadMagnify { delta, .. },
+                    ..
+                } => {
+                    //println!("{event:?}");
+                    engine.zoom(delta as f32, pan_helper.cursor());
                     engine.render();
                 }
+                Event::RedrawRequested(_) => {
+                    engine.render();
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => *control_flow = ControlFlow::Exit,
+                _ => {}
             }
-            Event::WindowEvent {
-                event: WindowEvent::TouchpadMagnify { delta, .. },
-                ..
-            } => {
-                //println!("{event:?}");
-                engine.zoom(delta as f32, pan_helper.cursor());
-                engine.render();
-            }
-            Event::RedrawRequested(_) => {
-                engine.render();
-            }
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => *control_flow = ControlFlow::Exit,
-            _ => {}
-        }
-    });
+        });
+    }
+
+    fn rebuild(&self, engine: &mut Engine) {
+        engine.clear_painters();
+        engine.add_painter(Box::new(LinePainter::new(engine)));
+    }
+
+    pub fn show(&self) {
+        let event_loop = EventLoop::new();
+        let window = Window::new(&event_loop).unwrap();
+        env_logger::init();
+
+        pollster::block_on(self.run_loop(event_loop, window, self.doc));
+    }
 }
 
 // ======================================================================================
 
 fn main() {
-    let event_loop = EventLoop::new();
-    let window = Window::new(&event_loop).unwrap();
-    env_logger::init();
+    let mut doc = vsvg_core::Document::new();
 
-    // Temporarily avoid srgb formats for the swapchain on the web
-    pollster::block_on(run(event_loop, window));
+    let viewer = Viewer::new(&doc);
+    viewer.show();
 }

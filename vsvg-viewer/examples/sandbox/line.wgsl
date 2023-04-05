@@ -10,6 +10,8 @@ struct InstanceInput {
     @location(1) p1: vec2<f32>,
     @location(2) p2: vec2<f32>,
     @location(3) p3: vec2<f32>,
+    @location(4) color: u32,
+    @location(5) width: f32,
 };
 
 struct VertexOutput {
@@ -19,10 +21,10 @@ struct VertexOutput {
     @location(2) @interpolate(flat) color: vec4<f32>,
     @location(3) @interpolate(flat) m0: vec2<f32>,
     @location(4) @interpolate(flat) m2: vec2<f32>,
+    @location(5) @interpolate(flat) width: f32,
 }
 
 
-const W: f32 = 50.;
 const AA: f32 = 1.5;
 
 
@@ -48,23 +50,36 @@ fn compute_miter(p0: vec2<f32>, p1: vec2<f32>, n: vec2<f32>, crit_length: f32, w
     }
 }
 
+fn unpack_color(color: u32) -> vec4<f32> {
+    return vec4<f32>(
+        f32(color & 255u),
+        f32((color >> 8u) & 255u),
+        f32((color >> 16u) & 255u),
+        f32((color >> 24u) & 255u),
+    ) / 255.0;
+}
+
 @vertex
 fn vs_main(
     @builtin(vertex_index) in_vertex_index: u32,
     @builtin(instance_index) in_instance_index: u32,
     instance: InstanceInput
 ) -> VertexOutput {
-    let w2 = W/2. + AA / camera.scale;
+    let color = unpack_color(instance.color);
+
+    // discard anything that has transpartent color
+    if (color.a == 0.) {
+        var out = VertexOutput();
+        // such value of z will be clipped
+        out.position = vec4<f32>(0.0, 0.0, 10.0, 1.0);
+        return out;
+    }
+
+    let w2 = instance.width/2. + AA / camera.scale;
 
     let d = distance(instance.p1, instance.p2);
     let v = normalize(instance.p2 - instance.p1);
     let n = vec2<f32>(-v.y, v.x);
-
-    // compute miter points
-    let critical_length_mid = length(instance.p2 - instance.p1 + w2 * n);
-    let m0 = compute_miter(instance.p0, instance.p1, n, critical_length_mid, w2);
-    let m2 = compute_miter(instance.p2, instance.p3, n, critical_length_mid, w2);
-
 
     var vertex: vec2<f32>;
     var tex_coords: vec2<f32>;
@@ -90,20 +105,24 @@ fn vs_main(
     // generate output structure
     var out: VertexOutput;
     out.position = camera.view_proj * vec4<f32>(vertex, 0.0, 1.0);
+    out.position.z = 0.5;
+
+    // TODO: all of this is needed *only* for vertices 0 and 1, thanks to flat shading
     out.tex_coords = tex_coords;
     out.distance = d;
+
+    // compute miter points
+    let critical_length_mid = length(instance.p2 - instance.p1 + w2 * n);
+    let m0 = compute_miter(instance.p0, instance.p1, n, critical_length_mid, w2);
+    let m2 = compute_miter(instance.p2, instance.p3, n, critical_length_mid, w2);
+    out.color = color;
+    out.width = instance.width;
 
     // to be useful, the miter points must be rotated in the texture coordinate system
     let rot_mat = transpose(mat2x2<f32>(v, n));
     out.m0 = rot_mat * m0;
     out.m2 = rot_mat * m2;
 
-    // rotate colors each segment
-    switch (in_instance_index % 3u) {
-//        case 0u: { out.color = vec4<f32>(1.0, 0.0, 0.0, .3); }
-//        case 1u: { out.color = vec4<f32>(0.0, 1.0, 0.0, .3); }
-        default: { out.color = vec4<f32>(0.0, 0.0, 1.0, .3); }
-    }
     return out;
 }
 
@@ -128,12 +147,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // draw miter points
     if (false)
     {
-        let dm0 = length(in.tex_coords - W/2.*in.m0);
+        let dm0 = length(in.tex_coords - in.width/2.*in.m0);
         if (dm0 < 2.) {
             return vec4<f32>(0.2, 0.1, 0.1, 1.0);
         }
 
-        let dm2 = length(in.tex_coords - vec2<f32>(in.distance, 0.) - W/2.*in.m2);
+        let dm2 = length(in.tex_coords - vec2<f32>(in.distance, 0.) - in.width/2.*in.m2);
         if (2. < dm2 && dm2 < 4.) {
             return vec4<f32>(0.1, 0.1, 0.3, 1.0);
         }
@@ -164,8 +183,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
     if (false) {
-        return vec4<f32>(1.0 - distance / W * 2., 0.0, 0.0, 1.0);
+        return vec4<f32>(1.0 - distance / in.width * 2., 0.0, 0.0, 1.0);
     } else {
-        return stroke(distance, W/2., AA/camera.scale, in.color);
+        return stroke(distance, in.width/2., AA/camera.scale, in.color);
     }
 }
