@@ -105,24 +105,25 @@ fn vs_main(
     // generate output structure
     var out: VertexOutput;
     out.position = camera.view_proj * vec4<f32>(vertex, 0.0, 1.0);
-    out.position.z = 0.5;
-
-    // TODO: all of this is needed *only* for vertices 0 and 1, thanks to flat shading
     out.tex_coords = tex_coords;
-    out.distance = d;
 
-    // compute miter points
-    let critical_length_mid = length(instance.p2 - instance.p1 + w2 * n);
-    let m0 = compute_miter(instance.p0, instance.p1, n, critical_length_mid, w2);
-    let m2 = compute_miter(instance.p2, instance.p3, n, critical_length_mid, w2);
-    out.color = color;
-    out.width = instance.width;
 
-    // to be useful, the miter points must be rotated in the texture coordinate system
-    let rot_mat = transpose(mat2x2<f32>(v, n));
-    out.m0 = rot_mat * m0;
-    out.m2 = rot_mat * m2;
+    // all of this is needed *only* for vertices 0 and 1, thanks to flat shading
+    if (in_vertex_index < 2u) {
+        out.distance = d;
 
+        // compute miter points
+        let critical_length_mid = length(instance.p2 - instance.p1 + w2 * n);
+        let m0 = compute_miter(instance.p0, instance.p1, n, critical_length_mid, w2);
+        let m2 = compute_miter(instance.p2, instance.p3, n, critical_length_mid, w2);
+        out.color = color;
+        out.width = instance.width;
+
+        // to be useful, the miter points must be rotated in the texture coordinate system
+        let rot_mat = transpose(mat2x2<f32>(v, n));
+        out.m0 = rot_mat * m0;
+        out.m2 = rot_mat * m2;
+    }
     return out;
 }
 
