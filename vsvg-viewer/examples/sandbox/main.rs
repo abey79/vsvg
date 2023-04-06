@@ -3,8 +3,8 @@ use vsvg_core::point::Point;
 use vsvg_core::{Document, FlattenedPath};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, vertex_attr_array, Adapter, Buffer, ColorTargetState, Device, Instance,
-    PrimitiveTopology, Queue, RenderPass, RenderPipeline, Surface,
+    include_wgsl, vertex_attr_array, Buffer, ColorTargetState, Device, Instance, PrimitiveTopology,
+    Queue, RenderPass, RenderPipeline, Surface,
 };
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton};
@@ -33,9 +33,9 @@ struct Engine {
     // wgpu stuff
     pub surface: Surface,
     pub device: Device,
-    pub adapter: Adapter,
     pub queue: Queue,
     pub config: wgpu::SurfaceConfiguration,
+    pub color_format: wgpu::TextureFormat,
 
     // camera stuff
     pub camera_uniform: CameraUniform,
@@ -113,11 +113,11 @@ impl Engine {
             .expect("Failed to create device");
 
         let swapchain_capabilities = surface.get_capabilities(&adapter);
-        let swapchain_format = swapchain_capabilities.formats[0];
+        let color_format = Self::preferred_framebuffer_format(&swapchain_capabilities.formats);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: swapchain_format,
+            format: color_format,
             width,
             height,
             present_mode: wgpu::PresentMode::Fifo,
@@ -166,9 +166,9 @@ impl Engine {
         Self {
             surface,
             device,
-            adapter,
             queue,
             config,
+            color_format,
             camera_uniform,
             camera_buffer,
             camera_bind_group_layout,
@@ -177,6 +177,21 @@ impl Engine {
             scale: 1.0,
             painters: vec![],
         }
+    }
+
+    /// Find a preferred framebuffer format from those available.
+    ///
+    /// Copied from egui_wgpu backend.
+    fn preferred_framebuffer_format(formats: &[wgpu::TextureFormat]) -> wgpu::TextureFormat {
+        for &format in formats {
+            if matches!(
+                format,
+                wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Bgra8Unorm
+            ) {
+                return format;
+            }
+        }
+        formats[0]
     }
 
     fn pan(&mut self, delta: cgmath::Vector2<f32>) {
@@ -248,7 +263,12 @@ impl Engine {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 242.0 / 255.0,
+                            g: 242.0 / 255.0,
+                            b: 242.0 / 255.0,
+                            a: 1.0,
+                        }),
                         store: true,
                     },
                 })],
@@ -371,9 +391,6 @@ impl LinePainter {
             ],
         };
 
-        let swapchain_capabilities = engine.surface.get_capabilities(&engine.adapter);
-        let swapchain_format = swapchain_capabilities.formats[0];
-
         let shader = engine
             .device
             .create_shader_module(include_wgsl!("line.wgsl"));
@@ -388,15 +405,22 @@ impl LinePainter {
                 });
 
         // enable alpha blending
-        let mut target: ColorTargetState = swapchain_format.into();
-        target.blend = Some(wgpu::BlendState {
-            color: wgpu::BlendComponent {
-                src_factor: wgpu::BlendFactor::SrcAlpha,
-                dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                operation: wgpu::BlendOperation::Add,
-            },
-            alpha: wgpu::BlendComponent::OVER,
-        });
+        let target = ColorTargetState {
+            format: engine.color_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::SrcAlpha,
+                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                    operation: wgpu::BlendOperation::Add,
+                },
+                alpha: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::OneMinusDstAlpha,
+                    dst_factor: wgpu::BlendFactor::One,
+                    operation: wgpu::BlendOperation::Add,
+                },
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        };
 
         let render_pipeline =
             engine
@@ -486,6 +510,122 @@ impl Painter for LinePainter {
         rpass.set_vertex_buffer(0, self.points_buffer.slice(..));
         rpass.set_vertex_buffer(1, self.attributes_buffer.slice(..));
         rpass.draw(0..4, 0..self.instance_count);
+    }
+}
+
+// ======================================================================================
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct ColorVertex {
+    position: [f32; 2],
+    color: u32,
+}
+
+/// Basic painter for drawing filled triangle strips
+///
+/// TODO: should support multiple distinct strips using indexed draw and primitive restart
+struct BasicPainter {
+    render_pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
+    vertex_count: u32,
+}
+
+impl BasicPainter {
+    fn new<I>(engine: &Engine, vertices_iterator: I, primitive_type: PrimitiveTopology) -> Self
+    where
+        I: IntoIterator<Item = ColorVertex>,
+    {
+        let vertices = vertices_iterator.into_iter().collect::<Vec<_>>();
+
+        // prepare point buffer
+        let vertex_buffer = engine
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex buffer"),
+                contents: bytemuck::cast_slice(vertices.as_slice()),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let vertex_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<ColorVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &vertex_attr_array![
+                0 => Float32x2,
+                1 => Uint32,
+            ],
+        };
+
+        let shader = engine
+            .device
+            .create_shader_module(include_wgsl!("basic.wgsl"));
+
+        let pipeline_layout =
+            engine
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &[&engine.camera_bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        // enable alpha blending
+        let target = ColorTargetState {
+            format: engine.color_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::SrcAlpha,
+                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                    operation: wgpu::BlendOperation::Add,
+                },
+                alpha: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::OneMinusDstAlpha,
+                    dst_factor: wgpu::BlendFactor::One,
+                    operation: wgpu::BlendOperation::Add,
+                },
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        };
+
+        let render_pipeline =
+            engine
+                .device
+                .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: Some("triangle pipeline"),
+                    layout: Some(&pipeline_layout),
+                    vertex: wgpu::VertexState {
+                        module: &shader,
+                        entry_point: "vs_main",
+                        buffers: &[vertex_buffer_layout],
+                    },
+                    fragment: Some(wgpu::FragmentState {
+                        module: &shader,
+                        entry_point: "fs_main",
+                        targets: &[Some(target)],
+                    }),
+                    primitive: wgpu::PrimitiveState {
+                        topology: primitive_type,
+                        ..Default::default()
+                    },
+                    depth_stencil: None,
+                    multisample: wgpu::MultisampleState::default(),
+                    multiview: None,
+                });
+
+        Self {
+            render_pipeline,
+            vertex_buffer,
+            vertex_count: vertices.len() as u32,
+        }
+    }
+}
+
+impl Painter for BasicPainter {
+    fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup) {
+        rpass.set_pipeline(&self.render_pipeline);
+        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        rpass.draw(0..self.vertex_count, 0..1);
     }
 }
 
@@ -621,6 +761,54 @@ impl Viewer<'_> {
 
     fn rebuild(&self, engine: &mut Engine) {
         engine.clear_painters();
+
+        // draw the page
+        if let Some(page_size) = self.doc.page_size {
+            let (w, h) = (page_size.w as f32, page_size.h as f32);
+
+            // shadow
+            const OFFSET: f32 = 10.;
+            let shadow_vertices = [
+                [OFFSET, h + OFFSET],
+                [OFFSET, h],
+                [w + OFFSET, h + OFFSET],
+                [w, h],
+                [w + OFFSET, OFFSET],
+                [w, OFFSET],
+            ];
+
+            engine.add_painter(Box::new(BasicPainter::new(
+                engine,
+                shadow_vertices.iter().map(|v| ColorVertex {
+                    position: *v,
+                    color: 0xFFB4B4B4,
+                }),
+                PrimitiveTopology::TriangleStrip,
+            )));
+
+            // white background
+            let vertices = [[0.0, 0.0], [w, 0.0], [0.0, h], [w, h]];
+            engine.add_painter(Box::new(BasicPainter::new(
+                engine,
+                vertices.iter().map(|v| ColorVertex {
+                    position: *v,
+                    color: 0xFFFFFFFF,
+                }),
+                PrimitiveTopology::TriangleStrip,
+            )));
+
+            // page border
+            let vertices = [[0., 0.], [w, 0.], [w, h], [0., h], [0., 0.]];
+            engine.add_painter(Box::new(BasicPainter::new(
+                engine,
+                vertices.iter().map(|v| ColorVertex {
+                    position: *v,
+                    color: 0xFFA8A8A8,
+                }),
+                PrimitiveTopology::LineStrip,
+            )));
+        }
+
         const TOLERANCE: f64 = 0.1;
         for (_, layer) in self.doc.layers.iter() {
             engine.add_painter(Box::new(LinePainter::new(
