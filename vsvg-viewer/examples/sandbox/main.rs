@@ -19,13 +19,15 @@ use winit::{
 struct CameraUniform {
     projection: [[f32; 4]; 4],
     scale: f32,
-    _padding: [u8; 12], // WGSL uniform buffer requires 16-byte alignment
+    screen_size: [f32; 2],
+    _padding: [u8; 4], // WGSL uniform buffer requires 16-byte alignment
 }
 
 impl CameraUniform {
-    fn update(&mut self, m: cgmath::Matrix4<f32>, scale: f32) {
+    fn update(&mut self, m: cgmath::Matrix4<f32>, scale: f32, screen_size: (u32, u32)) {
         self.projection = m.into();
         self.scale = scale;
+        self.screen_size = [screen_size.0 as f32, screen_size.1 as f32];
     }
 }
 
@@ -131,7 +133,11 @@ impl Engine {
         let origin = cgmath::Point2::new(0.0, 0.0);
         let scale = 1.0;
         let mut camera_uniform = CameraUniform::default();
-        camera_uniform.update(projection(origin, scale, width as f32, height as f32), 1.0);
+        camera_uniform.update(
+            projection(origin, scale, width as f32, height as f32),
+            1.0,
+            (width, height),
+        );
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -241,6 +247,7 @@ impl Engine {
                 self.config.height as f32,
             ),
             self.scale,
+            (self.config.width, self.config.height),
         );
         self.queue.write_buffer(
             &self.camera_buffer,
@@ -635,6 +642,121 @@ impl Painter for BasicPainter {
 
 // ======================================================================================
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct PointVertex {
+    position: [f32; 2],
+    color: u32,
+    size: f32,
+}
+
+struct PointPainter {
+    render_pipeline: RenderPipeline,
+    instance_buffer: Buffer,
+    instance_count: u32,
+}
+
+impl PointPainter {
+    fn new<I>(engine: &Engine, point_iterator: I) -> Self
+    where
+        I: IntoIterator<Item = PointVertex>,
+    {
+        let instances = point_iterator.into_iter().collect::<Vec<_>>();
+
+        // prepare point buffer
+        let instance_buffer = engine
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("PointPainter instance buffer"),
+                contents: bytemuck::cast_slice(instances.as_slice()),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let vertex_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<PointVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &vertex_attr_array![
+                0 => Float32x2,
+                1 => Uint32,
+                2 => Float32,
+            ],
+        };
+
+        let shader = engine
+            .device
+            .create_shader_module(include_wgsl!("point.wgsl"));
+
+        let pipeline_layout =
+            engine
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &[&engine.camera_bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        // enable alpha blending
+        let target = ColorTargetState {
+            format: engine.color_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::SrcAlpha,
+                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                    operation: wgpu::BlendOperation::Add,
+                },
+                alpha: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::OneMinusDstAlpha,
+                    dst_factor: wgpu::BlendFactor::One,
+                    operation: wgpu::BlendOperation::Add,
+                },
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        };
+
+        let render_pipeline =
+            engine
+                .device
+                .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: Some("PointPainter pipeline"),
+                    layout: Some(&pipeline_layout),
+                    vertex: wgpu::VertexState {
+                        module: &shader,
+                        entry_point: "vs_main",
+                        buffers: &[vertex_buffer_layout],
+                    },
+                    fragment: Some(wgpu::FragmentState {
+                        module: &shader,
+                        entry_point: "fs_main",
+                        targets: &[Some(target)],
+                    }),
+                    primitive: wgpu::PrimitiveState {
+                        topology: PrimitiveTopology::TriangleStrip,
+                        ..Default::default()
+                    },
+                    depth_stencil: None,
+                    multisample: wgpu::MultisampleState::default(),
+                    multiview: None,
+                });
+
+        Self {
+            render_pipeline,
+            instance_buffer,
+            instance_count: instances.len() as u32,
+        }
+    }
+}
+
+impl Painter for PointPainter {
+    fn draw<'a>(&'a self, rpass: &mut RenderPass<'a>, camera_bind_group: &'a wgpu::BindGroup) {
+        rpass.set_pipeline(&self.render_pipeline);
+        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_vertex_buffer(0, self.instance_buffer.slice(..));
+        rpass.draw(0..4, 0..self.instance_count);
+    }
+}
+
+// ======================================================================================
+
 struct ZoomPanHelper {
     panning: bool,
     cursor_position: cgmath::Vector2<f32>,
@@ -847,6 +969,18 @@ impl Viewer<'_> {
                 pen_up_trajectories,
                 PrimitiveTopology::LineList,
             )));
+
+            // draw the points
+            let points = flat_layer
+                .paths
+                .iter()
+                .flat_map(|p| p.data.iter())
+                .map(|p| PointVertex {
+                    position: p.into(),
+                    color: 0xFF000000,
+                    size: 10.0,
+                });
+            engine.add_painter(Box::new(PointPainter::new(engine, points)));
         }
     }
 
