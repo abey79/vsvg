@@ -345,9 +345,9 @@ struct LinePainter {
 }
 
 impl LinePainter {
-    fn new<I>(engine: &Engine, paths: I) -> Self
+    fn new<'b, I>(engine: &Engine, paths: I) -> Self
     where
-        I: IntoIterator<Item = FlattenedPath>,
+        I: IntoIterator<Item = &'b FlattenedPath>,
     {
         let (vertices, attribs) = Self::build_buffers(paths);
 
@@ -455,9 +455,9 @@ impl LinePainter {
         }
     }
 
-    fn build_buffers<I>(paths: I) -> (Vec<Vertex>, Vec<Attribute>)
+    fn build_buffers<'b, I>(paths: I) -> (Vec<Vertex>, Vec<Attribute>)
     where
-        I: IntoIterator<Item = FlattenedPath>,
+        I: IntoIterator<Item = &'b FlattenedPath>,
     {
         let mut iter = paths.into_iter();
         let min_size = 1000.min(iter.size_hint().0 * 4);
@@ -466,7 +466,11 @@ impl LinePainter {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(min_size);
         let mut attribs = Vec::with_capacity(min_size);
 
-        fn add_path(path: FlattenedPath, vertices: &mut Vec<Vertex>, attribs: &mut Vec<Attribute>) {
+        fn add_path(
+            path: &FlattenedPath,
+            vertices: &mut Vec<Vertex>,
+            attribs: &mut Vec<Attribute>,
+        ) {
             if path.data.len() > 1 {
                 if path.data.len() > 2 && path.data.first() == path.data.last() {
                     vertices.push(path.data[path.data.len() - 2].into());
@@ -811,9 +815,37 @@ impl Viewer<'_> {
 
         const TOLERANCE: f64 = 0.1;
         for (_, layer) in self.doc.layers.iter() {
-            engine.add_painter(Box::new(LinePainter::new(
+            let flat_layer = layer.flatten(TOLERANCE);
+
+            // draw the layer paths
+            engine.add_painter(Box::new(LinePainter::new(engine, &flat_layer.paths)));
+
+            // draw the pen-up trajectories
+            let pen_up_trajectories = flat_layer
+                .paths
+                .windows(2)
+                .filter_map(|p| {
+                    if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
+                        Some([
+                            ColorVertex {
+                                position: from.into(),
+                                color: 0xFFA8A8A8,
+                            },
+                            ColorVertex {
+                                position: to.into(),
+                                color: 0xFFA8A8A8,
+                            },
+                        ])
+                    } else {
+                        None
+                    }
+                })
+                .flatten();
+
+            engine.add_painter(Box::new(BasicPainter::new(
                 engine,
-                layer.flatten(TOLERANCE).paths,
+                pen_up_trajectories,
+                PrimitiveTopology::LineList,
             )));
         }
     }

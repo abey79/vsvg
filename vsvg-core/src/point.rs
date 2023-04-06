@@ -94,6 +94,13 @@ impl From<&Point> for [f64; 2] {
     }
 }
 
+impl From<&Point> for [f32; 2] {
+    fn from(p: &Point) -> Self {
+        #[allow(clippy::cast_possible_truncation)]
+        [p.x() as f32, p.y() as f32]
+    }
+}
+
 impl From<&Point> for kurbo::Point {
     fn from(p: &Point) -> Self {
         Self { x: p.x(), y: p.y() }
