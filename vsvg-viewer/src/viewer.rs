@@ -1,18 +1,14 @@
-mod engine;
-mod frame_history;
-mod painters;
-
+use crate::engine::{DisplayMode, Engine, ViewerOptions};
+use crate::frame_history::FrameHistory;
 use eframe::{egui_wgpu, Frame};
 use egui::{Color32, Pos2, Rect, Sense, Ui};
-use frame_history::FrameHistory;
-use std::error::Error;
-use std::sync::{Arc, Mutex};
-
-use crate::viewer::engine::{DisplayMode, Engine, ViewerOptions};
 use vsvg_core::document::FlattenedDocument;
+
+use std::sync::{Arc, Mutex};
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct Viewer {
     /// polylines derived from the document
     #[serde(skip)]
@@ -97,6 +93,7 @@ impl Viewer {
         })
     }
 
+    #[allow(clippy::unused_self)]
     fn menu_file(&self, frame: &mut Frame, ui: &mut Ui) {
         ui.menu_button("File", |ui| {
             if ui.button("Quit").clicked() {
@@ -116,7 +113,7 @@ impl Viewer {
                     )
                     .clicked()
                 {
-                    ui.close_menu()
+                    ui.close_menu();
                 };
                 if ui
                     .radio_value(
@@ -126,7 +123,7 @@ impl Viewer {
                     )
                     .clicked()
                 {
-                    ui.close_menu()
+                    ui.close_menu();
                 };
             });
             ui.separator();
@@ -167,9 +164,18 @@ impl Viewer {
 
     fn menu_debug(&mut self, ui: &mut Ui) {
         ui.menu_button("Debug", |ui| {
-            ui.checkbox(&mut self.show_settings, "Show settings");
-            ui.checkbox(&mut self.show_inspection, "Show inspection");
-            ui.checkbox(&mut self.show_memory, "Show memory");
+            if ui.button("Show settings window").clicked() {
+                self.show_settings = true;
+                ui.close_menu();
+            }
+            if ui.button("Show inspection window").clicked() {
+                self.show_inspection = true;
+                ui.close_menu();
+            }
+            if ui.button("Show memory window").clicked() {
+                self.show_memory = true;
+                ui.close_menu();
+            }
         });
     }
 
@@ -192,14 +198,18 @@ impl Viewer {
         }
         let bounds = bounds.expect("bounds is not none");
 
-        let (w, h) = (bounds.width() as f32, bounds.height() as f32);
-        let (view_w, view_h) = (viewport.width(), viewport.height());
+        #[allow(clippy::cast_possible_truncation)]
+        {
+            let (w, h) = (bounds.width() as f32, bounds.height() as f32);
+            let (view_w, view_h) = (viewport.width(), viewport.height());
 
-        self.scale = 0.95 * f32::min(view_w / w, view_h / h);
-        self.offset = Pos2::new(
-            bounds.x0 as f32 - (view_w / self.scale - w) / 2.0,
-            bounds.y0 as f32 - (view_h / self.scale - h) / 2.0,
-        );
+            self.scale = 0.95 * f32::min(view_w / w, view_h / h);
+
+            self.offset = Pos2::new(
+                bounds.x0 as f32 - (view_w / self.scale - w) / 2.0,
+                bounds.y0 as f32 - (view_h / self.scale - h) / 2.0,
+            );
+        }
     }
 
     fn paint_viewer(&mut self, ui: &mut Ui, _frame: &mut Frame) {
@@ -229,6 +239,7 @@ impl Viewer {
             }
         });
 
+        #[allow(clippy::float_cmp)]
         if old_offset != self.offset || old_scale != self.scale {
             self.must_fit_to_view = false;
         }
@@ -319,38 +330,5 @@ impl eframe::App for Viewer {
 
         self.frame_history
             .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
-    }
-}
-
-pub(crate) trait Show {
-    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>>;
-}
-
-impl Show for vsvg_core::Document {
-    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
-        let native_options = eframe::NativeOptions::default();
-
-        //TODO: this is Engine's implementation details
-        let polylines = self.flatten(tolerance);
-        let control_points = self.control_points();
-
-        eframe::run_native(
-            "vsvg",
-            native_options,
-            Box::new(move |cc| {
-                let style = egui::Style {
-                    visuals: egui::Visuals::light(),
-                    ..egui::Style::default()
-                };
-                cc.egui_ctx.set_style(style);
-
-                Box::new(
-                    Viewer::new(cc, polylines, control_points)
-                        .expect("viewer requires wgpu backend"),
-                )
-            }),
-        )?;
-
-        Ok(())
     }
 }

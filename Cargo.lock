@@ -2488,8 +2488,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vsvg"
 version = "0.1.0-alpha.0"
 dependencies = [
- "bytemuck",
- "cgmath",
  "clap 4.2.1",
  "dhat",
  "eframe",
@@ -2501,7 +2499,6 @@ dependencies = [
  "tracing-subscriber",
  "vsvg-core",
  "vsvg-viewer",
- "wgpu",
 ]
 
 [[package]]
@@ -2536,11 +2533,13 @@ dependencies = [
  "bytemuck",
  "cgmath",
  "criterion",
+ "eframe",
+ "egui",
  "env_logger",
  "kurbo",
  "pollster",
  "raw-window-handle",
- "rayon",
+ "serde",
  "tracing-subscriber",
  "vsvg-core",
  "wgpu",

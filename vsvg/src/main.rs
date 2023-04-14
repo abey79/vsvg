@@ -1,9 +1,8 @@
 mod cli;
 mod commands;
-mod viewer;
 
 use crate::commands::command_list;
-use crate::viewer::Show;
+use vsvg_viewer::Show;
 
 use std::error::Error;
 use std::io::Read;

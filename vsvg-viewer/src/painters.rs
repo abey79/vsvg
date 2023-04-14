@@ -1,4 +1,4 @@
-use crate::viewer::engine::Engine;
+use crate::engine::Engine;
 use std::mem;
 use vsvg_core::point::Point;
 use vsvg_core::FlattenedPath;
@@ -23,6 +23,7 @@ struct Vertex {
 impl From<&Point> for Vertex {
     fn from(point: &Point) -> Self {
         Self {
+            #[allow(clippy::cast_possible_truncation)]
             position: [point.x() as f32, point.y() as f32],
         }
     }
@@ -31,6 +32,7 @@ impl From<&Point> for Vertex {
 impl From<Point> for Vertex {
     fn from(point: Point) -> Self {
         Self {
+            #[allow(clippy::cast_possible_truncation)]
             position: [point.x() as f32, point.y() as f32],
         }
     }
@@ -156,6 +158,7 @@ impl LinePainter {
             render_pipeline,
             points_buffer,
             attributes_buffer,
+            #[allow(clippy::cast_possible_truncation)]
             instance_count: attribs.len() as u32,
         }
     }
@@ -164,13 +167,6 @@ impl LinePainter {
     where
         I: IntoIterator<Item = &'b FlattenedPath>,
     {
-        let mut iter = paths.into_iter();
-        let min_size = 1000.min(iter.size_hint().0 * 4);
-
-        // build the data buffers
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(min_size);
-        let mut attribs = Vec::with_capacity(min_size);
-
         fn add_path(
             path: &FlattenedPath,
             vertices: &mut Vec<Vertex>,
@@ -189,6 +185,7 @@ impl LinePainter {
 
                 let attr = Attribute {
                     color: path.color.to_rgba(),
+                    #[allow(clippy::cast_possible_truncation)]
                     width: path.stroke_width as f32,
                 };
 
@@ -197,6 +194,13 @@ impl LinePainter {
                 }
             }
         }
+
+        let mut iter = paths.into_iter();
+        let min_size = 1000.min(iter.size_hint().0 * 4);
+
+        // build the data buffers
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(min_size);
+        let mut attribs = Vec::with_capacity(min_size);
 
         if let Some(path) = iter.next() {
             add_path(path, &mut vertices, &mut attribs);
@@ -336,6 +340,7 @@ impl BasicPainter {
         Self {
             render_pipeline,
             vertex_buffer,
+            #[allow(clippy::cast_possible_truncation)]
             vertex_count: vertices.len() as u32,
         }
     }
@@ -459,6 +464,7 @@ impl PointPainter {
         Self {
             render_pipeline,
             instance_buffer,
+            #[allow(clippy::cast_possible_truncation)]
             instance_count: instances.len() as u32,
         }
     }

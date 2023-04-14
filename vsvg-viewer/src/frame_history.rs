@@ -8,6 +8,7 @@ pub(crate) struct FrameHistory {
 impl Default for FrameHistory {
     fn default() -> Self {
         let max_age: f32 = 1.0;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let max_len = (max_age * 300.0).round() as usize;
         Self {
             frame_times: History::new(0..max_len, max_age),

@@ -64,11 +64,26 @@ impl Display for Color {
 }
 
 impl Color {
+    pub const WHITE: Self = Self::gray(0xFF);
+    pub const BLACK: Self = Self::gray(0);
+
     #[must_use]
-    pub fn to_rgba(&self) -> u32 {
-        u32::from(self.r)
-            | u32::from(self.g) << 8
-            | u32::from(self.b) << 16
-            | u32::from(self.a) << 24
+    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b, a: 0xFF }
+    }
+
+    #[must_use]
+    pub const fn gray(v: u8) -> Self {
+        Self {
+            r: v,
+            g: v,
+            b: v,
+            a: 0xFF,
+        }
+    }
+
+    #[must_use]
+    pub const fn to_rgba(&self) -> u32 {
+        self.r as u32 | (self.g as u32) << 8 | (self.b as u32) << 16 | (self.a as u32) << 24
     }
 }

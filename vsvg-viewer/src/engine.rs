@@ -1,16 +1,17 @@
-use crate::viewer::painters::{BasicPainter, LinePainter, Painter, PointPainter};
+use crate::painters::{BasicPainter, LinePainter, Painter, PointPainter};
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use vsvg_core::{FlattenedDocument, LayerID};
+use vsvg_core::{Color, FlattenedDocument, LayerID};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, Device, PrimitiveTopology, TextureFormat};
 
-const PEN_UP_TRAJECTORY_COLOR: u32 = 0xFFA8A8A8;
-const PAGE_SHADOW_COLOR: u32 = 0xFFB4B4B4;
-const PAGE_BACKGROUND_COLOR: u32 = 0xFFFFFFFF;
-const PAGE_BORDER_COLOR: u32 = 0xFFA8A8A8;
-const POINTS_COLOR: u32 = 0xFF000000;
+const PEN_UP_TRAJECTORY_COLOR: u32 = Color::gray(168).to_rgba();
+const PAGE_SHADOW_COLOR: u32 = Color::gray(180).to_rgba();
+const PAGE_BACKGROUND_COLOR: u32 = Color::WHITE.to_rgba();
+const PAGE_BORDER_COLOR: u32 = Color::gray(168).to_rgba();
+const PAGE_SHADOW_SIZE: f32 = 10.;
+const POINTS_COLOR: u32 = Color::BLACK.to_rgba();
 const POINTS_SIZE: f32 = 2.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -177,17 +178,17 @@ impl Engine {
 
         // draw the page
         if let Some(page_size) = self.document.page_size {
+            #[allow(clippy::cast_possible_truncation)]
             let (w, h) = (page_size.w as f32, page_size.h as f32);
 
             // shadow
-            const OFFSET: f32 = 10.;
             let shadow_vertices = [
-                [OFFSET, h + OFFSET],
-                [OFFSET, h],
-                [w + OFFSET, h + OFFSET],
+                [PAGE_SHADOW_SIZE, h + PAGE_SHADOW_SIZE],
+                [PAGE_SHADOW_SIZE, h],
+                [w + PAGE_SHADOW_SIZE, h + PAGE_SHADOW_SIZE],
                 [w, h],
-                [w + OFFSET, OFFSET],
-                [w, OFFSET],
+                [w + PAGE_SHADOW_SIZE, PAGE_SHADOW_SIZE],
+                [w, PAGE_SHADOW_SIZE],
             ];
 
             painters.push(BasicPainter::from_vertices_solid(
@@ -231,7 +232,7 @@ impl Engine {
                     .paths
                     .iter()
                     .flat_map(|p| p.data.iter())
-                    .map(|p| p.into());
+                    .map(Into::into);
 
                 let pen_up_trajectories = layer
                     .paths
@@ -298,7 +299,7 @@ impl Engine {
             .for_each(|painter| painter.draw(render_pass, &self.camera_bind_group));
 
         let viewer_options = self.viewer_options.lock().unwrap();
-        for (lid, layer_painters) in self.layer_painters.iter() {
+        for (lid, layer_painters) in &self.layer_painters {
             if *viewer_options.layer_visibility.get(lid).unwrap_or(&true) {
                 layer_painters
                     .line_painter
