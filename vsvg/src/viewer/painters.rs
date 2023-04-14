@@ -241,6 +241,23 @@ pub(super) struct BasicPainter {
 }
 
 impl BasicPainter {
+    pub(crate) fn from_vertices_solid(
+        engine: &Engine,
+        device: &Device,
+        vertices: impl IntoIterator<Item = [f32; 2]>,
+        color: u32,
+        primitive_type: PrimitiveTopology,
+    ) -> Self {
+        Self::new(
+            engine,
+            device,
+            vertices
+                .into_iter()
+                .map(|v| ColorVertex { position: v, color }),
+            primitive_type,
+        )
+    }
+
     pub(crate) fn new<I>(
         engine: &Engine,
         device: &Device,
@@ -350,6 +367,24 @@ pub(super) struct PointPainter {
 }
 
 impl PointPainter {
+    pub(crate) fn from_vertices_solid(
+        engine: &Engine,
+        device: &Device,
+        vertices: impl IntoIterator<Item = [f32; 2]>,
+        color: u32,
+        size: f32,
+    ) -> Self {
+        Self::new(
+            engine,
+            device,
+            vertices.into_iter().map(|v| PointVertex {
+                position: v,
+                color,
+                size,
+            }),
+        )
+    }
+
     pub(crate) fn new<I>(engine: &Engine, device: &Device, point_iterator: I) -> Self
     where
         I: IntoIterator<Item = PointVertex>,

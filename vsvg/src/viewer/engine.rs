@@ -1,12 +1,17 @@
-use crate::viewer::painters::{
-    BasicPainter, ColorVertex, LinePainter, Painter, PointPainter, PointVertex,
-};
+use crate::viewer::painters::{BasicPainter, LinePainter, Painter, PointPainter};
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use vsvg_core::{FlattenedDocument, LayerID};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, Device, PrimitiveTopology, TextureFormat};
+
+const PEN_UP_TRAJECTORY_COLOR: u32 = 0xFFA8A8A8;
+const PAGE_SHADOW_COLOR: u32 = 0xFFB4B4B4;
+const PAGE_BACKGROUND_COLOR: u32 = 0xFFFFFFFF;
+const PAGE_BORDER_COLOR: u32 = 0xFFA8A8A8;
+const POINTS_COLOR: u32 = 0xFF000000;
+const POINTS_SIZE: f32 = 2.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 pub(crate) enum DisplayMode {
@@ -185,37 +190,31 @@ impl Engine {
                 [w, OFFSET],
             ];
 
-            painters.push(BasicPainter::new(
+            painters.push(BasicPainter::from_vertices_solid(
                 self,
                 device,
-                shadow_vertices.iter().map(|v| ColorVertex {
-                    position: *v,
-                    color: 0xFFB4B4B4,
-                }),
+                shadow_vertices,
+                PAGE_SHADOW_COLOR,
                 PrimitiveTopology::TriangleStrip,
             ));
 
             // white background
             let vertices = [[0.0, 0.0], [w, 0.0], [0.0, h], [w, h]];
-            painters.push(BasicPainter::new(
+            painters.push(BasicPainter::from_vertices_solid(
                 self,
                 device,
-                vertices.iter().map(|v| ColorVertex {
-                    position: *v,
-                    color: 0xFFFFFFFF,
-                }),
+                vertices,
+                PAGE_BACKGROUND_COLOR,
                 PrimitiveTopology::TriangleStrip,
             ));
 
             // page border
             let vertices = [[0., 0.], [w, 0.], [w, h], [0., h], [0., 0.]];
-            painters.push(BasicPainter::new(
+            painters.push(BasicPainter::from_vertices_solid(
                 self,
                 device,
-                vertices.iter().map(|v| ColorVertex {
-                    position: *v,
-                    color: 0xFFA8A8A8,
-                }),
+                vertices,
+                PAGE_BORDER_COLOR,
                 PrimitiveTopology::LineStrip,
             ));
         }
@@ -232,27 +231,14 @@ impl Engine {
                     .paths
                     .iter()
                     .flat_map(|p| p.data.iter())
-                    .map(|p| PointVertex {
-                        position: p.into(),
-                        color: 0xFF000000,
-                        size: 10.0,
-                    });
+                    .map(|p| p.into());
 
                 let pen_up_trajectories = layer
                     .paths
                     .windows(2)
                     .filter_map(|p| {
                         if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
-                            Some([
-                                ColorVertex {
-                                    position: from.into(),
-                                    color: 0xFFA8A8A8,
-                                },
-                                ColorVertex {
-                                    position: to.into(),
-                                    color: 0xFFA8A8A8,
-                                },
-                            ])
+                            Some([from.into(), to.into()])
                         } else {
                             None
                         }
@@ -263,11 +249,18 @@ impl Engine {
                     lid,
                     LayerPainters {
                         line_painter: LinePainter::new(self, device, &layer.paths),
-                        point_painter: PointPainter::new(self, device, points),
-                        pen_up_painter: BasicPainter::new(
+                        point_painter: PointPainter::from_vertices_solid(
+                            self,
+                            device,
+                            points,
+                            POINTS_COLOR,
+                            POINTS_SIZE,
+                        ),
+                        pen_up_painter: BasicPainter::from_vertices_solid(
                             self,
                             device,
                             pen_up_trajectories,
+                            PEN_UP_TRAJECTORY_COLOR,
                             PrimitiveTopology::LineList,
                         ),
                     },

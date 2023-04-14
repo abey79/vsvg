@@ -329,6 +329,8 @@ pub(crate) trait Show {
 impl Show for vsvg_core::Document {
     fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
         let native_options = eframe::NativeOptions::default();
+
+        //TODO: this is Engine's implementation details
         let polylines = self.flatten(tolerance);
         let control_points = self.control_points();
 
@@ -341,8 +343,11 @@ impl Show for vsvg_core::Document {
                     ..egui::Style::default()
                 };
                 cc.egui_ctx.set_style(style);
-                //FIXME: unwrap
-                Box::new(Viewer::new(cc, polylines, control_points).unwrap())
+
+                Box::new(
+                    Viewer::new(cc, polylines, control_points)
+                        .expect("viewer requires wgpu backend"),
+                )
             }),
         )?;
 
