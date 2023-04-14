@@ -2,7 +2,8 @@ use crate::painters::{BasicPainter, LinePainter, Painter, PointPainter};
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use vsvg_core::{Color, FlattenedDocument, LayerID};
+use vsvg_core::point::Point;
+use vsvg_core::{Color, Document, FlattenedDocument, LayerID};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, Device, PrimitiveTopology, TextureFormat};
 
@@ -13,6 +14,8 @@ const PAGE_BORDER_COLOR: u32 = Color::gray(168).to_rgba();
 const PAGE_SHADOW_SIZE: f32 = 10.;
 const POINTS_COLOR: u32 = Color::BLACK.to_rgba();
 const POINTS_SIZE: f32 = 2.0;
+const CONTROL_POINTS_COLOR: u32 = Color::gray(128).to_rgba();
+const CONTROL_POINTS_SIZE: f32 = 2.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 pub(crate) enum DisplayMode {
@@ -63,7 +66,28 @@ impl CameraUniform {
     }
 }
 
-struct LayerPainters {
+#[derive(Debug, Default)]
+pub(crate) struct DocumentData {
+    pub flattened_document: FlattenedDocument,
+    pub control_points: FlattenedDocument,
+    pub display_vertices: HashMap<LayerID, Vec<Point>>,
+}
+
+impl DocumentData {
+    pub(crate) fn new(document: &Document) -> Self {
+        Self {
+            flattened_document: document.flatten(0.01), //TODO: magic number
+            control_points: document.control_points(),
+            display_vertices: document
+                .layers
+                .iter()
+                .map(|(&lid, layer)| (lid, layer.display_vertices()))
+                .collect(),
+        }
+    }
+}
+
+struct LayerData {
     /// lines are always displayed
     line_painter: LinePainter,
 
@@ -72,13 +96,16 @@ struct LayerPainters {
 
     /// painter for pen-up trajectories
     pen_up_painter: BasicPainter,
+
+    /// painter for control points
+    control_points_painter: PointPainter,
+
+    /// painters for control lines
+    control_lines_painter: BasicPainter,
 }
 
 pub(super) struct Engine {
-    document: Arc<FlattenedDocument>,
-    //TODO: implement that
-    #[allow(dead_code)]
-    control_points: Arc<Option<FlattenedDocument>>,
+    document_data: Arc<DocumentData>,
 
     viewer_options: Arc<Mutex<ViewerOptions>>,
 
@@ -94,7 +121,7 @@ pub(super) struct Engine {
     page_size_painters: Vec<BasicPainter>,
 
     /// per-layer painters
-    layer_painters: HashMap<LayerID, LayerPainters>,
+    layer_data: HashMap<LayerID, LayerData>,
 }
 
 fn projection(
@@ -116,7 +143,7 @@ fn projection(
 impl Engine {
     pub(crate) fn new(
         wgpu_render_state: &RenderState,
-        document: Arc<FlattenedDocument>,
+        document_data: Arc<DocumentData>,
         viewer_options: Arc<Mutex<ViewerOptions>>,
     ) -> Self {
         let device = &wgpu_render_state.device;
@@ -154,21 +181,20 @@ impl Engine {
         });
 
         let mut engine = Self {
-            document,
-            control_points: Arc::new(None),
+            document_data,
             viewer_options,
             camera_buffer,
             camera_bind_group_layout,
             camera_bind_group,
             target_format: wgpu_render_state.target_format,
             page_size_painters: vec![],
-            layer_painters: HashMap::new(),
+            layer_data: HashMap::new(),
         };
 
         // Note: this stuff must be done each time the document change, if we want to support
         // changing the document.
         engine.page_size_painters = engine.build_page_size_painters(device);
-        engine.layer_painters = engine.build_layer_painters(device);
+        engine.layer_data = engine.build_layer_painters(device);
 
         engine
     }
@@ -177,7 +203,7 @@ impl Engine {
         let mut painters = vec![];
 
         // draw the page
-        if let Some(page_size) = self.document.page_size {
+        if let Some(page_size) = self.document_data.flattened_document.page_size {
             #[allow(clippy::cast_possible_truncation)]
             let (w, h) = (page_size.w as f32, page_size.h as f32);
 
@@ -223,51 +249,72 @@ impl Engine {
         painters
     }
 
-    fn build_layer_painters(&self, device: &Device) -> HashMap<LayerID, LayerPainters> {
-        self.document
-            .layers
-            .iter()
-            .map(|(&lid, layer)| {
-                let points = layer
-                    .paths
-                    .iter()
-                    .flat_map(|p| p.data.iter())
-                    .map(Into::into);
+    fn build_layer_painters(&self, device: &Device) -> HashMap<LayerID, LayerData> {
+        let mut layers = HashMap::new();
+        for (lid, flattened_layer) in &self.document_data.flattened_document.layers {
+            let points = self
+                .document_data
+                .display_vertices
+                .get(lid)
+                .unwrap()
+                .iter()
+                .map(Into::into);
 
-                let pen_up_trajectories = layer
-                    .paths
-                    .windows(2)
-                    .filter_map(|p| {
-                        if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
-                            Some([from.into(), to.into()])
-                        } else {
-                            None
-                        }
-                    })
-                    .flatten();
+            let pen_up_trajectories = flattened_layer
+                .paths
+                .windows(2)
+                .filter_map(|p| {
+                    if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
+                        Some([from.into(), to.into()])
+                    } else {
+                        None
+                    }
+                })
+                .flatten();
 
-                (
-                    lid,
-                    LayerPainters {
-                        line_painter: LinePainter::new(self, device, &layer.paths),
-                        point_painter: PointPainter::from_vertices_solid(
-                            self,
-                            device,
-                            points,
-                            POINTS_COLOR,
-                            POINTS_SIZE,
-                        ),
-                        pen_up_painter: BasicPainter::from_vertices_solid(
-                            self,
-                            device,
-                            pen_up_trajectories,
-                            PEN_UP_TRAJECTORY_COLOR,
-                            PrimitiveTopology::LineList,
-                        ),
-                    },
-                )
-            })
-            .collect()
+            let control_points: Vec<_> = self.document_data.control_points.layers[lid]
+                .paths
+                .iter()
+                .flat_map(|p| &p.data)
+                .map(Into::into)
+                .collect();
+
+            let layer_data = LayerData {
+                line_painter: LinePainter::new(self, device, &flattened_layer.paths),
+                point_painter: PointPainter::from_vertices_solid(
+                    self,
+                    device,
+                    points,
+                    POINTS_COLOR,
+                    POINTS_SIZE,
+                ),
+                pen_up_painter: BasicPainter::from_vertices_solid(
+                    self,
+                    device,
+                    pen_up_trajectories,
+                    PEN_UP_TRAJECTORY_COLOR,
+                    PrimitiveTopology::LineList,
+                ),
+                control_points_painter: PointPainter::from_vertices_solid(
+                    self,
+                    device,
+                    control_points.clone(),
+                    CONTROL_POINTS_COLOR,
+                    CONTROL_POINTS_SIZE,
+                ),
+                control_lines_painter: BasicPainter::from_vertices_solid(
+                    self,
+                    device,
+                    control_points,
+                    CONTROL_POINTS_COLOR,
+                    PrimitiveTopology::LineList,
+                ),
+            };
+
+            layers.insert(*lid, layer_data);
+        }
+
+        layers
     }
 
     pub(super) fn prepare(
@@ -299,11 +346,21 @@ impl Engine {
             .for_each(|painter| painter.draw(render_pass, &self.camera_bind_group));
 
         let viewer_options = self.viewer_options.lock().unwrap();
-        for (lid, layer_painters) in &self.layer_painters {
+        for (lid, layer_painters) in &self.layer_data {
             if *viewer_options.layer_visibility.get(lid).unwrap_or(&true) {
                 layer_painters
                     .line_painter
                     .draw(render_pass, &self.camera_bind_group);
+
+                if viewer_options.show_control_points {
+                    layer_painters
+                        .control_points_painter
+                        .draw(render_pass, &self.camera_bind_group);
+
+                    layer_painters
+                        .control_lines_painter
+                        .draw(render_pass, &self.camera_bind_group);
+                }
 
                 if viewer_options.show_point {
                     layer_painters

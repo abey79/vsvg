@@ -2,7 +2,6 @@ mod cli;
 mod commands;
 
 use crate::commands::command_list;
-use vsvg_viewer::Show;
 
 use std::error::Error;
 use std::io::Read;
@@ -54,7 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // display gui
     if !no_show {
-        state.document.show(0.1)?;
+        vsvg_viewer::show(&state.document)?;
     }
 
     Ok(())

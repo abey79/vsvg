@@ -1,8 +1,7 @@
-use crate::engine::{DisplayMode, Engine, ViewerOptions};
+use crate::engine::{DisplayMode, DocumentData, Engine, ViewerOptions};
 use crate::frame_history::FrameHistory;
 use eframe::{egui_wgpu, Frame};
 use egui::{Color32, Pos2, Rect, Sense, Ui};
-use vsvg_core::document::FlattenedDocument;
 
 use std::sync::{Arc, Mutex};
 
@@ -12,11 +11,7 @@ use std::sync::{Arc, Mutex};
 pub(crate) struct Viewer {
     /// polylines derived from the document
     #[serde(skip)]
-    document: Arc<FlattenedDocument>,
-
-    /// control points derived from the document
-    #[serde(skip)]
-    control_points: FlattenedDocument,
+    document_data: Arc<DocumentData>,
 
     /// viewer options
     viewer_options: Arc<Mutex<ViewerOptions>>,
@@ -53,8 +48,7 @@ pub(crate) struct Viewer {
 impl Viewer {
     pub fn new<'a>(
         cc: &'a eframe::CreationContext<'a>,
-        document: FlattenedDocument,
-        control_points: FlattenedDocument,
+        document_data: Arc<DocumentData>,
     ) -> Option<Self> {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
@@ -63,7 +57,6 @@ impl Viewer {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }*/
 
-        let document = Arc::new(document);
         let viewer_options = Arc::new(Mutex::new(ViewerOptions::default()));
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -71,7 +64,11 @@ impl Viewer {
         let wgpu_render_state = cc.wgpu_render_state.as_ref()?;
 
         // prepare engine
-        let engine = Engine::new(wgpu_render_state, document.clone(), viewer_options.clone());
+        let engine = Engine::new(
+            wgpu_render_state,
+            document_data.clone(),
+            viewer_options.clone(),
+        );
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
@@ -80,8 +77,7 @@ impl Viewer {
         callback_resources.insert(engine);
 
         Some(Viewer {
-            document,
-            control_points,
+            document_data,
             viewer_options,
             offset: Pos2::ZERO,
             scale: 1.0,
@@ -149,7 +145,7 @@ impl Viewer {
 
     fn menu_layer(&mut self, ui: &mut Ui) {
         ui.menu_button("Layer", |ui| {
-            for (lid, layer) in &self.document.layers {
+            for (lid, layer) in &self.document_data.flattened_document.layers {
                 let mut viewer_options = self.viewer_options.lock().unwrap();
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
                 let mut label = format!("Layer {lid}");
@@ -180,17 +176,17 @@ impl Viewer {
     }
 
     fn fit_to_view(&mut self, viewport: &Rect) {
-        let bounds = if let Some(page_size) = self.document.page_size {
+        let bounds = if let Some(page_size) = self.document_data.flattened_document.page_size {
             if page_size.w != 0.0 && page_size.h != 0.0 {
                 Some(kurbo::Rect::from_points(
                     (0., 0.),
                     (page_size.w, page_size.h),
                 ))
             } else {
-                self.document.bounds()
+                self.document_data.flattened_document.bounds()
             }
         } else {
-            self.document.bounds()
+            self.document_data.flattened_document.bounds()
         };
 
         if bounds.is_none() {

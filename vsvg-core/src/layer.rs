@@ -1,7 +1,8 @@
 use crate::flattened_layer::FlattenedLayer;
 use crate::path::{PathData, PathImpl};
 use crate::point::Point;
-use crate::{FlattenedPath, PathType};
+use crate::{FlattenedPath, Path, PathType};
+use kurbo::PathEl;
 
 pub type Layer = LayerImpl<PathData>;
 
@@ -69,6 +70,30 @@ impl Layer {
             paths: flattened_paths,
             name: self.name.clone(),
         }
+    }
+
+    #[must_use]
+    pub fn control_points(&self) -> FlattenedLayer {
+        FlattenedLayer {
+            paths: self.paths.iter().flat_map(Path::control_points).collect(),
+            name: self.name.clone(),
+        }
+    }
+
+    #[must_use]
+    pub fn display_vertices(&self) -> Vec<Point> {
+        self.paths
+            .iter()
+            .flat_map(|path| {
+                path.data.iter().filter_map(|el| match el {
+                    PathEl::MoveTo(pt)
+                    | PathEl::LineTo(pt)
+                    | PathEl::CurveTo(_, _, pt)
+                    | PathEl::QuadTo(_, pt) => Some(pt.into()),
+                    PathEl::ClosePath => None,
+                })
+            })
+            .collect()
     }
 
     pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {

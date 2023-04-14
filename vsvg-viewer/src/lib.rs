@@ -7,38 +7,29 @@ mod frame_history;
 mod painters;
 mod viewer;
 
+use crate::engine::DocumentData;
 use crate::viewer::Viewer;
 use std::error::Error;
+use std::sync::Arc;
+use vsvg_core::Document;
 
-pub trait Show {
-    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>>;
-}
+pub fn show(document: &Document) -> Result<(), Box<dyn Error>> {
+    let native_options = eframe::NativeOptions::default();
+    let document_data = Arc::new(DocumentData::new(document));
 
-impl Show for vsvg_core::Document {
-    fn show(&self, tolerance: f64) -> Result<(), Box<dyn Error>> {
-        let native_options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "vsvg",
+        native_options,
+        Box::new(move |cc| {
+            let style = egui::Style {
+                visuals: egui::Visuals::light(),
+                ..egui::Style::default()
+            };
+            cc.egui_ctx.set_style(style);
 
-        //TODO: this is Engine's implementation details
-        let polylines = self.flatten(tolerance);
-        let control_points = self.control_points();
+            Box::new(Viewer::new(cc, document_data).expect("viewer requires wgpu backend"))
+        }),
+    )?;
 
-        eframe::run_native(
-            "vsvg",
-            native_options,
-            Box::new(move |cc| {
-                let style = egui::Style {
-                    visuals: egui::Visuals::light(),
-                    ..egui::Style::default()
-                };
-                cc.egui_ctx.set_style(style);
-
-                Box::new(
-                    Viewer::new(cc, polylines, control_points)
-                        .expect("viewer requires wgpu backend"),
-                )
-            }),
-        )?;
-
-        Ok(())
-    }
+    Ok(())
 }
