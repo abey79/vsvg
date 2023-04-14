@@ -16,7 +16,7 @@ eframe = { version = "0.21.0", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "wgpu",
 ] }
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
 tracing-subscriber = "0.3.16"
 clap = { version = "4.1.6", features = ["cargo"]}
 vsvg-core = { path = "../vsvg-core", features = ["egui"] }
@@ -24,3 +24,18 @@ vsvg-viewer = { path = "../vsvg-viewer"}
 kurbo = "0.9.1"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
+wgpu = "0.15.1"
+bytemuck = {version = "1.13.1",  features = [ "derive" ]}
+cgmath = "0.18.0"
+
+dhat = { version = "0.3.2", optional = true } # for heap profiling
+
+
+
+# for dhat-heap!!
+#[profile.release]
+#debug = 1
+
+[features]
+dhat-heap = ["dhat"]    # if you are doing heap profiling
+dhat-ad-hoc = []  # if you are doing ad hoc profiling

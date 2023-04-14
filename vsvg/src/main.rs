@@ -1,6 +1,5 @@
 mod cli;
 mod commands;
-mod frame_history;
 mod viewer;
 
 use crate::commands::command_list;
@@ -13,7 +12,14 @@ use std::path::PathBuf;
 use crate::cli::State;
 use vsvg_core::Document;
 
+#[cfg(feature = "dhat-heap")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
+
 fn main() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "dhat-heap")]
+    let _profiler = dhat::Profiler::new_heap();
+
     let commands = command_list();
     let mut matches = cli::cli(&commands).get_matches();
 
