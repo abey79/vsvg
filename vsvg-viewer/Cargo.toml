@@ -8,13 +8,10 @@ edition = "2021"
 
 [dependencies]
 vsvg-core = { path = "../vsvg-core" }
-kurbo = "0.9.1"
-egui = "0.21.0"
-eframe = { version = "0.21.0", default-features = false, features = [
-    "default_fonts", # Embed the default egui fonts.
-    "wgpu",
-] }
-serde = { version = "1", features = ["derive", "rc"] }
+kurbo.workspace = true
+egui.workspace = true
+eframe.workspace = true
+serde.workspace = true
 wgpu = "0.15.1"
 bytemuck = {version = "1.13.1",  features = [ "derive" ]}
 cgmath = "0.18.0"

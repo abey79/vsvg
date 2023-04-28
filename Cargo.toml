@@ -4,6 +4,7 @@ members = [
     "vsvg",
     "vsvg-core",
     "vsvg-viewer",
+    "vsvg-multi",
 ]
 
 resolver = "2"
@@ -11,3 +12,16 @@ resolver = "2"
 [patch.crates-io]
 usvg = { git = "https://github.com/abey79/resvg", branch="vsvg" }
 rosvgtree = { git = "https://github.com/abey79/resvg", branch="vsvg" }
+
+
+[workspace.dependencies]
+egui = "0.21.0"
+eframe = { version = "0.21.3", default-features = false, features = [
+    "accesskit",
+    "default_fonts",
+    "wgpu",
+] }
+serde = { version = "1", features = ["derive", "rc"] }
+kurbo = "0.9.1"
+rand = "0.8.5"
+rand_chacha = "0.3.1"

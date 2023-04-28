@@ -7,12 +7,12 @@ edition = "2021"
 
 
 [dependencies]
+kurbo.workspace = true
 usvg = "0.29.0"
 rosvgtree = "0.1.0"
 rctree = "*"  # Let usvg decide on the version
 svg = "0.13.1"
 rayon = "1.6.1"
-kurbo = "0.9.0"
 arrayvec = "0.7.2"
 lyon_geom = "1.0.4"
 regex = "1.7.1"
@@ -23,13 +23,13 @@ bitvec = "1.0.1"
 time = {version="0.3.20", features = ["formatting"]}
 
 # optional dependencies, mainly for Point interop.
-egui = { version ="*", optional = true}
+egui = { workspace=true, optional = true}
 
 [dev-dependencies]
 approx = "0.5.1"
 criterion = "0.4.0"
-rand = "0.8.5"
-rand_chacha = "0.3.1"
+rand.workspace = true
+rand_chacha.workspace = true
 
 [[bench]]
 name = "bench_path_index"
