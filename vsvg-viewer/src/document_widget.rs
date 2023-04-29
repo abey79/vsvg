@@ -3,7 +3,7 @@ use eframe::egui_wgpu;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
 
-/// Widget to display a [`vsvg::Document`] in a egui application.
+/// Widget to display a [`vsvg_core::Document`] in a egui application.
 ///
 /// The widget is an egui wrapper around [`Engine`]. It holds the state needed for rendering, such
 /// as the scale and pan offset.
