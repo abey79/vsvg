@@ -67,10 +67,10 @@ impl CameraUniform {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct DocumentData {
-    pub flattened_document: FlattenedDocument,
-    pub control_points: FlattenedDocument,
-    pub display_vertices: HashMap<LayerID, Vec<Point>>,
+pub struct DocumentData {
+    pub(crate) flattened_document: FlattenedDocument,
+    pub(crate) control_points: FlattenedDocument,
+    pub(crate) display_vertices: HashMap<LayerID, Vec<Point>>,
 }
 
 impl DocumentData {

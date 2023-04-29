@@ -3,6 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::let_underscore_untyped)]
 
+mod document_widget;
 mod engine;
 mod frame_history;
 mod painters;
