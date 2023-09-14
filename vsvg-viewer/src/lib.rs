@@ -15,6 +15,8 @@ use std::error::Error;
 use std::sync::Arc;
 use vsvg_core::Document;
 
+/// Show a document in a window.
+#[allow(clippy::missing_panics_doc)]
 pub fn show(document: &Document) -> Result<(), Box<dyn Error>> {
     let native_options = eframe::NativeOptions::default();
     let document_data = Arc::new(DocumentData::new(document));

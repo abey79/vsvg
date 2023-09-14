@@ -1,5 +1,4 @@
-use crate::{DocumentImpl, LayerID, LayerImpl, PathType};
-use std::collections::HashMap;
+use crate::{LayerTrait, PathDataTrait, PathTrait};
 
 #[derive(Debug)]
 pub struct LayerStats {
@@ -7,17 +6,16 @@ pub struct LayerStats {
     pub pen_up_length: f64,
 }
 
-impl<T: PathType> LayerImpl<T> {
-    #[must_use]
-    pub fn stats(&self) -> LayerStats {
+impl LayerStats {
+    pub fn from_layer<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>(layer: &L) -> Self {
         LayerStats {
-            num_paths: self.paths.len(),
-            pen_up_length: self
-                .paths
+            num_paths: layer.paths().len(),
+            pen_up_length: layer
+                .paths()
                 .windows(2)
                 .map(|w| {
-                    if let Some(ref start) = w[0].data.end() {
-                        if let Some(ref end) = w[1].data.start() {
+                    if let Some(ref start) = w[0].end() {
+                        if let Some(ref end) = w[1].start() {
                             start.distance(end)
                         } else {
                             0.0
@@ -28,15 +26,5 @@ impl<T: PathType> LayerImpl<T> {
                 })
                 .sum(),
         }
-    }
-}
-
-impl<T: PathType> DocumentImpl<T> {
-    #[must_use]
-    pub fn stats(&self) -> HashMap<LayerID, LayerStats> {
-        self.layers
-            .iter()
-            .map(|(id, layer)| (*id, layer.stats()))
-            .collect()
     }
 }

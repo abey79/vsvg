@@ -1,8 +1,7 @@
 use crate::path_index::IndexBuilder;
-use crate::point::Point;
-use crate::{LayerImpl, PathType};
+use crate::{Layer, PathDataTrait, Point};
 
-impl<T: PathType> LayerImpl<T> {
+impl Layer {
     /// Sort the paths such as to minimize the pen up distance
     ///
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
@@ -11,6 +10,7 @@ impl<T: PathType> LayerImpl<T> {
         self.sort_with_builder(IndexBuilder::default().flip(flip));
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn sort_with_builder(&mut self, builder: IndexBuilder) {
         if self.paths.len() <= 1 {
             return;
@@ -42,13 +42,11 @@ impl<T: PathType> LayerImpl<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::flattened_layer::FlattenedLayer;
-    use crate::point::Point;
-    use crate::{test_file, Document, FlattenedPath};
+    use crate::{test_file, Document, DocumentTrait, FlattenedLayer, FlattenedPath, LayerTrait};
 
     #[test]
     fn test_sort() {
-        let mut layer = FlattenedLayer::new();
+        let mut layer = FlattenedLayer::default();
 
         let p1 = FlattenedPath::from(vec![Point::new(10.0, 10.1), Point::new(0.0, 0.0)]);
         let p2 = FlattenedPath::from(vec![Point::new(3.0, 2.3), Point::new(10.0, 10.0)]);
@@ -70,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_sort_bidir() {
-        let mut layer = FlattenedLayer::new();
+        let mut layer = FlattenedLayer::default();
 
         let p1 = FlattenedPath::from(vec![Point::new(10.0, 10.1), Point::new(20.0, 20.0)]);
         let p2 = FlattenedPath::from(vec![Point::new(3.0, 2.3), Point::new(10.0, 10.0)]);
@@ -92,7 +90,6 @@ mod tests {
         assert_eq!(layer.paths[3], p1);
     }
 
-    //#[ignore] // this test fails with kiddo 2.0.0-beta.5
     #[test]
     fn test_sort_problematic_case() {
         let mut doc = Document::from_svg(test_file!("random_100_sort.svg"), false).unwrap();

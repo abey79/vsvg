@@ -5,13 +5,10 @@
 mod crop;
 pub mod document;
 pub mod draw;
-pub mod flattened_layer;
-pub mod flattened_path;
 pub mod layer;
 pub mod optimization;
 pub mod path;
 pub mod path_index;
-pub mod point;
 pub mod stats;
 mod svg_reader;
 pub mod svg_writer;
@@ -20,7 +17,6 @@ pub mod transforms;
 
 pub use document::*;
 pub use draw::*;
-pub use flattened_path::*;
 pub use layer::*;
 pub use path::*;
 pub use path_index::IndexBuilder;
@@ -28,7 +24,7 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 pub use transforms::*;
 
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug, PartialEq)]
 pub struct PageSize {
     pub w: f64,
     pub h: f64,

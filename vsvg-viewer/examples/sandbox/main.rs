@@ -1,6 +1,5 @@
 use std::{env, mem, process};
-use vsvg_core::point::Point;
-use vsvg_core::{Document, FlattenedPath};
+use vsvg_core::{Document, DocumentTrait, FlattenedPath, PathTrait, Point};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Buffer, ColorTargetState, Device, Instance, PrimitiveTopology,
@@ -478,23 +477,24 @@ impl LinePainter {
             vertices: &mut Vec<Vertex>,
             attribs: &mut Vec<Attribute>,
         ) {
-            if path.data.len() > 1 {
-                if path.data.len() > 2 && path.data.first() == path.data.last() {
-                    vertices.push(path.data[path.data.len() - 2].into());
-                    vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
-                    vertices.push(path.data[1].into());
+            let points = path.data().points();
+            if points.len() > 1 {
+                if points.len() > 2 && points.first() == points.last() {
+                    vertices.push(points[points.len() - 2].into());
+                    vertices.extend(points.iter().map(|p| Vertex::from(p)));
+                    vertices.push(points[1].into());
                 } else {
-                    vertices.push(path.data.first().expect("length checked").into());
-                    vertices.extend(path.data.iter().map(|p| Vertex::from(p)));
-                    vertices.push(path.data.last().expect("length checked").into());
+                    vertices.push(points.first().expect("length checked").into());
+                    vertices.extend(points.iter().map(|p| Vertex::from(p)));
+                    vertices.push(points.last().expect("length checked").into());
                 }
 
                 let attr = Attribute {
-                    color: path.color.to_rgba(),
-                    width: path.stroke_width as f32,
+                    color: path.metadata().color.to_rgba(),
+                    width: path.metadata().stroke_width as f32,
                 };
 
-                for _ in 0..path.data.len() - 1 {
+                for _ in 0..points.len() - 1 {
                     attribs.push(attr);
                 }
             }
@@ -889,7 +889,7 @@ impl Viewer<'_> {
         engine.clear_painters();
 
         // draw the page
-        if let Some(page_size) = self.doc.page_size {
+        if let Some(page_size) = self.doc.metadata().page_size {
             let (w, h) = (page_size.w as f32, page_size.h as f32);
 
             // shadow
@@ -947,7 +947,9 @@ impl Viewer<'_> {
                 .paths
                 .windows(2)
                 .filter_map(|p| {
-                    if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
+                    if let (Some(from), Some(to)) =
+                        (p[0].data.points().last(), p[1].data.points().first())
+                    {
                         Some([
                             ColorVertex {
                                 position: from.into(),
@@ -974,7 +976,7 @@ impl Viewer<'_> {
             let points = flat_layer
                 .paths
                 .iter()
-                .flat_map(|p| p.data.iter())
+                .flat_map(|p| p.data.points().iter())
                 .map(|p| PointVertex {
                     position: p.into(),
                     color: 0xFF000000,

@@ -2,8 +2,10 @@ use crate::painters::{BasicPainter, LinePainter, Painter, PointPainter};
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use vsvg_core::point::Point;
-use vsvg_core::{Color, Document, FlattenedDocument, LayerID};
+
+use vsvg_core::{
+    Color, Document, DocumentTrait, FlattenedDocument, LayerID, LayerTrait, PathTrait, Point,
+};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, Device, PrimitiveTopology, TextureFormat};
 
@@ -203,7 +205,7 @@ impl Engine {
         let mut painters = vec![];
 
         // draw the page
-        if let Some(page_size) = self.document_data.flattened_document.page_size {
+        if let Some(page_size) = self.document_data.flattened_document.metadata().page_size {
             #[allow(clippy::cast_possible_truncation)]
             let (w, h) = (page_size.w as f32, page_size.h as f32);
 
@@ -251,6 +253,7 @@ impl Engine {
 
     fn build_layer_painters(&self, device: &Device) -> HashMap<LayerID, LayerData> {
         let mut layers = HashMap::new();
+
         for (lid, flattened_layer) in &self.document_data.flattened_document.layers {
             let points = self
                 .document_data
@@ -261,21 +264,15 @@ impl Engine {
                 .map(Into::into);
 
             let pen_up_trajectories = flattened_layer
-                .paths
-                .windows(2)
-                .filter_map(|p| {
-                    if let (Some(from), Some(to)) = (p[0].data.last(), p[1].data.first()) {
-                        Some([from.into(), to.into()])
-                    } else {
-                        None
-                    }
-                })
-                .flatten();
+                .pen_up_trajectories()
+                .iter()
+                .flat_map(|(start, end)| [start.into(), end.into()])
+                .collect::<Vec<[f32; 2]>>();
 
             let control_points: Vec<_> = self.document_data.control_points.layers[lid]
                 .paths
                 .iter()
-                .flat_map(|p| &p.data)
+                .flat_map(|p| p.data().points())
                 .map(Into::into)
                 .collect();
 

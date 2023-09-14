@@ -6,7 +6,9 @@ use std::error::Error;
 use std::fs;
 use std::path;
 
-use crate::{Color, Document, Layer, LayerID, PageSize, Path};
+use crate::{
+    Color, Document, DocumentTrait, Layer, LayerID, LayerTrait, PageSize, Path, PathTrait,
+};
 
 use usvg::utils::view_box_to_transform;
 use usvg::{GroupMode, PathSegment, Transform, Tree};
@@ -42,14 +44,14 @@ impl Path {
         // extract metadata
         if let Some(stroke) = &svg_path.stroke {
             if let usvg::Paint::Color(c) = stroke.paint {
-                res.color = Color {
+                res.metadata_mut().color = Color {
                     r: c.red,
                     g: c.green,
                     b: c.blue,
                     a: stroke.opacity.to_u8(),
                 };
             }
-            res.stroke_width = stroke.width.get();
+            res.metadata_mut().stroke_width = stroke.width.get();
         }
 
         res
@@ -217,7 +219,7 @@ impl Document {
 
                     // set layer name
                     if let Some(name) = layer_name {
-                        layer.name = name.clone();
+                        layer.metadata_mut().name = name.clone();
                     }
                 }
                 usvg::NodeKind::Path(ref path) => {
@@ -234,7 +236,7 @@ impl Document {
 #[cfg(test)]
 mod tests {
 
-    use crate::{test_file, Document, PathType};
+    use crate::{test_file, Document, DocumentTrait, LayerTrait, PathDataTrait};
     use kurbo::BezPath;
 
     #[test]
@@ -299,11 +301,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(doc.layers.len(), 5);
-        assert_eq!(doc.try_get(10).unwrap().name, "Layer 10");
-        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().name, "Hello");
-        assert_eq!(doc.try_get(4).unwrap().name, "world");
-        assert_eq!(doc.try_get(5).unwrap().name, "layer_name");
+        assert_eq!(doc.try_get(10).unwrap().metadata().name, "Layer 10");
+        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().metadata().name, "Hello");
+        assert_eq!(doc.try_get(4).unwrap().metadata().name, "world");
+        assert_eq!(doc.try_get(5).unwrap().metadata().name, "layer_name");
     }
 
     #[test]
@@ -331,9 +333,9 @@ mod tests {
 
         assert_eq!(doc.layers.len(), 4);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
-        assert_eq!(doc.try_get(1).unwrap().name, "layer_one");
-        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().name, "layer_three");
+        assert_eq!(doc.try_get(1).unwrap().metadata().name, "layer_one");
+        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().metadata().name, "layer_three");
     }
 
     #[test]
@@ -384,7 +386,7 @@ mod tests {
         )
         .unwrap();
 
-        let page_size = doc.page_size.unwrap();
+        let page_size = doc.metadata().page_size.unwrap();
         assert_eq!(page_size.w, 100.);
         assert_eq!(page_size.h, 100.);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
