@@ -2,7 +2,7 @@ use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
 use std::io::Write;
-use vsvg_core::{IndexBuilder, Transforms};
+use vsvg_core::{DocumentTrait, IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
 macro_rules! count_items {
@@ -273,10 +273,10 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             String,
             |state, file| {
                 if file == "-" {
-                    println!("{}", state.document);
+                    state.document.to_svg(std::io::stdout())?;
                 } else {
-                    let mut file = std::io::BufWriter::new(std::fs::File::create(file)?);
-                    write!(file, "{}", state.document)?;
+                    let file = std::io::BufWriter::new(std::fs::File::create(file)?);
+                    state.document.to_svg(file)?;
                 }
             }
         ),

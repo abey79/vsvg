@@ -2,6 +2,7 @@ use crate::engine::{DisplayMode, DocumentData, Engine, ViewerOptions};
 use eframe::egui_wgpu;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
+use vsvg_core::{DocumentTrait, LayerTrait};
 
 /// Widget to display a [`vsvg_core::Document`] in a egui application.
 ///
@@ -184,8 +185,8 @@ impl DocumentWidget {
                 let mut viewer_options = self.viewer_options.lock().unwrap();
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
                 let mut label = format!("Layer {lid}");
-                if !layer.name.is_empty() {
-                    label.push_str(&format!(": {}", layer.name));
+                if !layer.metadata().name.is_empty() {
+                    label.push_str(&format!(": {}", layer.metadata().name));
                 }
 
                 ui.checkbox(visibility, label);
@@ -194,18 +195,19 @@ impl DocumentWidget {
     }
 
     fn fit_to_view(&mut self, viewport: &Rect) {
-        let bounds = if let Some(page_size) = self.document_data.flattened_document.page_size {
-            if page_size.w != 0.0 && page_size.h != 0.0 {
-                Some(kurbo::Rect::from_points(
-                    (0., 0.),
-                    (page_size.w, page_size.h),
-                ))
+        let bounds =
+            if let Some(page_size) = self.document_data.flattened_document.metadata().page_size {
+                if page_size.w != 0.0 && page_size.h != 0.0 {
+                    Some(kurbo::Rect::from_points(
+                        (0., 0.),
+                        (page_size.w, page_size.h),
+                    ))
+                } else {
+                    self.document_data.flattened_document.bounds()
+                }
             } else {
                 self.document_data.flattened_document.bounds()
-            }
-        } else {
-            self.document_data.flattened_document.bounds()
-        };
+            };
 
         if bounds.is_none() {
             return;

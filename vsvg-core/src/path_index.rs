@@ -1,35 +1,37 @@
 // inspiration: https://nb.paulbutler.org/optimizing-plots-with-tsp-solver/
 // design note: https://github.com/abey79/vsvg/issues/12
 
-use crate::point::Point;
-use crate::{PathImpl, PathType};
+use crate::{PathDataTrait, PathTrait, Point};
 use bitvec::prelude::BitVec;
 use indexmap::IndexMap;
 use kdtree::distance::squared_euclidean;
 
 type KdTree = kdtree::KdTree<f64, usize, [f64; 2]>;
 
-pub struct PathIndex<'a, T: PathType> {
-    paths: IndexMap<usize, PathItem<'a, T>>,
+pub struct PathIndex<'a, P: PathTrait<D>, D: PathDataTrait> {
+    paths: IndexMap<usize, PathItem<'a, P, D>>,
     occupancy: BitVec,
     tree: KdTree,
     settings: IndexBuilder,
     reindex_agent: ReindexAgent,
+    _phantom_data: std::marker::PhantomData<D>,
 }
 
 #[derive(Debug)]
-pub struct PathItem<'a, T: PathType> {
-    pub path: &'a PathImpl<T>,
+pub struct PathItem<'a, P: PathTrait<D>, D: PathDataTrait> {
+    pub path: &'a P,
     pub start: Option<Point>,
     pub end: Option<Point>,
+    _phantom_data: std::marker::PhantomData<D>,
 }
 
-impl<'a, T: PathType> From<&'a PathImpl<T>> for PathItem<'a, T> {
-    fn from(value: &'a PathImpl<T>) -> Self {
+impl<'a, P: PathTrait<D>, D: PathDataTrait> From<&'a P> for PathItem<'a, P, D> {
+    fn from(value: &'a P) -> Self {
         Self {
             path: value,
-            start: value.data.start(),
-            end: value.data.end(),
+            start: value.start(),
+            end: value.end(),
+            _phantom_data: std::marker::PhantomData,
         }
     }
 }
@@ -75,7 +77,7 @@ impl IndexBuilder {
     }
 
     #[must_use]
-    pub fn build<T: PathType>(self, paths: &[PathImpl<T>]) -> PathIndex<T> {
+    pub fn build<P: PathTrait<D>, D: PathDataTrait>(self, paths: &[P]) -> PathIndex<P, D> {
         PathIndex::new(paths, self)
     }
 }
@@ -130,12 +132,12 @@ impl ReindexAgent {
     }
 }
 
-impl<'a, T: PathType> PathIndex<'a, T> {
+impl<'a, P: PathTrait<D>, D: PathDataTrait> PathIndex<'a, P, D> {
     /// Create an index from a list of paths
     ///
     /// The order of the paths is reversed such as to have an efficient implementation of
     /// [`pop_first`] based on [`IndexMap::pop`].
-    fn new(paths: &'a [PathImpl<T>], settings: IndexBuilder) -> Self {
+    fn new(paths: &'a [P], settings: IndexBuilder) -> Self {
         let mut path_map = IndexMap::with_capacity(paths.len());
         for (idx, path) in paths.iter().rev().enumerate() {
             let path_item = path.into();
@@ -148,6 +150,7 @@ impl<'a, T: PathType> PathIndex<'a, T> {
             tree: KdTree::new(2),
             settings,
             reindex_agent: ReindexAgent::default(), // will be overwritten in reindex
+            _phantom_data: std::marker::PhantomData,
         };
 
         pi.reindex();
@@ -180,7 +183,7 @@ impl<'a, T: PathType> PathIndex<'a, T> {
         }
     }
 
-    pub fn pop_first(&mut self) -> Option<PathItem<T>> {
+    pub fn pop_first(&mut self) -> Option<PathItem<P, D>> {
         // since the paths were reversed upon insertion, the pop operation corresponds to pop_first
         let (idx, path_item) = self.paths.pop()?;
         self.occupancy.set(idx, false);
@@ -201,7 +204,7 @@ impl<'a, T: PathType> PathIndex<'a, T> {
     ///
     /// This function may return `None` even if the `PathIndex` is not empty, as some paths may not
     /// be indexed.
-    pub fn pop_nearest(&mut self, point: &Point) -> Option<(PathItem<T>, bool)> {
+    pub fn pop_nearest(&mut self, point: &Point) -> Option<(PathItem<P, D>, bool)> {
         if self.reindex_agent.should_reindex() {
             self.reindex();
         }
@@ -240,21 +243,22 @@ impl<'a, T: PathType> PathIndex<'a, T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::FlattenedPath;
 
     #[test]
     fn test_path_index() {
         let paths = vec![
-            PathImpl::from(vec![
+            FlattenedPath::from(vec![
                 Point::new(0.0, 0.0),
                 Point::new(13.0, 1.0),
                 Point::new(1.0, 2.0),
             ]),
-            PathImpl::from(vec![
+            FlattenedPath::from(vec![
                 Point::new(5.0, 0.0),
                 Point::new(11.0, 1.0),
                 Point::new(6.0, 2.0),
             ]),
-            PathImpl::from(vec![
+            FlattenedPath::from(vec![
                 Point::new(1.0, 0.0),
                 Point::new(10.0, 1.0),
                 Point::new(2.0, 2.0),
@@ -267,9 +271,9 @@ mod tests {
         assert!(pi.pop_first().is_none());
     }
 
-    fn assert_nearest<T: PathType>(
-        res: Option<(PathItem<T>, bool)>,
-        expected_path: &PathImpl<T>,
+    fn assert_nearest<P: PathTrait<D>, D: PathDataTrait>(
+        res: Option<(PathItem<P, D>, bool)>,
+        expected_path: &P,
         expected_reversed: bool,
     ) {
         let (path_item, reversed) = res.expect("must find a path");
@@ -280,9 +284,9 @@ mod tests {
     #[test]
     fn test_path_index_pop_nearest() {
         let paths = vec![
-            PathImpl::from(vec![Point::new(1.0, 0.0), Point::new(2.0, 2.0)]),
-            PathImpl::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
-            PathImpl::from(vec![Point::new(5.0, 0.0), Point::new(6.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(1.0, 0.0), Point::new(2.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(5.0, 0.0), Point::new(6.0, 2.0)]),
         ];
         let mut pi = IndexBuilder::new().build(&paths);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[1], false);
@@ -295,9 +299,9 @@ mod tests {
     #[test]
     fn test_path_index_pop_nearest_bidir() {
         let paths = vec![
-            PathImpl::from(vec![Point::new(1.0, 0.0), Point::new(2.0, 2.0)]),
-            PathImpl::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
-            PathImpl::from(vec![Point::new(15.0, 0.0), Point::new(6.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(1.0, 0.0), Point::new(2.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(0.0, 0.5), Point::new(1.0, 2.0)]),
+            FlattenedPath::from(vec![Point::new(15.0, 0.0), Point::new(6.0, 2.0)]),
         ];
         let mut pi = IndexBuilder::new().flip(true).build(&paths);
         assert_nearest(pi.pop_nearest(&Point::new(0.0, 0.0)), &paths[1], false);

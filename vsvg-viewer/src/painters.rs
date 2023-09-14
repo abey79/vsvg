@@ -1,7 +1,6 @@
 use crate::engine::Engine;
 use std::mem;
-use vsvg_core::point::Point;
-use vsvg_core::FlattenedPath;
+use vsvg_core::{FlattenedPath, PathTrait, Point};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Buffer, ColorTargetState, Device, PrimitiveTopology,
@@ -172,24 +171,25 @@ impl LinePainter {
             vertices: &mut Vec<Vertex>,
             attribs: &mut Vec<Attribute>,
         ) {
-            if path.data.len() > 1 {
-                if path.data.len() > 2 && path.data.first() == path.data.last() {
-                    vertices.push(path.data[path.data.len() - 2].into());
-                    vertices.extend(path.data.iter().map(Vertex::from));
-                    vertices.push(path.data[1].into());
+            let points = path.data().points();
+            if points.len() > 1 {
+                if points.len() > 2 && points.first() == points.last() {
+                    vertices.push(points[points.len() - 2].into());
+                    vertices.extend(points.iter().map(Vertex::from));
+                    vertices.push(points[1].into());
                 } else {
-                    vertices.push(path.data.first().expect("length checked").into());
-                    vertices.extend(path.data.iter().map(Vertex::from));
-                    vertices.push(path.data.last().expect("length checked").into());
+                    vertices.push(points.first().expect("length checked").into());
+                    vertices.extend(points.iter().map(Vertex::from));
+                    vertices.push(points.last().expect("length checked").into());
                 }
 
                 let attr = Attribute {
-                    color: path.color.to_rgba(),
+                    color: path.metadata().color.to_rgba(),
                     #[allow(clippy::cast_possible_truncation)]
-                    width: path.stroke_width as f32,
+                    width: path.metadata().stroke_width as f32,
                 };
 
-                for _ in 0..path.data.len() - 1 {
+                for _ in 0..path.data().points().len() - 1 {
                     attribs.push(attr);
                 }
             }

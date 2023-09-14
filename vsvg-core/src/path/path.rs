@@ -1,33 +1,23 @@
+use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
 use crate::crop::Crop;
-use crate::flattened_path::Polyline;
-use crate::point::Point;
-use crate::{Color, FlattenedPath};
-use kurbo::{BezPath, PathEl};
+use crate::Transforms;
+use kurbo::{Affine, BezPath, PathEl};
 use std::cell::RefCell;
 use std::error::Error;
 use std::fmt::Debug;
 
 const DEFAULT_TOLERANCE: f64 = 0.05;
 
-pub type PathData = BezPath;
-pub type Path = PathImpl<PathData>;
+// ======================================================================================
+// The path data for `Path` is `kurbo::BezPath`.
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct PathImpl<T: PathType> {
-    pub data: T,
-    pub color: Color,
-    pub stroke_width: f64,
+impl Transforms for BezPath {
+    fn transform(&mut self, affine: &Affine) {
+        self.apply_affine(*affine);
+    }
 }
 
-pub trait PathType: Default + Clone + PartialEq + Debug {
-    fn bounds(&self) -> kurbo::Rect;
-    fn start(&self) -> Option<Point>;
-    fn end(&self) -> Option<Point>;
-    fn is_point(&self) -> bool;
-    fn flip(&mut self);
-}
-
-impl PathType for PathData {
+impl PathDataTrait for BezPath {
     fn bounds(&self) -> kurbo::Rect {
         kurbo::Shape::bounding_box(self)
     }
@@ -69,33 +59,34 @@ impl PathType for PathData {
     }
 }
 
-impl<T: PathType> Default for PathImpl<T> {
-    fn default() -> Self {
-        Self {
-            data: T::default(),
-            color: Color::default(),
-            stroke_width: 1.0,
-        }
+// ======================================================================================
+// `Path`
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Path {
+    pub data: BezPath,
+    pub(crate) metadata: PathMetadata,
+}
+
+impl Transforms for Path {
+    fn transform(&mut self, affine: &Affine) {
+        self.data.apply_affine(*affine);
     }
 }
 
-impl<T: PathType> PathImpl<T> {
-    pub fn bounds(&self) -> kurbo::Rect {
+impl PathTrait<BezPath> for Path {
+    fn data(&self) -> &BezPath {
+        &self.data
+    }
+    fn bounds(&self) -> kurbo::Rect {
         self.data.bounds()
     }
-}
+    fn metadata(&self) -> &PathMetadata {
+        &self.metadata
+    }
 
-/// This enables adding a [`kurbo::Shape`] directly to a [Layer]:
-/// ```
-/// use vsvg_core::Layer;
-/// use kurbo::Circle;
-///
-/// let mut layer = Layer::new();
-/// layer.paths.push(Circle::new((0.0, 0.0), 1.0).into());
-/// ```
-impl<T: kurbo::Shape> From<T> for Path {
-    fn from(value: T) -> Self {
-        Self::from_shape_with_tolerance(value, DEFAULT_TOLERANCE)
+    fn metadata_mut(&mut self) -> &mut PathMetadata {
+        &mut self.metadata
     }
 }
 
@@ -121,32 +112,33 @@ impl Path {
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> Vec<FlattenedPath> {
         let mut lines: Vec<FlattenedPath> = vec![];
-        let current_line: RefCell<Polyline> = RefCell::new(vec![]);
+        let current_line: RefCell<Polyline> = RefCell::new(Polyline::default());
 
         self.data.flatten(tolerance, |el| match el {
             PathEl::MoveTo(pt) => {
-                if !current_line.borrow().is_empty() {
+                if !current_line.borrow().points().is_empty() {
                     // lines.push(Polyline::from(current_line.replace(vec![])));
-                    lines.push(FlattenedPath::from(current_line.replace(vec![])));
+                    lines.push(FlattenedPath::from(
+                        current_line.replace(Polyline::default()),
+                    ));
                 }
-                current_line.borrow_mut().push(pt.into());
+                current_line.borrow_mut().points_mut().push(pt.into());
             }
-            PathEl::LineTo(pt) => current_line.borrow_mut().push(pt.into()),
+            PathEl::LineTo(pt) => current_line.borrow_mut().points_mut().push(pt.into()),
             PathEl::ClosePath => {
-                let pt = current_line.borrow()[0];
-                current_line.borrow_mut().push(pt);
+                let pt = current_line.borrow().points()[0];
+                current_line.borrow_mut().points_mut().push(pt);
             }
             _ => unreachable!(),
         });
 
         let current_line = current_line.into_inner();
-        if !current_line.is_empty() {
+        if !current_line.points().is_empty() {
             lines.push(FlattenedPath::from(current_line));
         }
 
         for line in &mut lines {
-            line.color = self.color;
-            line.stroke_width = self.stroke_width;
+            *line.metadata_mut() = self.metadata().clone();
         }
 
         lines
@@ -187,6 +179,20 @@ impl Path {
 
         self.data = new_bezpath;
         self
+    }
+}
+
+/// This enables adding a [`kurbo::Shape`] directly to a [Layer]:
+/// ```
+/// use vsvg_core::Layer;
+/// use kurbo::Circle;
+///
+/// let mut layer = Layer::new();
+/// layer.paths.push(Circle::new((0.0, 0.0), 1.0).into());
+/// ```
+impl<T: kurbo::Shape> From<T> for Path {
+    fn from(value: T) -> Self {
+        Self::from_shape_with_tolerance(value, DEFAULT_TOLERANCE)
     }
 }
 

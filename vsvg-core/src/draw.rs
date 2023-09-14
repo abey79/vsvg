@@ -1,4 +1,4 @@
-use crate::{Color, Layer, Path, Transforms};
+use crate::{Color, Layer, Path, PathTrait, Transforms};
 use kurbo::{Affine, Shape, Vec2};
 
 #[derive(Debug)]
@@ -34,7 +34,7 @@ impl DrawState {
 }
 
 impl Transforms for DrawState {
-    fn apply_affine(&mut self, affine: &Affine) {
+    fn transform(&mut self, affine: &Affine) {
         self.transform = *affine * self.transform;
     }
 }
@@ -155,8 +155,8 @@ impl<'layer, 'state> Draw<'layer, 'state> {
 
     fn add_shape<T: Shape>(&mut self, shape: T) -> &Self {
         let mut path: Path = shape.into();
-        path.color = self.state.color;
-        path.stroke_width = self.state.stroke_width;
+        path.metadata_mut().color = self.state.color;
+        path.metadata_mut().stroke_width = self.state.stroke_width;
         path.apply_transform(self.state.transform);
         self.layer.paths.push(path);
         self
