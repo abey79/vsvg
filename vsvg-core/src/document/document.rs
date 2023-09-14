@@ -84,7 +84,7 @@ mod test {
 
     #[test]
     fn test_document_bounds() {
-        let mut doc = Document::new();
+        let mut doc = Document::default();
         assert_eq!(doc.bounds(), None);
 
         let layer1 = Layer::new();

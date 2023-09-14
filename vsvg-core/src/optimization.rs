@@ -41,7 +41,7 @@ impl Layer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{test_file, Document, DocumentTrait, FlattenedLayer, FlattenedPath};
+    use crate::{test_file, Document, DocumentTrait, FlattenedLayer, FlattenedPath, LayerTrait};
 
     #[test]
     fn test_sort() {
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn test_sort_bidir() {
-        let mut layer = FlattenedLayer::new();
+        let mut layer = FlattenedLayer::default();
 
         let p1 = FlattenedPath::from(vec![Point::new(10.0, 10.1), Point::new(20.0, 20.0)]);
         let p2 = FlattenedPath::from(vec![Point::new(3.0, 2.3), Point::new(10.0, 10.0)]);

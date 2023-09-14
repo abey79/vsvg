@@ -78,6 +78,11 @@ impl PathTrait<Polyline> for FlattenedPath {
     fn data(&self) -> &Polyline {
         &self.data
     }
+
+    fn data_mut(&mut self) -> &mut Polyline {
+        &mut self.data
+    }
+
     fn bounds(&self) -> kurbo::Rect {
         self.data.bounds()
     }

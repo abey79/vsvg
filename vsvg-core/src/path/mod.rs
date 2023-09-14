@@ -21,8 +21,11 @@ pub trait PathDataTrait:
     fn flip(&mut self);
 }
 
-pub trait PathTrait<D: PathDataTrait>: Transforms {
+pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt::Debug {
     fn data(&self) -> &D;
+
+    fn data_mut(&mut self) -> &mut D;
+
     fn bounds(&self) -> kurbo::Rect;
 
     fn start(&self) -> Option<Point> {

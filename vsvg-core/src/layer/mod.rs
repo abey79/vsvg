@@ -2,7 +2,7 @@ mod flattened_layer;
 mod layer;
 mod metadata;
 
-use crate::{PathDataTrait, PathTrait, Point, Transforms};
+use crate::{IndexBuilder, PathDataTrait, PathTrait, Point, Transforms};
 
 use crate::stats::LayerStats;
 pub use flattened_layer::FlattenedLayer;
@@ -10,7 +10,9 @@ pub use layer::Layer;
 pub use metadata::LayerMetadata;
 
 pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
-    fn paths(&self) -> &Vec<P>;
+    fn paths(&self) -> &[P];
+
+    fn paths_mut(&mut self) -> &mut Vec<P>;
 
     fn metadata(&self) -> &LayerMetadata;
 
@@ -28,6 +30,41 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
                 .skip(1)
                 .fold(first, |acc, path| acc.union(path.bounds())),
         )
+    }
+
+    fn sort(&mut self, flip: bool) {
+        self.sort_with_builder(IndexBuilder::default().flip(flip));
+    }
+
+    fn sort_with_builder(&mut self, builder: IndexBuilder) {
+        if self.paths().len() <= 1 {
+            return;
+        }
+
+        let mut new_paths = Vec::with_capacity(self.paths().len());
+        let mut index = builder.build(&self.paths());
+
+        let mut pos = Point::ZERO;
+        while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
+            new_paths.push((*path_item.path).clone());
+            if reverse {
+                pos = path_item.start.unwrap_or(pos);
+                new_paths
+                    .last_mut()
+                    .expect("just inserted")
+                    .data_mut()
+                    .flip();
+            } else {
+                pos = path_item.end.unwrap_or(pos);
+            }
+        }
+
+        // add any remaining, unindexed paths
+        while let Some(path_item) = index.pop_first() {
+            new_paths.push((*path_item.path).clone());
+        }
+
+        *self.paths_mut() = new_paths;
     }
 
     fn pen_up_trajectories(&self) -> Vec<(Point, Point)> {

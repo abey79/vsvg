@@ -78,6 +78,11 @@ impl PathTrait<BezPath> for Path {
     fn data(&self) -> &BezPath {
         &self.data
     }
+
+    fn data_mut(&mut self) -> &mut BezPath {
+        &mut self.data
+    }
+
     fn bounds(&self) -> kurbo::Rect {
         self.data.bounds()
     }

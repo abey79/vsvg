@@ -237,7 +237,7 @@ impl Document {
 #[cfg(test)]
 mod tests {
 
-    use crate::{test_file, Document, DocumentTrait, PathDataTrait};
+    use crate::{test_file, Document, DocumentTrait, LayerTrait, PathDataTrait};
     use kurbo::BezPath;
 
     #[test]
@@ -302,11 +302,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(doc.layers.len(), 5);
-        assert_eq!(doc.try_get(10).unwrap().name, "Layer 10");
-        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().name, "Hello");
-        assert_eq!(doc.try_get(4).unwrap().name, "world");
-        assert_eq!(doc.try_get(5).unwrap().name, "layer_name");
+        assert_eq!(doc.try_get(10).unwrap().metadata().name, "Layer 10");
+        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().metadata().name, "Hello");
+        assert_eq!(doc.try_get(4).unwrap().metadata().name, "world");
+        assert_eq!(doc.try_get(5).unwrap().metadata().name, "layer_name");
     }
 
     #[test]
@@ -334,9 +334,9 @@ mod tests {
 
         assert_eq!(doc.layers.len(), 4);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
-        assert_eq!(doc.try_get(1).unwrap().name, "layer_one");
-        assert_eq!(doc.try_get(11).unwrap().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().name, "layer_three");
+        assert_eq!(doc.try_get(1).unwrap().metadata().name, "layer_one");
+        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
+        assert_eq!(doc.try_get(3).unwrap().metadata().name, "layer_three");
     }
 
     #[test]

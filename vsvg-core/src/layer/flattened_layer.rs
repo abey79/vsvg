@@ -22,8 +22,12 @@ impl Transforms for FlattenedLayer {
     }
 }
 impl LayerTrait<FlattenedPath, Polyline> for FlattenedLayer {
-    fn paths(&self) -> &Vec<FlattenedPath> {
+    fn paths(&self) -> &[FlattenedPath] {
         &self.paths
+    }
+
+    fn paths_mut(&mut self) -> &mut Vec<FlattenedPath> {
+        &mut self.paths
     }
 
     fn metadata(&self) -> &LayerMetadata {

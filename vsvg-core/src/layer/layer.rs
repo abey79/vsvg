@@ -25,12 +25,16 @@ impl Transforms for Layer {
 }
 
 impl LayerTrait<Path, kurbo::BezPath> for Layer {
-    fn paths(&self) -> &Vec<Path> {
+    fn paths(&self) -> &[Path] {
         &self.paths
     }
 
+    fn paths_mut(&mut self) -> &mut Vec<Path> {
+        &mut self.paths
+    }
+
     fn metadata(&self) -> &LayerMetadata {
-        &self.metadata()
+        &self.metadata
     }
 
     fn metadata_mut(&mut self) -> &mut LayerMetadata {
