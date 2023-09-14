@@ -83,15 +83,14 @@ fn layer_to_svg_group<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait + S
     group
 }
 
-pub(crate) fn document_to_svg_string<
+pub(crate) fn document_to_svg_doc<
     T: DocumentTrait<L, P, D>,
     L: LayerTrait<P, D>,
     P: PathTrait<D>,
     D: PathDataTrait,
 >(
     document: &T,
-    mut writer: impl std::io::Write,
-) -> std::io::Result<()> {
+) -> svg::Document {
     let mut doc = svg::Document::new()
         .set(
             "xmlns:inkscape",
@@ -155,77 +154,29 @@ pub(crate) fn document_to_svg_string<
         doc = doc.add(group);
     }
 
-    write!(writer, "{doc}")
+    doc
 }
 
-//OLD
-// impl<T: PathDataTrait + detail::SvgPathWriter> Display for DocumentImpl<T> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         let mut doc = svg::Document::new()
-//             .set(
-//                 "xmlns:inkscape",
-//                 "http://www.inkscape.org/namespaces/inkscape",
-//             )
-//             .set("xmlns:cc", "http://creativecommons.org/ns")
-//             .set("xmlns:dc", "http://purl.org/dc/elements/1.1/")
-//             .set("xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns");
-//
-//         // dimensions, ensuring minimum size of 1x1
-//         let mut dims = if let Some(page_size) = self.page_size {
-//             kurbo::Rect::from_points((0.0, 0.0), (page_size.w, page_size.h))
-//         } else if let Some(bounds) = self.bounds() {
-//             bounds
-//         } else {
-//             kurbo::Rect::from_points((0.0, 0.0), (1.0, 1.0))
-//         };
-//         dims = dims.union(kurbo::Rect::from_origin_size(dims.origin(), (1.0, 1.0)));
-//
-//         doc = doc
-//             .set("width", format!("{:.5}", dims.width()))
-//             .set("height", format!("{:.5}", dims.height()))
-//             .set(
-//                 "viewBox",
-//                 format!(
-//                     "{:.5} {:.5} {:.5} {:.5}",
-//                     dims.x0,
-//                     dims.y0,
-//                     dims.width(),
-//                     dims.height()
-//                 ),
-//             );
-//
-//         // append metadata
-//         let mut cc = Element::new("cc:Work");
-//         let mut dc_format = Element::new("dc:format");
-//         dc_format.append(svg::node::Text::new("image/svg+xml"));
-//         cc.append(dc_format);
-//         let mut dc_date = Element::new("dc:date");
-//         dc_date.append(svg::node::Text::new(
-//             OffsetDateTime::now_utc()
-//                 .format(&Iso8601::DEFAULT)
-//                 .expect("must format"),
-//         ));
-//         cc.append(dc_date);
-//         if let Some(source) = self.source.as_ref() {
-//             let mut dc_source = Element::new("dc:source");
-//             dc_source.append(svg::node::Text::new(source));
-//             cc.append(dc_source);
-//         }
-//         let mut rdf = Element::new("rdf:RDF");
-//         rdf.append(cc);
-//         let mut metadata = Element::new("metadata");
-//         metadata.append(rdf);
-//         doc.append(metadata);
-//
-//         // append layers
-//         for (lid, layer) in &self.layers {
-//             let group = layer.as_svg_group().set("id", format!("layer{lid}"));
-//
-//             doc = doc.add(group);
-//         }
-//
-//         write!(f, "{doc}")
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Document;
 
-// TODO: tests
+    #[test]
+    fn test_svg_out() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" >
+                <path d="M 10,0 L 20,0" />
+            </svg>"#,
+            false,
+        )
+        .unwrap();
+
+        let svg = doc.to_svg_string().unwrap();
+
+        assert!(svg.find("path d=\"M10,0 L20,0\"").is_some());
+    }
+}

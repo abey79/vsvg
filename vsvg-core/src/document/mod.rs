@@ -7,7 +7,7 @@ mod flattened_document;
 mod metadata;
 
 use crate::stats::LayerStats;
-use crate::svg_writer::document_to_svg_string;
+use crate::svg_writer::document_to_svg_doc;
 pub use document::Document;
 pub use flattened_document::FlattenedDocument;
 pub use metadata::DocumentMetadata;
@@ -65,7 +65,15 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
             .collect()
     }
 
+    fn to_svg_string(&self) -> Result<String, std::fmt::Error> {
+        use std::fmt::Write;
+
+        let doc = document_to_svg_doc(self);
+        let mut svg = String::new();
+        write!(svg, "{doc}").map(|_| svg)
+    }
     fn to_svg(&self, writer: impl std::io::Write) -> std::io::Result<()> {
-        document_to_svg_string(self, writer)
+        let doc = document_to_svg_doc(self);
+        svg::write(writer, &doc)
     }
 }
