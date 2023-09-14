@@ -1,5 +1,6 @@
 mod flattened_path;
 mod metadata;
+#[allow(clippy::module_inception)]
 mod path;
 mod point;
 

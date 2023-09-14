@@ -10,6 +10,7 @@ impl Layer {
         self.sort_with_builder(IndexBuilder::default().flip(flip));
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn sort_with_builder(&mut self, builder: IndexBuilder) {
         if self.paths.len() <= 1 {
             return;

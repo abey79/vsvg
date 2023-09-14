@@ -1,5 +1,5 @@
-use super::*;
-use crate::{FlattenedPath, Polyline};
+use super::{LayerMetadata, LayerTrait};
+use crate::{FlattenedPath, Polyline, Transforms};
 
 #[derive(Default, Clone, Debug)]
 pub struct FlattenedLayer {

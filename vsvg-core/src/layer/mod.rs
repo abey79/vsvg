@@ -1,4 +1,5 @@
 mod flattened_layer;
+#[allow(clippy::module_inception)]
 mod layer;
 mod metadata;
 
@@ -42,7 +43,7 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
         }
 
         let mut new_paths = Vec::with_capacity(self.paths().len());
-        let mut index = builder.build(&self.paths());
+        let mut index = builder.build(self.paths());
 
         let mut pos = Point::ZERO;
         while let Some((path_item, reverse)) = index.pop_nearest(&pos) {

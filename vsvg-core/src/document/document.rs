@@ -1,5 +1,5 @@
-use super::*;
-use crate::{Layer, PageSize, Path};
+use super::{DocumentMetadata, DocumentTrait, FlattenedDocument, LayerID};
+use crate::{Layer, PageSize, Path, Transforms};
 use std::collections::BTreeMap;
 
 #[derive(Default, Clone, Debug)]
@@ -80,7 +80,7 @@ impl Document {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Layer;
+    use crate::{Layer, LayerTrait};
 
     #[test]
     fn test_document_bounds() {

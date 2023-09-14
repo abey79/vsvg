@@ -1,7 +1,6 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use std::io::Write;
 use vsvg_core::{DocumentTrait, IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511

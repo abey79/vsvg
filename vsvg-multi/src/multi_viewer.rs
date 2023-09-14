@@ -18,7 +18,7 @@ impl MultiViewer {
 impl eframe::App for MultiViewer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // handle input
-        if !ctx.wants_keyboard_input() {}
+        //if !ctx.wants_keyboard_input() {}
 
         egui::SidePanel::left("left_panel").show(ctx, |ui| {
             ui.input(|i| {

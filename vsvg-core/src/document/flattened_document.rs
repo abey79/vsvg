@@ -1,5 +1,6 @@
-use super::*;
-use crate::{FlattenedLayer, FlattenedPath, Polyline};
+use super::{DocumentMetadata, DocumentTrait, LayerID};
+use crate::{FlattenedLayer, FlattenedPath, Polyline, Transforms};
+use std::collections::BTreeMap;
 
 #[derive(Default, Clone, Debug)]
 pub struct FlattenedDocument {

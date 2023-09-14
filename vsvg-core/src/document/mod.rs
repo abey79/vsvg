@@ -1,6 +1,7 @@
 use crate::{LayerTrait, PathDataTrait, PathTrait, Transforms};
 use std::collections::BTreeMap;
 
+#[allow(clippy::module_inception)]
 mod document;
 mod flattened_document;
 mod metadata;

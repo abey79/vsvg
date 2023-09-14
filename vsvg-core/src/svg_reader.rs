@@ -7,8 +7,7 @@ use std::fs;
 use std::path;
 
 use crate::{
-    Color, Document, DocumentTrait, Layer, LayerID, LayerTrait, PageSize, Path, PathMetadata,
-    PathTrait,
+    Color, Document, DocumentTrait, Layer, LayerID, LayerTrait, PageSize, Path, PathTrait,
 };
 
 use usvg::utils::view_box_to_transform;

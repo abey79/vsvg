@@ -9,14 +9,17 @@ use kurbo::Affine;
 pub struct Polyline(Vec<Point>);
 
 impl Polyline {
+    #[must_use]
     pub fn new(points: Vec<Point>) -> Self {
         Self(points)
     }
 
+    #[must_use]
     pub fn points(&self) -> &[Point] {
         &self.0
     }
 
+    #[must_use]
     pub fn points_mut(&mut self) -> &mut Vec<Point> {
         &mut self.0
     }
@@ -24,7 +27,7 @@ impl Polyline {
 
 impl Transforms for Polyline {
     fn transform(&mut self, affine: &Affine) {
-        for point in self.points_mut().iter_mut() {
+        for point in self.points_mut() {
             *point = *affine * *point;
         }
     }

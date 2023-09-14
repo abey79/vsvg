@@ -169,7 +169,7 @@ impl<'a, P: PathTrait<D>, D: PathDataTrait> PathIndex<'a, P, D> {
 
         // update k-d tree
         self.tree = KdTree::new(2);
-        for (idx, path_item) in self.paths.iter() {
+        for (idx, path_item) in &self.paths {
             if let Some(ref start) = path_item.start {
                 if self.settings.flip {
                     if let Some(ref end) = path_item.end {
@@ -204,6 +204,7 @@ impl<'a, P: PathTrait<D>, D: PathDataTrait> PathIndex<'a, P, D> {
     ///
     /// This function may return `None` even if the `PathIndex` is not empty, as some paths may not
     /// be indexed.
+    #[allow(clippy::missing_panics_doc)]
     pub fn pop_nearest(&mut self, point: &Point) -> Option<(PathItem<P, D>, bool)> {
         if self.reindex_agent.should_reindex() {
             self.reindex();
