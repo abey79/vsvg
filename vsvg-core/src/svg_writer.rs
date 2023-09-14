@@ -4,8 +4,6 @@
 use svg::Node;
 
 use crate::{DocumentTrait, LayerTrait, PathDataTrait, PathTrait, Polyline};
-use time::format_description::well_known::Iso8601;
-use time::OffsetDateTime;
 
 // private trait in public types, see https://github.com/rust-lang/rust/issues/34537
 
@@ -129,13 +127,22 @@ pub(crate) fn document_to_svg_doc<
     let mut dc_format = svg::node::element::Element::new("dc:format");
     dc_format.append(svg::node::Text::new("image/svg+xml"));
     cc.append(dc_format);
-    let mut dc_date = svg::node::element::Element::new("dc:date");
-    dc_date.append(svg::node::Text::new(
-        OffsetDateTime::now_utc()
-            .format(&Iso8601::DEFAULT)
-            .expect("must format"),
-    ));
-    cc.append(dc_date);
+
+    //TODO: find suitable replacement
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use time::format_description::well_known::Iso8601;
+        use time::OffsetDateTime;
+
+        let mut dc_date = svg::node::element::Element::new("dc:date");
+        dc_date.append(svg::node::Text::new(
+            OffsetDateTime::now_utc()
+                .format(&Iso8601::DEFAULT)
+                .expect("must format"),
+        ));
+        cc.append(dc_date);
+    }
+
     if let Some(source) = document.metadata().source.as_ref() {
         let mut dc_source = svg::node::element::Element::new("dc:source");
         dc_source.append(svg::node::Text::new(source));
