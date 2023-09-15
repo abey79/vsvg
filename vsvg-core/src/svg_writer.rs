@@ -193,6 +193,6 @@ mod tests {
 
         let svg = doc.to_svg_string().unwrap();
 
-        assert!(svg.find("path d=\"M10,0 L20,0\"").is_some());
+        assert!(svg.contains("path d=\"M10,0 L20,0\""));
     }
 }

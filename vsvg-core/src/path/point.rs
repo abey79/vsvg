@@ -46,6 +46,12 @@ impl From<(f64, f64)> for Point {
     }
 }
 
+impl From<(f32, f32)> for Point {
+    fn from((x, y): (f32, f32)) -> Self {
+        Self::new(f64::from(x), f64::from(y))
+    }
+}
+
 impl From<Point> for (f64, f64) {
     fn from(p: Point) -> Self {
         (p.x(), p.y())
@@ -55,6 +61,12 @@ impl From<Point> for (f64, f64) {
 impl From<[f64; 2]> for Point {
     fn from([x, y]: [f64; 2]) -> Self {
         Self::new(x, y)
+    }
+}
+
+impl From<[f32; 2]> for Point {
+    fn from([x, y]: [f32; 2]) -> Self {
+        Self::new(f64::from(x), f64::from(y))
     }
 }
 
