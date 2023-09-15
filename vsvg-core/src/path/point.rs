@@ -148,6 +148,14 @@ impl From<&Point> for egui::Pos2 {
     }
 }
 
+#[cfg(feature = "glam")]
+impl From<glam::Vec2> for Point {
+    fn from(p: glam::Vec2) -> Self {
+        //glam::
+        Self::new(f64::from(p.x), f64::from(p.y))
+    }
+}
+
 impl Mul<Point> for kurbo::Affine {
     type Output = Point;
 
