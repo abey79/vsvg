@@ -1,3 +1,23 @@
+//! `vsvg-core` is a library crate to manipulate vector graphics, with a focus on SVG and
+//! pen-plotter applications. It's inspired upon [`vpype`](https://github.com/abey79/vpype), the
+//! Swiss-Army-knife command-line tool for plotter vector graphics.
+//!
+//! TODO: complete this documentation
+//!
+//! # Example
+//!
+//! ```
+//! use vsvg_core::{Document, DocumentTrait, Layer, Path};
+//!
+//! let mut doc = Document::default();
+//!
+//! // todo
+//! // - create path from anything, add metadata
+//! // - add Layer::push_path + add layer
+//! // - add Document::push_path
+//!
+//!```
+
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
@@ -38,6 +58,18 @@ pub struct Color {
     pub a: u8,
 }
 
+impl Color {
+    #[must_use]
+    pub fn to_rgb_string(&self) -> String {
+        format!("#{:02x}{:02x}{:02x}", self.r, self.g, self.b)
+    }
+
+    #[must_use]
+    pub fn opacity(&self) -> f32 {
+        f32::from(self.a) / 255.0
+    }
+}
+
 impl Default for Color {
     fn default() -> Self {
         Self {
@@ -62,6 +94,11 @@ impl Display for Color {
 impl Color {
     pub const WHITE: Self = Self::gray(0xFF);
     pub const BLACK: Self = Self::gray(0);
+
+    #[must_use]
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
+    }
 
     #[must_use]
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {

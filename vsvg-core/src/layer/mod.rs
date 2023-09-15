@@ -33,6 +33,10 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
         )
     }
 
+    fn push_path(&mut self, path: impl Into<P>) {
+        self.paths_mut().push(path.into());
+    }
+
     fn sort(&mut self, flip: bool) {
         self.sort_with_builder(IndexBuilder::default().flip(flip));
     }

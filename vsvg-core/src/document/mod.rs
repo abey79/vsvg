@@ -25,6 +25,10 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
 
     fn metadata_mut(&mut self) -> &mut DocumentMetadata;
 
+    fn push_path(&mut self, id: LayerID, path: impl Into<P>) {
+        self.get_mut(id).push_path(path.into());
+    }
+
     fn try_get(&self, id: LayerID) -> Option<&L> {
         self.layers().get(&id)
     }

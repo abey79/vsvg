@@ -57,11 +57,20 @@ impl SvgPathWriter for Polyline {
 }
 
 fn path_to_svg_path<P: PathTrait<D>, D: PathDataTrait>(path: &P) -> svg::node::element::Path {
-    svg::node::element::Path::new()
+    let mut elem = svg::node::element::Path::new()
         .set("fill", "none")
-        .set("stroke", path.metadata().color.to_string())
+        .set("stroke", path.metadata().color.to_rgb_string())
         .set("stroke-width", path.metadata().stroke_width)
-        .set("d", path.data().to_svg_path_data())
+        .set("d", path.data().to_svg_path_data());
+
+    if path.metadata().color.opacity() < 1.0 {
+        elem = elem.set(
+            "stroke-opacity",
+            format!("{:0.1}%", path.metadata().color.opacity() * 100.),
+        );
+    }
+
+    elem
 
     // TODO: do not add metadata if it is the default
     // TODO: promote common attributes to group level
