@@ -7,7 +7,7 @@
 //! # Example
 //!
 //! ```
-//! use vsvg_core::{Document, DocumentTrait, Layer, Path};
+//! use vsvg::{Document, DocumentTrait, Layer, Path};
 //!
 //! let mut doc = Document::default();
 //!

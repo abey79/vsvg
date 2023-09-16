@@ -1,5 +1,5 @@
 use std::{env, mem, process};
-use vsvg_core::{Document, DocumentTrait, FlattenedPath, PathTrait, Point};
+use vsvg::{Document, DocumentTrait, FlattenedPath, PathTrait, Point};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Buffer, ColorTargetState, Device, Instance, PrimitiveTopology,
