@@ -43,6 +43,10 @@ impl LayerTrait<Path, kurbo::BezPath> for Layer {
 }
 
 impl Layer {
+    pub fn push_shape(&mut self, shape: impl kurbo::Shape) {
+        self.push_path(Path::from_shape(shape));
+    }
+
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedLayer {
         let flattened_paths =
@@ -108,6 +112,17 @@ mod test {
         assert_eq!(
             layer.bounds(),
             Some(kurbo::Rect::new(-10.0, -150.0, 25.0, 53.0))
+        );
+    }
+
+    #[test]
+    fn test_layer_push_shape() {
+        let mut layer = Layer::new();
+        layer.push_shape(kurbo::Rect::new(0.0, 0.0, 10.0, 10.0));
+        assert_eq!(layer.paths.len(), 1);
+        assert_eq!(
+            layer.paths[0],
+            Path::from_shape(kurbo::Rect::new(0.0, 0.0, 10.0, 10.0))
         );
     }
 }

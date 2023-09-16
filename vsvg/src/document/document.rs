@@ -47,6 +47,10 @@ impl Document {
         }
     }
 
+    pub fn push_shape(&mut self, layer: LayerID, shape: impl kurbo::Shape) {
+        self.get_mut(layer).push_shape(shape);
+    }
+
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedDocument {
         FlattenedDocument::new(
@@ -106,5 +110,18 @@ mod test {
         )));
         doc.layers.insert(3, layer3);
         assert_eq!(doc.bounds(), Some(kurbo::Rect::new(10., -100., 250., 54.)));
+    }
+
+    #[test]
+    fn test_document_push_shape() {
+        let mut doc = Document::default();
+        doc.push_shape(2, kurbo::Rect::new(0., 0., 10., 10.));
+
+        assert_eq!(doc.layers.len(), 1);
+        assert_eq!(doc.layers[&2].paths.len(), 1);
+        assert_eq!(
+            doc.layers[&2].paths[0],
+            Path::from_shape(kurbo::Rect::new(0., 0., 10., 10.))
+        );
     }
 }
