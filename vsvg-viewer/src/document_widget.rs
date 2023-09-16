@@ -2,7 +2,7 @@ use crate::engine::{DisplayMode, DocumentData, Engine, ViewerOptions};
 use eframe::egui_wgpu;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
-use vsvg_core::{DocumentTrait, LayerTrait};
+use vsvg::{DocumentTrait, LayerTrait};
 
 /// Widget to display a [`vsvg_core::Document`] in a egui application.
 ///

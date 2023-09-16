@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use vsvg_core::{DocumentTrait, IndexBuilder, Transforms};
+use vsvg::{DocumentTrait, IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
 macro_rules! count_items {
@@ -78,7 +78,7 @@ macro_rules! command_decl {
         command_impl!($arg, String, String, $(|$state, $($x),+| $action),+)
     };
     ($arg:expr, LayerID, $(|$state:ident, $($x:ident),+| $action:expr),+) => {
-        command_impl!($arg, vsvg_core::LayerID, LayerID, $(|$state, $($x),+| $action),+)
+        command_impl!($arg, vsvg::LayerID, LayerID, $(|$state, $($x),+| $action),+)
     };
 }
 

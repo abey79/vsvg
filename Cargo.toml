@@ -2,7 +2,7 @@
 
 members = [
     "vsvg",
-    "vsvg-core",
+    "vsvg-cli",
     "vsvg-viewer",
     "vsvg-multi",
 ]

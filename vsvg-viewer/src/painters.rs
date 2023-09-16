@@ -1,6 +1,6 @@
 use crate::engine::Engine;
 use std::mem;
-use vsvg_core::{FlattenedPath, PathTrait, Point};
+use vsvg::{FlattenedPath, PathTrait, Point};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, vertex_attr_array, Buffer, ColorTargetState, Device, PrimitiveTopology,

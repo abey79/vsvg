@@ -1,0 +1,38 @@
+[package]
+name = "vsvg-cli"
+description = "An experimental SVG viewer for plotter users."
+authors = ["Antoine Beyeler"]
+version = "0.1.0-alpha.0"
+edition = "2021"
+readme = "../README.md"
+homepage = "https://github.com/abey79/vsvg"
+license = "MIT"
+
+[[bin]]
+name = "vsvg"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+egui.workspace = true
+eframe.workspace = true
+serde.workspace = true
+kurbo.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+tracing-subscriber = "0.3.16"
+clap = { version = "4.1.6", features = ["cargo"]}
+vsvg = { path = "../vsvg", features = ["egui"] }
+vsvg-viewer = { path = "../vsvg-viewer"}
+dhat = { version = "0.3.2", optional = true } # for heap profiling
+
+
+
+# for dhat-heap!!
+#[profile.release]
+#debug = 1
+
+[features]
+dhat-heap = ["dhat"]    # if you are doing heap profiling
+dhat-ad-hoc = []  # if you are doing ad hoc profiling

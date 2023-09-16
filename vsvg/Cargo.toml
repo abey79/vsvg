@@ -1,34 +1,38 @@
 [package]
 name = "vsvg"
-description = "An experimental SVG viewer for plotter users."
+description = "Rust prototype of vpype-core V2"
 authors = ["Antoine Beyeler"]
 version = "0.1.0-alpha.0"
 edition = "2021"
-readme = "../README.md"
-homepage = "https://github.com/abey79/vsvg"
-license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui.workspace = true
-eframe.workspace = true
-serde.workspace = true
 kurbo.workspace = true
+usvg = "0.29.0"
+rosvgtree = "0.1.0"
+rctree = "*"  # Let usvg decide on the version
+svg = "0.13.1"
+rayon = "1.6.1"
+arrayvec = "0.7.2"
+lyon_geom = "1.0.4"
+regex = "1.7.1"
+lazy_static = "1.4.0"
+indexmap = {version = "1.9.2", features = ["rayon"]}
+kdtree = "0.7.0"
+bitvec = "1.0.1"
+time = {version="0.3.20", features = ["formatting"]}
+
+# optional dependencies, mainly for Point interop.
+egui = { workspace=true, optional = true }
+glam = { version="0", optional = true }
+bevy = { version="0", optional = true, default-features = false }
+
+[dev-dependencies]
+approx = "0.5.1"
+criterion = "0.4.0"
 rand.workspace = true
 rand_chacha.workspace = true
-tracing-subscriber = "0.3.16"
-clap = { version = "4.1.6", features = ["cargo"]}
-vsvg-core = { path = "../vsvg-core", features = ["egui"] }
-vsvg-viewer = { path = "../vsvg-viewer"}
-dhat = { version = "0.3.2", optional = true } # for heap profiling
 
-
-
-# for dhat-heap!!
-#[profile.release]
-#debug = 1
-
-[features]
-dhat-heap = ["dhat"]    # if you are doing heap profiling
-dhat-ad-hoc = []  # if you are doing ad hoc profiling
+[[bench]]
+name = "bench_path_index"
+harness = false

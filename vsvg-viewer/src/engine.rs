@@ -3,7 +3,7 @@ use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use vsvg_core::{
+use vsvg::{
     Color, Document, DocumentTrait, FlattenedDocument, LayerID, LayerTrait, PathTrait, Point,
 };
 use wgpu::util::DeviceExt;

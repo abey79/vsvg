@@ -8,7 +8,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use crate::cli::State;
-use vsvg_core::Document;
+use vsvg::Document;
 
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]

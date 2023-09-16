@@ -1,4 +1,4 @@
-//! `vsvg-core` is a library crate to manipulate vector graphics, with a focus on SVG and
+//! `vsvg` is a library crate to manipulate vector graphics, with a focus on SVG and
 //! pen-plotter applications. It's inspired upon [`vpype`](https://github.com/abey79/vpype), the
 //! Swiss-Army-knife command-line tool for plotter vector graphics.
 //!

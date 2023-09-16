@@ -13,7 +13,7 @@ use crate::engine::DocumentData;
 use crate::viewer::Viewer;
 use std::error::Error;
 use std::sync::Arc;
-use vsvg_core::Document;
+use vsvg::Document;
 
 /// Show a document in a window.
 #[allow(clippy::missing_panics_doc)]

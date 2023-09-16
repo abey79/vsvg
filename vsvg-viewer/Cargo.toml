@@ -7,7 +7,7 @@ edition = "2021"
 
 
 [dependencies]
-vsvg-core = { path = "../vsvg-core" }
+vsvg = { path = "../vsvg" }
 kurbo.workspace = true
 egui.workspace = true
 eframe.workspace = true

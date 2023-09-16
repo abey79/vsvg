@@ -3576,23 +3576,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vsvg"
 version = "0.1.0-alpha.0"
 dependencies = [
- "clap 4.2.5",
- "dhat",
- "eframe",
- "egui",
- "kurbo",
- "rand",
- "rand_chacha",
- "serde",
- "tracing-subscriber",
- "vsvg-core",
- "vsvg-viewer",
-]
-
-[[package]]
-name = "vsvg-core"
-version = "0.1.0-alpha.0"
-dependencies = [
  "approx 0.5.1",
  "arrayvec",
  "bevy",
@@ -3614,6 +3597,23 @@ dependencies = [
  "svg",
  "time",
  "usvg",
+]
+
+[[package]]
+name = "vsvg-cli"
+version = "0.1.0-alpha.0"
+dependencies = [
+ "clap 4.2.5",
+ "dhat",
+ "eframe",
+ "egui",
+ "kurbo",
+ "rand",
+ "rand_chacha",
+ "serde",
+ "tracing-subscriber",
+ "vsvg",
+ "vsvg-viewer",
 ]
 
 [[package]]
@@ -3639,7 +3639,7 @@ dependencies = [
  "raw-window-handle",
  "serde",
  "tracing-subscriber",
- "vsvg-core",
+ "vsvg",
  "wgpu",
  "winit",
 ]
