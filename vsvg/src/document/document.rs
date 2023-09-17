@@ -47,10 +47,6 @@ impl Document {
         }
     }
 
-    pub fn push_shape(&mut self, layer: LayerID, shape: impl kurbo::Shape) {
-        self.get_mut(layer).push_shape(shape);
-    }
-
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedDocument {
         FlattenedDocument::new(
@@ -98,16 +94,15 @@ mod test {
         let mut layer2 = Layer::new();
         layer2
             .paths
-            .push(Path::from_shape(kurbo::Line::new((10., 10.), (25., 53.))));
+            .push(Path::from(kurbo::Line::new((10., 10.), (25., 53.))));
         let layer2_bounds = layer2.bounds();
         doc.layers.insert(2, layer2);
         assert_eq!(doc.bounds(), layer2_bounds);
 
         let mut layer3 = Layer::new();
-        layer3.paths.push(Path::from_shape(kurbo::Line::new(
-            (25., -100.),
-            (250., 54.),
-        )));
+        layer3
+            .paths
+            .push(Path::from(kurbo::Line::new((25., -100.), (250., 54.))));
         doc.layers.insert(3, layer3);
         assert_eq!(doc.bounds(), Some(kurbo::Rect::new(10., -100., 250., 54.)));
     }
@@ -115,13 +110,13 @@ mod test {
     #[test]
     fn test_document_push_shape() {
         let mut doc = Document::default();
-        doc.push_shape(2, kurbo::Rect::new(0., 0., 10., 10.));
+        doc.push_path(2, kurbo::Rect::new(0., 0., 10., 10.));
 
         assert_eq!(doc.layers.len(), 1);
         assert_eq!(doc.layers[&2].paths.len(), 1);
         assert_eq!(
             doc.layers[&2].paths[0],
-            Path::from_shape(kurbo::Rect::new(0., 0., 10., 10.))
+            Path::from(kurbo::Rect::new(0., 0., 10., 10.))
         );
     }
 }

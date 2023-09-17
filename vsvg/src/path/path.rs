@@ -1,12 +1,11 @@
 use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
 use crate::crop::Crop;
+use crate::path::into_bezpath::{IntoBezPath, IntoBezPathTolerance};
 use crate::Transforms;
 use kurbo::{Affine, BezPath, PathEl};
 use std::cell::RefCell;
 use std::error::Error;
 use std::fmt::Debug;
-
-const DEFAULT_TOLERANCE: f64 = 0.05;
 
 // ======================================================================================
 // The path data for `Path` is `kurbo::BezPath`.
@@ -96,29 +95,31 @@ impl PathTrait<BezPath> for Path {
 }
 
 impl Path {
-    pub fn from_shape<T: kurbo::Shape>(shape: T) -> Self {
-        Self::from_shape_with_tolerance(shape, DEFAULT_TOLERANCE)
-    }
-    pub fn from_shape_with_tolerance<T: kurbo::Shape>(shape: T, tolerance: f64) -> Self {
+    #[must_use]
+    pub fn from_tolerance(path: impl IntoBezPathTolerance, tolerance: f64) -> Self {
         Self {
-            data: shape.into_path(tolerance),
+            data: path.into_bezpath_with_tolerance(tolerance),
             ..Default::default()
         }
     }
 
-    pub fn from_points(points: impl IntoIterator<Item = Point>) -> Self {
+    #[must_use]
+    pub fn from_metadata(path: impl IntoBezPath, metadata: PathMetadata) -> Self {
         Self {
-            data: points_to_bezpath(points),
-            ..Default::default()
+            data: path.into_bezpath(),
+            metadata,
         }
     }
 
-    pub fn from_line_segments(
-        segments: impl IntoIterator<Item = impl Into<(Point, Point)>>,
+    #[must_use]
+    pub fn from_tolerance_metadata(
+        path: impl IntoBezPathTolerance,
+        tolerance: f64,
+        metadata: PathMetadata,
     ) -> Self {
         Self {
-            data: line_segment_to_bezpath(segments),
-            ..Default::default()
+            data: path.into_bezpath_with_tolerance(tolerance),
+            metadata,
         }
     }
 
@@ -206,37 +207,10 @@ impl Path {
     }
 }
 
-fn points_to_bezpath(points: impl IntoIterator<Item = impl Into<Point>>) -> BezPath {
-    let mut bezpath = BezPath::new();
-
-    let mut points = points.into_iter().map(Into::into);
-
-    if let Some(pt) = points.next() {
-        bezpath.move_to(pt);
-    }
-
-    for pt in points {
-        bezpath.line_to(pt);
-    }
-
-    bezpath
-}
-
-fn line_segment_to_bezpath(
-    segments: impl IntoIterator<Item = impl Into<(Point, Point)>>,
-) -> BezPath {
-    let segments = segments
-        .into_iter()
-        .map(Into::into)
-        .map(|(a, b)| kurbo::PathSeg::Line(kurbo::Line::new(a, b)));
-
-    BezPath::from_path_segments(segments)
-}
-
-impl From<BezPath> for Path {
-    fn from(path: BezPath) -> Self {
+impl<T: IntoBezPath> From<T> for Path {
+    fn from(path: T) -> Self {
         Self {
-            data: path,
+            data: path.into_bezpath(),
             ..Default::default()
         }
     }
@@ -246,11 +220,10 @@ impl From<BezPath> for Path {
 mod test {
     use super::*;
     use kurbo::Line;
-    use kurbo::PathEl::{LineTo, MoveTo};
 
     #[test]
     fn test_path_crop() {
-        let mut path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        let mut path = Path::from(Line::new((0.0, 0.0), (1.0, 1.0)));
         path.crop(0.5, 0.5, 1.5, 1.5);
         let mut it = path.data.segments();
         assert_eq!(
@@ -262,7 +235,7 @@ mod test {
 
     #[test]
     fn test_path_bounds() {
-        let path = Path::from_shape(Line::new((0.0, 0.0), (1.0, 1.0)));
+        let path = Path::from(Line::new((0.0, 0.0), (1.0, 1.0)));
         assert_eq!(path.bounds(), kurbo::Rect::new(0.0, 0.0, 1.0, 1.0));
     }
 
@@ -292,47 +265,5 @@ mod test {
 
         let path = Path::from_svg("M 10,0 L 10,0").unwrap();
         assert!(path.data.is_point());
-    }
-
-    #[test]
-    fn test_points_to_bezpath() {
-        let points = vec![[0.0, 0.0], [10.0, 12.0], [1.0, 2.0]];
-
-        assert_eq!(
-            points_to_bezpath(points),
-            BezPath::from_vec(vec![
-                MoveTo(kurbo::Point::new(0.0, 0.0)),
-                LineTo(kurbo::Point::new(10.0, 12.0)),
-                LineTo(kurbo::Point::new(1.0, 2.0))
-            ])
-        );
-    }
-
-    #[test]
-    fn test_points_to_bezpath_empty() {
-        let points: [Point; 0] = [];
-        assert!(points_to_bezpath(points).is_empty());
-
-        let points = [Point::new(0.0, 0.0)];
-        assert!(points_to_bezpath(points).is_empty());
-    }
-
-    #[test]
-    fn test_line_segments_to_bezpath() {
-        let segs = [
-            (Point::new(0.0, 0.0), Point::new(10.0, 12.0)),
-            (Point::new(1.0, 2.0), Point::new(3.0, 4.0)),
-        ];
-        let bezpath = line_segment_to_bezpath(segs);
-
-        assert_eq!(
-            bezpath,
-            BezPath::from_vec(vec![
-                MoveTo(kurbo::Point::new(0.0, 0.0)),
-                LineTo(kurbo::Point::new(10.0, 12.0)),
-                MoveTo(kurbo::Point::new(1.0, 2.0)),
-                LineTo(kurbo::Point::new(3.0, 4.0))
-            ])
-        );
     }
 }

@@ -1,4 +1,5 @@
 mod flattened_path;
+pub(crate) mod into_bezpath;
 mod metadata;
 #[allow(clippy::module_inception)]
 mod path;
@@ -11,6 +12,8 @@ pub use flattened_path::{FlattenedPath, Polyline};
 pub use metadata::PathMetadata;
 pub use path::Path;
 pub use point::Point;
+
+pub const DEFAULT_TOLERANCE: f64 = 0.05;
 
 pub trait PathDataTrait:
     Transforms + SvgPathWriter + Default + Clone + PartialEq + std::fmt::Debug

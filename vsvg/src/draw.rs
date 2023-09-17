@@ -1,11 +1,15 @@
-use crate::{Color, Layer, Path, PathTrait, Transforms};
-use kurbo::{Affine, Shape, Vec2};
+use crate::path::into_bezpath::IntoBezPathTolerance;
+use crate::{Color, Layer, Path, PathTrait, Transforms, DEFAULT_TOLERANCE};
+use kurbo::{Affine, Vec2};
 
 #[derive(Debug)]
 pub struct DrawState {
     transform: Affine, //TODO: make it a stack?
     color: Color,
     stroke_width: f64,
+
+    /// used to convert shapes to Béziers
+    tolerance: f64,
 }
 
 impl Default for DrawState {
@@ -14,6 +18,7 @@ impl Default for DrawState {
             transform: Affine::default(),
             color: Color::default(),
             stroke_width: 1.0,
+            tolerance: DEFAULT_TOLERANCE,
         }
     }
 }
@@ -59,7 +64,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
         x4: f64,
         y4: f64,
     ) -> &Self {
-        self.add_shape(kurbo::CubicBez::new((x1, y1), (x2, y2), (x3, y3), (x4, y4)))
+        self.add_path(kurbo::CubicBez::new((x1, y1), (x2, y2), (x3, y3), (x4, y4)))
     }
 
     /// Draw a quadratic Bézier curve from (`x1`, `y1`) to (`x3`, `y3`) with control point at (`x2`,
@@ -73,7 +78,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
         x3: f64,
         y3: f64,
     ) -> &Self {
-        self.add_shape(kurbo::QuadBez::new((x1, y1), (x2, y2), (x3, y3)))
+        self.add_path(kurbo::QuadBez::new((x1, y1), (x2, y2), (x3, y3)))
     }
 
     /// Draw an elliptical arc centered on (`x`, `y`) with radii `rx` and `ry`. The arc starts at
@@ -89,7 +94,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
         sweep: f64,
         x_rot: f64,
     ) -> &Self {
-        self.add_shape(kurbo::Arc {
+        self.add_path(kurbo::Arc {
             center: kurbo::Point { x, y },
             radii: Vec2 { x: rx, y: ry },
             start_angle: start,
@@ -100,23 +105,23 @@ impl<'layer, 'state> Draw<'layer, 'state> {
 
     /// Draw a circle centered on (`x`, `y`) with radius `r`.
     pub fn circle(&mut self, x: f64, y: f64, r: f64) -> &Self {
-        self.add_shape(kurbo::Circle::new(kurbo::Point { x, y }, r))
+        self.add_path(kurbo::Circle::new(kurbo::Point { x, y }, r))
     }
 
     /// Draw an ellipse centered on (`x`, `y`) with radii `rx` and `ry`. `x_rot` is the rotation of
     /// the ellipse in radians.
     pub fn ellipse(&mut self, x: f64, y: f64, rx: f64, ry: f64, x_rot: f64) -> &Self {
-        self.add_shape(kurbo::Ellipse::new((x, y), (rx, ry), x_rot))
+        self.add_path(kurbo::Ellipse::new((x, y), (rx, ry), x_rot))
     }
 
     /// Draw a line from (`x1`, `y1`) to (`x2`, `y2`).
     pub fn line(&mut self, x1: f64, y1: f64, x2: f64, y2: f64) -> &Self {
-        self.add_shape(kurbo::Line::new((x1, y1), (x2, y2)))
+        self.add_path(kurbo::Line::new((x1, y1), (x2, y2)))
     }
 
     /// Draw a rectangle centered on (`x`, `y`) with width `w` and height `h`.
     pub fn rect(&mut self, x: f64, y: f64, w: f64, h: f64) -> &Self {
-        self.add_shape(kurbo::Rect::new(
+        self.add_path(kurbo::Rect::new(
             x - w * 0.5,
             y - h * 0.5,
             x + w * 0.5,
@@ -138,7 +143,7 @@ impl<'layer, 'state> Draw<'layer, 'state> {
         br: f64,
         bl: f64,
     ) -> &Self {
-        self.add_shape(kurbo::RoundedRect::new(
+        self.add_path(kurbo::RoundedRect::new(
             x - w * 0.5,
             y - h * 0.5,
             x + w * 0.5,
@@ -149,12 +154,12 @@ impl<'layer, 'state> Draw<'layer, 'state> {
 
     /// Draw from an SVG path representation.
     pub fn svg_path(&mut self, path: &str) -> Result<(), kurbo::SvgParseError> {
-        self.add_shape(kurbo::BezPath::from_svg(path)?);
+        self.add_path(kurbo::BezPath::from_svg(path)?);
         Ok(())
     }
 
-    fn add_shape<T: Shape>(&mut self, shape: T) -> &Self {
-        let mut path: Path = Path::from_shape(shape);
+    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &Self {
+        let mut path: Path = Path::from_tolerance(path, self.state.tolerance);
         path.metadata_mut().color = self.state.color;
         path.metadata_mut().stroke_width = self.state.stroke_width;
         path.apply_transform(self.state.transform);
