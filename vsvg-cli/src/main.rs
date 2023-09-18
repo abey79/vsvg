@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod draw_state;
 
 use crate::commands::command_list;
 

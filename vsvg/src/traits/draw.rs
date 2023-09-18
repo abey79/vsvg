@@ -1,52 +1,7 @@
 use crate::path::into_bezpath::IntoBezPathTolerance;
-use crate::{Layer, Path, PathMetadata, PathTrait, Transforms, DEFAULT_TOLERANCE};
-use kurbo::{Affine, Vec2};
+use kurbo::Vec2;
 
-//TODO: figure out what to do with that draw state...
-#[derive(Debug)]
-pub struct DrawState {
-    pub transform: Affine, //TODO: make it a stack?
-
-    pub metadata: PathMetadata,
-
-    /// used to convert shapes to Béziers
-    pub tolerance: f64,
-}
-
-impl Default for DrawState {
-    fn default() -> Self {
-        Self {
-            transform: Affine::default(),
-            metadata: PathMetadata::default(),
-            tolerance: DEFAULT_TOLERANCE,
-        }
-    }
-}
-
-impl DrawState {
-    #[must_use]
-    pub fn new() -> Self {
-        DrawState::default()
-    }
-
-    pub fn metadata_mut(&mut self) -> &mut PathMetadata {
-        &mut self.metadata
-    }
-}
-
-impl Transforms for DrawState {
-    fn transform(&mut self, affine: &Affine) -> &mut Self {
-        self.transform = *affine * self.transform;
-        self
-    }
-}
-
-pub struct Draw<'layer, 'state> {
-    state: &'state DrawState,
-    layer: &'layer mut Layer,
-}
-
-pub trait DrawAPI {
+pub trait Draw {
     fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self;
 
     /// Draw a cubic Bézier curve from (`x1`, `y1`) to (`x4`, `y4`) with control points at (`x2`,
@@ -155,24 +110,5 @@ pub trait DrawAPI {
     fn svg_path(&mut self, path: &str) -> Result<&mut Self, kurbo::SvgParseError> {
         self.add_path(kurbo::BezPath::from_svg(path)?);
         Ok(self)
-    }
-}
-
-impl<'layer, 'state> DrawAPI for Draw<'layer, 'state> {
-    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
-        let mut path: Path = Path::from_tolerance(path, self.state.tolerance);
-        *path.metadata_mut() = self.state.metadata.clone();
-        path.apply_transform(self.state.transform);
-        self.layer.paths.push(path);
-        self
-    }
-}
-
-impl Layer {
-    pub fn draw<'layer, 'state>(
-        &'layer mut self,
-        state: &'state DrawState,
-    ) -> Draw<'layer, 'state> {
-        Draw { state, layer: self }
     }
 }

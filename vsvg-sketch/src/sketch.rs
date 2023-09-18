@@ -1,14 +1,16 @@
 use kurbo::Affine;
 use vsvg::path::IntoBezPathTolerance;
 use vsvg::{
-    Document, DocumentTrait, DrawAPI, DrawState, LayerID, PageSize, Path, PathTrait, Transforms,
+    Document, DocumentTrait, Draw, LayerID, PageSize, Path, PathMetadata, Transforms,
+    DEFAULT_TOLERANCE,
 };
 
 pub struct Sketch {
     document: Document,
-    pub state: DrawState, //TODO: get rid of that!!
     transform: Affine,
     target_layer: LayerID,
+    tolerance: f64,
+    path_metadata: PathMetadata,
 }
 
 impl Default for Sketch {
@@ -28,13 +30,13 @@ impl Sketch {
     pub fn with_document(mut document: Document) -> Self {
         let target_layer = 0;
         document.ensure_exists(target_layer);
-        let state = DrawState::default();
 
         Self {
             document,
-            state,
+            tolerance: DEFAULT_TOLERANCE,
             transform: Affine::default(),
             target_layer,
+            path_metadata: PathMetadata::default(),
         }
     }
 
@@ -61,10 +63,10 @@ impl Transforms for Sketch {
     }
 }
 
-impl DrawAPI for Sketch {
+impl Draw for Sketch {
     fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
         let mut path: Path =
-            Path::from_tolerance_metadata(path, self.state.tolerance, self.state.metadata.clone());
+            Path::from_tolerance_metadata(path, self.tolerance, self.path_metadata.clone());
 
         path.apply_transform(self.transform);
 

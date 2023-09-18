@@ -4,8 +4,9 @@ use std::error::Error;
 
 use std::fmt::{Debug, Display, Formatter};
 
+use crate::draw_state::{DrawState, LayerDrawer};
 use std::path::PathBuf;
-use vsvg::{Document, DrawState, LayerID};
+use vsvg::{Document, DocumentTrait, LayerID};
 
 /// A trait for types that can be used as command line arguments.
 trait CommandArg: Clone + Into<CommandValue> + Send + Sync + Debug + 'static {}
@@ -37,6 +38,15 @@ pub(crate) struct State {
     pub document: Document,
     pub draw_state: DrawState,
     pub draw_layer: LayerID,
+}
+
+impl State {
+    pub(crate) fn draw(&mut self) -> LayerDrawer {
+        LayerDrawer {
+            state: &self.draw_state,
+            layer: self.document.get_mut(self.draw_layer),
+        }
+    }
 }
 
 impl Default for State {

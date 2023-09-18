@@ -5,7 +5,11 @@ edition = "2021"
 
 [dependencies]
 vsvg = { path = "../vsvg", features = ["geo"] }
-vsvg-viewer = { path = "../vsvg-viewer" }
+vsvg-viewer = { path = "../vsvg-viewer", optional = true }
 kurbo.workspace = true
 
 [dev-dependencies]
+
+[features]
+default = ["viewer"]
+viewer = ["dep:vsvg-viewer"]

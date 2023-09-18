@@ -1,5 +1,5 @@
 pub use crate::sketch::Sketch;
-pub use vsvg::{DrawAPI, PageSize, Transforms};
+pub use vsvg::{Draw, PageSize, Transforms};
 pub use vsvg_viewer::show;
 
 //TODO: put that somewhere better

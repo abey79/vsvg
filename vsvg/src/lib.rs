@@ -1,22 +1,6 @@
 //! `vsvg` is a library crate to manipulate vector graphics, with a focus on SVG and
 //! pen-plotter applications. It's inspired upon [`vpype`](https://github.com/abey79/vpype), the
 //! Swiss-Army-knife command-line tool for plotter vector graphics.
-//!
-//! TODO: complete this documentation
-//!
-//! # Example
-//!
-//! ```
-//! use vsvg::{Document, DocumentTrait, Layer, Path};
-//!
-//! let mut doc = Document::default();
-//!
-//! // todo
-//! // - create path from anything, add metadata
-//! // - add Layer::push_path + add layer
-//! // - add Document::push_path
-//!
-//!```
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
@@ -24,7 +8,6 @@
 
 mod crop;
 pub mod document;
-pub mod draw;
 pub mod layer;
 pub mod optimization;
 pub mod path;
@@ -33,16 +16,16 @@ pub mod stats;
 mod svg_reader;
 pub mod svg_writer;
 pub mod test_utils;
-pub mod transforms;
+mod traits;
 
 pub use document::*;
-pub use draw::*;
+
 pub use layer::*;
 pub use path::*;
 pub use path_index::IndexBuilder;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-pub use transforms::*;
+pub use traits::*;
 
 #[derive(Default, Clone, Copy, Debug, PartialEq)]
 pub struct PageSize {

@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use vsvg::{DocumentTrait, DrawAPI, IndexBuilder, Transforms};
+use vsvg::{DocumentTrait, Draw, IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
 macro_rules! count_items {
@@ -177,9 +177,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x1, y1, x2, y2, x3, y3, x4, y4| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .cubic_bezier(*x1, *y1, *x2, *y2, *x3, *y3, *x4, *y4)
             }
         ),
@@ -188,9 +186,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x1, y1, x2, y2, x3, y3| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .quadratic_bezier(*x1, *y1, *x2, *y2, *x3, *y3)
             }
         ),
@@ -199,9 +195,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x, y, rx, ry, start, sweep, rot_x| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .arc(*x, *y, *rx, *ry, start.to_radians(), sweep.to_radians(), rot_x.to_radians())
             }
         ),
@@ -210,9 +204,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x, y, r| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .circle(*x, *y, *r)
             }
         ),
@@ -221,9 +213,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x, y, rx, ry, rot_x| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .ellipse(*x, *y, *rx, *ry, rot_x.to_radians())
             }
         ),
@@ -232,9 +222,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, x1, y1, x2, y2| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .line(*x1, *y1, *x2, *y2)
             }
         ),
@@ -242,7 +230,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             arg!(--drect [X] "Draw a rectangle with X, Y, W, H"),
             f64,
             |state, a, b, c, d| {
-                state.document.get_mut(state.draw_layer).draw(&state.draw_state).rect(*a, *b, *c, *d)
+                state.draw().rect(*a, *b, *c, *d)
             }
         ),
         command_decl!(
@@ -250,9 +238,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, cx, cy, w, h, tl, tr, br, bl| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                   .draw()
                     .rounded_rect(*cx, *cy, *w, *h, *tl, *tr, *br, *bl)
             }
         ),
@@ -261,9 +247,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             String,
             |state, path| {
                 state
-                    .document
-                    .get_mut(state.draw_layer)
-                    .draw(&state.draw_state)
+                    .draw()
                     .svg_path(path)?
             }
         ),
