@@ -47,12 +47,22 @@ pub trait Transforms: Sized {
         self
     }
 
+    /// Rotate the geometry by `theta` degrees around the origin.
+    fn rotate_deg(&mut self, theta: f64) -> &mut Self {
+        self.rotate(theta.to_radians())
+    }
+
     /// Rotate the geometry by `theta` radians around the point `(cx, cy)`.
     fn rotate_around(&mut self, theta: f64, cx: f64, cy: f64) -> &mut Self {
         let transform =
             Affine::translate((cx, cy)) * Affine::rotate(theta) * Affine::translate((-cx, -cy));
         self.transform(&transform);
         self
+    }
+
+    /// Rotate the geometry by `theta` degrees around the point `(cx, cy)`.
+    fn rotate_around_deg(&mut self, theta: f64, cx: f64, cy: f64) -> &mut Self {
+        self.rotate_around(theta.to_radians(), cx, cy)
     }
 
     /// Skew the geometry by `kx` and `ky` radians around the origin.

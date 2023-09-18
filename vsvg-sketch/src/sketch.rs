@@ -50,8 +50,14 @@ impl Sketch {
         &self.document
     }
 
-    pub fn show(&mut self) -> Result<&mut Self, Box<dyn std::error::Error>> {
+    pub fn show(&mut self) -> anyhow::Result<&mut Self> {
         vsvg_viewer::show(self.document())?;
+        Ok(self)
+    }
+
+    pub fn save(&mut self, path: impl AsRef<std::path::Path>) -> anyhow::Result<&mut Self> {
+        let file = std::io::BufWriter::new(std::fs::File::create(path)?);
+        self.document.to_svg(file)?;
         Ok(self)
     }
 }

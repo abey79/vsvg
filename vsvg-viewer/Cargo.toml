@@ -15,6 +15,7 @@ serde.workspace = true
 wgpu = "0.15.1"
 bytemuck = {version = "1.13.1",  features = [ "derive" ]}
 cgmath = "0.18.0"
+anyhow.workspace = true
 
 [dev-dependencies]  # mostly for examples
 criterion = "0.4.0"
