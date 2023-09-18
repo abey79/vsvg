@@ -46,6 +46,16 @@ impl Sketch {
         self
     }
 
+    pub fn color(&mut self, color: impl Into<vsvg::Color>) -> &mut Self {
+        self.path_metadata.color = color.into();
+        self
+    }
+
+    pub fn stroke_width(&mut self, width: impl Into<f64>) -> &mut Self {
+        self.path_metadata.stroke_width = width.into();
+        self
+    }
+
     pub fn document(&self) -> &Document {
         &self.document
     }

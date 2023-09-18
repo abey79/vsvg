@@ -9,7 +9,14 @@ vsvg-viewer = { path = "../vsvg-viewer", optional = true }
 kurbo.workspace = true
 anyhow.workspace = true
 
+# for examples
 [dev-dependencies]
+geo = "0.26.0"
+voronoice = "0.2.0"
+rand.workspace = true
+rand_chacha.workspace = true
+rand_distr.workspace = true
+itertools.workspace = true
 
 [features]
 default = ["viewer"]

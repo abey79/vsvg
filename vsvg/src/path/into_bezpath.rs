@@ -50,7 +50,7 @@ impl<const N: usize> IntoBezPathTolerance for [(Point, Point); N] {
 // Note: we can't use a blanket implementation on `kurbo::Shape`, so let's unroll on the available
 // types.
 
-macro_rules! into_bez_path_tol_impl {
+macro_rules! kurbo_shape_into_bezpath {
     ($t:ty) => {
         impl IntoBezPathTolerance for $t {
             fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
@@ -60,17 +60,17 @@ macro_rules! into_bez_path_tol_impl {
     };
 }
 
-into_bez_path_tol_impl!(kurbo::PathSeg);
-into_bez_path_tol_impl!(kurbo::Arc);
-into_bez_path_tol_impl!(kurbo::BezPath);
-into_bez_path_tol_impl!(kurbo::Circle);
-into_bez_path_tol_impl!(kurbo::CircleSegment);
-into_bez_path_tol_impl!(kurbo::CubicBez);
-into_bez_path_tol_impl!(kurbo::Ellipse);
-into_bez_path_tol_impl!(kurbo::Line);
-into_bez_path_tol_impl!(kurbo::QuadBez);
-into_bez_path_tol_impl!(kurbo::Rect);
-into_bez_path_tol_impl!(kurbo::RoundedRect);
+kurbo_shape_into_bezpath!(kurbo::PathSeg);
+kurbo_shape_into_bezpath!(kurbo::Arc);
+kurbo_shape_into_bezpath!(kurbo::BezPath);
+kurbo_shape_into_bezpath!(kurbo::Circle);
+kurbo_shape_into_bezpath!(kurbo::CircleSegment);
+kurbo_shape_into_bezpath!(kurbo::CubicBez);
+kurbo_shape_into_bezpath!(kurbo::Ellipse);
+kurbo_shape_into_bezpath!(kurbo::Line);
+kurbo_shape_into_bezpath!(kurbo::QuadBez);
+kurbo_shape_into_bezpath!(kurbo::Rect);
+kurbo_shape_into_bezpath!(kurbo::RoundedRect);
 
 impl IntoBezPathTolerance for Polyline {
     fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
@@ -79,100 +79,119 @@ impl IntoBezPathTolerance for Polyline {
 }
 
 #[cfg(feature = "geo")]
-impl IntoBezPathTolerance for geo::Geometry<f64> {
-    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
-        match self {
-            geo::Geometry::Point(pt) => BezPath::from_vec(vec![
-                PathEl::MoveTo((pt.x(), pt.y()).into()),
-                PathEl::LineTo((pt.x(), pt.y()).into()),
-            ]),
+pub mod geo_impl {
+    #[allow(clippy::wildcard_imports)]
+    use super::*;
 
-            geo::Geometry::MultiPoint(mp) => BezPath::from_vec(
-                mp.into_iter()
-                    .flat_map(|pt| {
-                        [
-                            PathEl::MoveTo((pt.x(), pt.y()).into()),
-                            PathEl::LineTo((pt.x(), pt.y()).into()),
-                        ]
-                    })
-                    .collect(),
-            ),
+    impl IntoBezPathTolerance for geo::Geometry<f64> {
+        fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
+            match self {
+                geo::Geometry::Point(pt) => BezPath::from_vec(vec![
+                    PathEl::MoveTo((pt.x(), pt.y()).into()),
+                    PathEl::LineTo((pt.x(), pt.y()).into()),
+                ]),
+                geo::Geometry::MultiPoint(mp) => BezPath::from_vec(
+                    mp.into_iter()
+                        .flat_map(|pt| {
+                            [
+                                PathEl::MoveTo((pt.x(), pt.y()).into()),
+                                PathEl::LineTo((pt.x(), pt.y()).into()),
+                            ]
+                        })
+                        .collect(),
+                ),
+                geo::Geometry::Line(line) => {
+                    BezPath::from_path_segments(std::iter::once(PathSeg::Line(kurbo::Line::new(
+                        (line.start.x, line.start.y),
+                        (line.end.x, line.end.y),
+                    ))))
+                }
 
-            geo::Geometry::Line(line) => {
-                BezPath::from_path_segments(std::iter::once(PathSeg::Line(kurbo::Line::new(
-                    (line.start.x, line.start.y),
-                    (line.end.x, line.end.y),
-                ))))
-            }
+                geo::Geometry::LineString(pts) => linestring_to_path_el(pts).collect::<BezPath>(),
+                geo::Geometry::MultiLineString(mls) => mls
+                    .into_iter()
+                    .flat_map(linestring_to_path_el)
+                    .collect::<BezPath>(),
 
-            geo::Geometry::LineString(pts) => linestring_to_path_el(pts).collect::<BezPath>(),
-
-            geo::Geometry::MultiLineString(mls) => mls
-                .into_iter()
-                .flat_map(linestring_to_path_el)
-                .collect::<BezPath>(),
-
-            geo::Geometry::Polygon(poly) => {
-                let (exterior, interiors) = poly.into_inner();
-
-                linestring_to_path_el(exterior)
-                    .chain(interiors.into_iter().flat_map(linestring_to_path_el))
-                    .collect::<BezPath>()
-            }
-
-            geo::Geometry::MultiPolygon(mp) => mp
-                .into_iter()
-                .flat_map(|poly| {
+                geo::Geometry::Polygon(poly) => {
                     let (exterior, interiors) = poly.into_inner();
 
                     linestring_to_path_el(exterior)
                         .chain(interiors.into_iter().flat_map(linestring_to_path_el))
-                })
-                .collect::<BezPath>(),
+                        .collect::<BezPath>()
+                }
 
-            geo::Geometry::GeometryCollection(coll) => coll
-                .into_iter()
-                .flat_map(IntoBezPath::into_bezpath)
-                .collect(),
+                geo::Geometry::MultiPolygon(mp) => mp
+                    .into_iter()
+                    .flat_map(|poly| {
+                        let (exterior, interiors) = poly.into_inner();
 
-            geo::Geometry::Rect(rect) => BezPath::from_vec(vec![
-                PathEl::MoveTo((rect.min().x, rect.min().y).into()),
-                PathEl::LineTo((rect.min().x, rect.max().y).into()),
-                PathEl::LineTo((rect.max().x, rect.max().y).into()),
-                PathEl::LineTo((rect.max().x, rect.min().y).into()),
-                PathEl::ClosePath,
-            ]),
+                        linestring_to_path_el(exterior)
+                            .chain(interiors.into_iter().flat_map(linestring_to_path_el))
+                    })
+                    .collect::<BezPath>(),
 
-            geo::Geometry::Triangle(tri) => BezPath::from_vec(vec![
-                PathEl::MoveTo((tri.0.x, tri.0.y).into()),
-                PathEl::LineTo((tri.1.x, tri.1.y).into()),
-                PathEl::LineTo((tri.2.x, tri.2.y).into()),
-                PathEl::ClosePath,
-            ]),
+                geo::Geometry::GeometryCollection(coll) => coll
+                    .into_iter()
+                    .flat_map(IntoBezPath::into_bezpath)
+                    .collect(),
+                geo::Geometry::Rect(rect) => BezPath::from_vec(vec![
+                    PathEl::MoveTo((rect.min().x, rect.min().y).into()),
+                    PathEl::LineTo((rect.min().x, rect.max().y).into()),
+                    PathEl::LineTo((rect.max().x, rect.max().y).into()),
+                    PathEl::LineTo((rect.max().x, rect.min().y).into()),
+                    PathEl::ClosePath,
+                ]),
+                geo::Geometry::Triangle(tri) => BezPath::from_vec(vec![
+                    PathEl::MoveTo((tri.0.x, tri.0.y).into()),
+                    PathEl::LineTo((tri.1.x, tri.1.y).into()),
+                    PathEl::LineTo((tri.2.x, tri.2.y).into()),
+                    PathEl::ClosePath,
+                ]),
+            }
         }
     }
-}
 
-#[cfg(feature = "geo")]
-fn linestring_to_path_el(ls: geo::LineString<f64>) -> impl Iterator<Item = PathEl> {
-    let closed = ls.is_closed();
-    let len = ls.0.len();
+    macro_rules! geo_object_into_bezpath {
+        ( $ t: ty) => {
+            impl IntoBezPathTolerance for $t {
+                fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
+                    let geom: ::geo::Geometry = self.into();
+                    geom.into_bezpath_with_tolerance(tolerance)
+                }
+            }
+        };
+    }
 
-    ls.into_iter().enumerate().map(move |(i, pt)| {
-        if i == 0 {
-            PathEl::MoveTo(coord_to_point(pt).into())
-        } else if i == len - 1 && closed {
-            PathEl::ClosePath
-        } else {
-            PathEl::LineTo(coord_to_point(pt).into())
-        }
-    })
-}
+    geo_object_into_bezpath!(geo::Point<f64>);
+    geo_object_into_bezpath!(geo::Line<f64>);
+    geo_object_into_bezpath!(geo::LineString<f64>);
+    geo_object_into_bezpath!(geo::Polygon<f64>);
+    geo_object_into_bezpath!(geo::MultiPoint<f64>);
+    geo_object_into_bezpath!(geo::MultiLineString<f64>);
+    geo_object_into_bezpath!(geo::MultiPolygon<f64>);
+    geo_object_into_bezpath!(geo::Rect<f64>);
+    geo_object_into_bezpath!(geo::Triangle<f64>);
 
-#[cfg(feature = "geo")]
-#[inline]
-fn coord_to_point(c: geo::Coord<f64>) -> Point {
-    (c.x, c.y).into()
+    pub(super) fn linestring_to_path_el(ls: geo::LineString<f64>) -> impl Iterator<Item = PathEl> {
+        let closed = ls.is_closed();
+        let len = ls.0.len();
+
+        ls.into_iter().enumerate().map(move |(i, pt)| {
+            if i == 0 {
+                PathEl::MoveTo(coord_to_point(pt).into())
+            } else if i == len - 1 && closed {
+                PathEl::ClosePath
+            } else {
+                PathEl::LineTo(coord_to_point(pt).into())
+            }
+        })
+    }
+
+    #[inline]
+    pub(super) fn coord_to_point(c: geo::Coord<f64>) -> Point {
+        (c.x, c.y).into()
+    }
 }
 
 fn points_to_bezpath(points: impl IntoIterator<Item = impl Into<Point>>) -> kurbo::BezPath {
@@ -203,6 +222,7 @@ fn line_segment_to_bezpath(
 }
 #[cfg(test)]
 mod test {
+    use super::geo_impl::*;
     use super::*;
 
     #[test]
