@@ -50,6 +50,22 @@ pub struct PageSize {
     pub h: f64,
 }
 
+macro_rules! mm_to_px {
+    ($x:expr) => {
+        ($x) * 96.0 / 25.4
+    };
+}
+
+impl PageSize {
+    //TODO: add moar
+    pub const A4: Self = Self {
+        w: mm_to_px!(210.0),
+        h: mm_to_px!(297.0),
+    };
+}
+
+// macro to convert a float literal from mm to pixels
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Color {
     pub r: u8,

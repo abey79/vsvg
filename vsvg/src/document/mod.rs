@@ -38,6 +38,10 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
         self.layers_mut().entry(id).or_insert_with(|| L::default())
     }
 
+    fn ensure_exists(&mut self, id: LayerID) {
+        let _ = self.get_mut(id);
+    }
+
     fn for_each<F>(&mut self, f: F)
     where
         F: Fn(&mut L),

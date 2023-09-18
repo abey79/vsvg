@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use vsvg::{DocumentTrait, IndexBuilder, Transforms};
+use vsvg::{DocumentTrait, DrawAPI, IndexBuilder, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
 macro_rules! count_items {

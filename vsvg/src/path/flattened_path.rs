@@ -26,10 +26,11 @@ impl Polyline {
 }
 
 impl Transforms for Polyline {
-    fn transform(&mut self, affine: &Affine) {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
         for point in self.points_mut() {
             *point = *affine * *point;
         }
+        self
     }
 }
 
@@ -73,8 +74,9 @@ pub struct FlattenedPath {
 }
 
 impl Transforms for FlattenedPath {
-    fn transform(&mut self, affine: &Affine) {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
         self.data.transform(affine);
+        self
     }
 }
 impl PathTrait<Polyline> for FlattenedPath {

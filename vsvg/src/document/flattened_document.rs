@@ -16,10 +16,11 @@ impl FlattenedDocument {
 }
 
 impl Transforms for FlattenedDocument {
-    fn transform(&mut self, affine: &kurbo::Affine) {
+    fn transform(&mut self, affine: &kurbo::Affine) -> &mut Self {
         self.layers.iter_mut().for_each(|(_, layer)| {
             layer.transform(affine);
         });
+        self
     }
 }
 

@@ -3763,6 +3763,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vsvg-sketch"
+version = "0.1.0-alpha.0"
+dependencies = [
+ "kurbo",
+ "vsvg",
+ "vsvg-viewer",
+]
+
+[[package]]
 name = "vsvg-viewer"
 version = "0.1.0-alpha.0"
 dependencies = [
