@@ -11,8 +11,9 @@ use std::fmt::Debug;
 // The path data for `Path` is `kurbo::BezPath`.
 
 impl Transforms for BezPath {
-    fn transform(&mut self, affine: &Affine) {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
         self.apply_affine(*affine);
+        self
     }
 }
 
@@ -68,8 +69,9 @@ pub struct Path {
 }
 
 impl Transforms for Path {
-    fn transform(&mut self, affine: &Affine) {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
         self.data.apply_affine(*affine);
+        self
     }
 }
 

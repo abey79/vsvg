@@ -4,6 +4,7 @@ members = [
     "vsvg",
     "vsvg-cli",
     "vsvg-viewer",
+    "vsvg-sketch",
     "vsvg-multi",
 ]
 
@@ -25,3 +26,4 @@ serde = { version = "1", features = ["derive", "rc"] }
 kurbo = "0.9.1"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
+anyhow = "1"

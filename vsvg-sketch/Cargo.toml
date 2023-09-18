@@ -1,0 +1,16 @@
+[package]
+name = "vsvg-sketch"
+version = "0.1.0-alpha.0"
+edition = "2021"
+
+[dependencies]
+vsvg = { path = "../vsvg", features = ["geo"] }
+vsvg-viewer = { path = "../vsvg-viewer", optional = true }
+kurbo.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+
+[features]
+default = ["viewer"]
+viewer = ["dep:vsvg-viewer"]

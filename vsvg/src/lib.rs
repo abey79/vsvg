@@ -1,22 +1,6 @@
 //! `vsvg` is a library crate to manipulate vector graphics, with a focus on SVG and
 //! pen-plotter applications. It's inspired upon [`vpype`](https://github.com/abey79/vpype), the
 //! Swiss-Army-knife command-line tool for plotter vector graphics.
-//!
-//! TODO: complete this documentation
-//!
-//! # Example
-//!
-//! ```
-//! use vsvg::{Document, DocumentTrait, Layer, Path};
-//!
-//! let mut doc = Document::default();
-//!
-//! // todo
-//! // - create path from anything, add metadata
-//! // - add Layer::push_path + add layer
-//! // - add Document::push_path
-//!
-//!```
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
@@ -24,7 +8,6 @@
 
 mod crop;
 pub mod document;
-pub mod draw;
 pub mod layer;
 pub mod optimization;
 pub mod path;
@@ -33,22 +16,65 @@ pub mod stats;
 mod svg_reader;
 pub mod svg_writer;
 pub mod test_utils;
-pub mod transforms;
+mod traits;
 
 pub use document::*;
-pub use draw::*;
+
 pub use layer::*;
 pub use path::*;
 pub use path_index::IndexBuilder;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-pub use transforms::*;
+pub use traits::*;
+
+pub struct Units;
+
+impl Units {
+    pub const PX: f64 = 1.0;
+    pub const INCH: f64 = 96.0;
+    pub const FT: f64 = 12.0 * 96.0;
+    pub const YARD: f64 = 36.0 * 96.0;
+    pub const MI: f64 = 1760.0 * 36.0 * 96.0;
+    pub const MM: f64 = 96.0 / 25.4;
+    pub const CM: f64 = 96.0 / 2.54;
+    pub const M: f64 = 100.0 * 96.0 / 2.54;
+    pub const KM: f64 = 100_000.0 * 96.0 / 2.54;
+    pub const PC: f64 = 16.0;
+    pub const PT: f64 = 96.0 / 72.0;
+}
 
 #[derive(Default, Clone, Copy, Debug, PartialEq)]
 pub struct PageSize {
     pub w: f64,
     pub h: f64,
 }
+
+macro_rules! mm {
+    ($x:expr) => {
+        ($x) * 96.0 / 25.4
+    };
+}
+
+impl PageSize {
+    pub const A6: Self = Self::new(mm!(105.0), mm!(148.0));
+    pub const A5: Self = Self::new(mm!(148.0), mm!(210.0));
+    pub const A4: Self = Self::new(mm!(210.0), mm!(297.0));
+    pub const A3: Self = Self::new(mm!(297.0), mm!(420.0));
+    pub const A2: Self = Self::new(mm!(420.0), mm!(594.0));
+    pub const A1: Self = Self::new(mm!(594.0), mm!(841.0));
+    pub const A0: Self = Self::new(mm!(841.0), mm!(1189.0));
+    pub const LETTER: Self = Self::new(mm!(215.9), mm!(279.4));
+    pub const LEGAL: Self = Self::new(mm!(215.9), mm!(355.6));
+    pub const EXECUTIVE: Self = Self::new(mm!(185.15), mm!(266.7));
+    pub const TABLOID: Self = Self::new(mm!(279.4), mm!(431.8));
+
+    #[must_use]
+    pub const fn new(w: f64, h: f64) -> Self {
+        Self { w, h }
+    }
+}
+
+// macro to convert a float literal from mm to pixels
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Color {

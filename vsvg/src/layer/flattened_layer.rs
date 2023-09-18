@@ -15,10 +15,11 @@ impl FlattenedLayer {
 }
 
 impl Transforms for FlattenedLayer {
-    fn transform(&mut self, affine: &kurbo::Affine) {
+    fn transform(&mut self, affine: &kurbo::Affine) -> &mut Self {
         self.paths.iter_mut().for_each(|path| {
             path.transform(affine);
         });
+        self
     }
 }
 impl LayerTrait<FlattenedPath, Polyline> for FlattenedLayer {
