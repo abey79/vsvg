@@ -60,6 +60,7 @@ impl Sketch {
         &self.document
     }
 
+    #[cfg(feature = "viewer")]
     pub fn show(&mut self) -> anyhow::Result<&mut Self> {
         vsvg_viewer::show(self.document())?;
         Ok(self)
