@@ -1,6 +1,8 @@
 use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
 use crate::crop::Crop;
-use crate::path::into_bezpath::{IntoBezPath, IntoBezPathTolerance};
+use crate::path::into_bezpath::{
+    line_segment_to_bezpath, points_to_bezpath, IntoBezPath, IntoBezPathTolerance,
+};
 use crate::Transforms;
 use kurbo::{Affine, BezPath, PathEl};
 use std::cell::RefCell;
@@ -84,6 +86,10 @@ impl PathTrait<BezPath> for Path {
         &mut self.data
     }
 
+    fn into_data(self) -> BezPath {
+        self.data
+    }
+
     fn bounds(&self) -> kurbo::Rect {
         self.data.bounds()
     }
@@ -123,6 +129,16 @@ impl Path {
             data: path.into_bezpath_with_tolerance(tolerance),
             metadata,
         }
+    }
+
+    #[must_use]
+    pub fn from_points(points: impl IntoIterator<Item = impl Into<Point>>) -> Self {
+        Self::from(points_to_bezpath(points))
+    }
+
+    #[must_use]
+    pub fn from_segments(points: impl IntoIterator<Item = impl Into<(Point, Point)>>) -> Self {
+        Self::from(line_segment_to_bezpath(points))
     }
 
     pub fn from_svg(path: &str) -> Result<Self, Box<dyn Error>> {

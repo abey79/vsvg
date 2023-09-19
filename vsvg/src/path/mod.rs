@@ -31,6 +31,8 @@ pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt
 
     fn data_mut(&mut self) -> &mut D;
 
+    fn into_data(self) -> D;
+
     fn bounds(&self) -> kurbo::Rect;
 
     fn start(&self) -> Option<Point> {

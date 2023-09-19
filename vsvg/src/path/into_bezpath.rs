@@ -35,6 +35,12 @@ impl<const N: usize> IntoBezPathTolerance for [Point; N] {
     }
 }
 
+impl IntoBezPathTolerance for &Vec<Point> {
+    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
+        points_to_bezpath(self.iter().copied())
+    }
+}
+
 impl IntoBezPathTolerance for &[(Point, Point)] {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
         line_segment_to_bezpath(self.iter().copied())
@@ -194,7 +200,9 @@ pub mod geo_impl {
     }
 }
 
-fn points_to_bezpath(points: impl IntoIterator<Item = impl Into<Point>>) -> kurbo::BezPath {
+pub(crate) fn points_to_bezpath(
+    points: impl IntoIterator<Item = impl Into<Point>>,
+) -> kurbo::BezPath {
     let mut bezpath = kurbo::BezPath::new();
 
     let mut points = points.into_iter().map(Into::into);
@@ -210,7 +218,7 @@ fn points_to_bezpath(points: impl IntoIterator<Item = impl Into<Point>>) -> kurb
     bezpath
 }
 
-fn line_segment_to_bezpath(
+pub(crate) fn line_segment_to_bezpath(
     segments: impl IntoIterator<Item = impl Into<(Point, Point)>>,
 ) -> BezPath {
     let segments = segments

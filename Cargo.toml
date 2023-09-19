@@ -16,12 +16,13 @@ rosvgtree = { git = "https://github.com/abey79/resvg", branch="vsvg" }
 
 
 [workspace.dependencies]
-egui = "0.21.0"
-eframe = { version = "0.21.3", default-features = false, features = [
+egui = "0.22.0"
+eframe = { version = "0.22.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "wgpu",
 ] }
+wgpu = "0.16.3" # same a egui
 serde = { version = "1", features = ["derive", "rc"] }
 kurbo = "0.9.1"
 rand = "0.8.5"

@@ -23,6 +23,11 @@ impl Polyline {
     pub fn points_mut(&mut self) -> &mut Vec<Point> {
         &mut self.0
     }
+
+    #[must_use]
+    pub fn into_points(self) -> Vec<Point> {
+        self.0
+    }
 }
 
 impl Transforms for Polyline {
@@ -86,6 +91,10 @@ impl PathTrait<Polyline> for FlattenedPath {
 
     fn data_mut(&mut self) -> &mut Polyline {
         &mut self.data
+    }
+
+    fn into_data(self) -> Polyline {
+        self.data
     }
 
     fn bounds(&self) -> kurbo::Rect {
