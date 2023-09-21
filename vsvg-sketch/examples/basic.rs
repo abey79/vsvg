@@ -1,7 +1,8 @@
 use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
-    Sketch::with_page_size(PageSize::A5)
+    Sketch::new()
+        .page_size(PageSize::A5)
         .scale(Units::CM)
         .translate(7.0, 6.0)
         .circle(0.0, 0.0, 2.5)

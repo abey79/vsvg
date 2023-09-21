@@ -14,10 +14,11 @@ use vsvg_sketch::prelude::*;
 fn main() -> Result {
     let mut rng = ChaCha8Rng::seed_from_u64(4);
 
-    let page_size = PageSize::A5;
-    let mut sketch = Sketch::with_page_size(page_size);
+    let mut sketch = Sketch::new();
 
+    let page_size = PageSize::A5;
     sketch
+        .page_size(page_size)
         .translate(page_size.w / 2.0, page_size.h / 2.0)
         .scale(4.0 * Units::CM);
 

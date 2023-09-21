@@ -20,6 +20,9 @@ pub struct DocumentWidget {
     /// viewer options
     viewer_options: Arc<Mutex<ViewerOptions>>,
 
+    /// if provided by user code, this new document will be fed to the renderer on the next frame
+    new_document_data: Option<Arc<DocumentData>>,
+
     /// pan offset
     ///
     /// The offset is expressed in SVG coordinates, not in pixels. `self.scale` can be used for
@@ -34,6 +37,7 @@ pub struct DocumentWidget {
 }
 
 impl DocumentWidget {
+    #[must_use]
     pub fn new<'a>(
         cc: &'a eframe::CreationContext<'a>,
         document_data: Arc<DocumentData>,
@@ -45,11 +49,8 @@ impl DocumentWidget {
         let wgpu_render_state = cc.wgpu_render_state.as_ref()?;
 
         // prepare engine
-        let engine = Engine::new(
-            wgpu_render_state,
-            document_data.clone(),
-            viewer_options.clone(),
-        );
+        let mut engine = Engine::new(wgpu_render_state, viewer_options.clone());
+        engine.set_document_data(&document_data);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
@@ -60,12 +61,18 @@ impl DocumentWidget {
         Some(Self {
             document_data,
             viewer_options,
+            new_document_data: None,
             offset: Pos2::ZERO,
             scale: 1.0,
             must_fit_to_view: true,
         })
     }
 
+    pub fn set_document_data(&mut self, doc_data: DocumentData) {
+        self.new_document_data = Some(Arc::new(doc_data));
+    }
+
+    #[allow(clippy::missing_panics_doc)]
     pub fn ui(&mut self, ui: &mut Ui) {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), Sense::click_and_drag());
 
@@ -115,9 +122,18 @@ impl DocumentWidget {
         let scale = self.scale;
         let origin = cgmath::Point2::new(self.offset.x, self.offset.y);
 
+        let new_doc_data = self.new_document_data.take();
+        if let Some(new_doc_data) = new_doc_data.clone() {
+            self.document_data = new_doc_data;
+        }
+
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, _encoder, paint_callback_resources| {
                 let engine: &mut Engine = paint_callback_resources.get_mut().unwrap();
+
+                if let Some(new_doc_data) = new_doc_data.clone() {
+                    engine.set_document_data(&new_doc_data);
+                }
                 engine.prepare(device, queue, rect, scale, origin);
                 Vec::new()
             })
@@ -179,6 +195,7 @@ impl DocumentWidget {
         });
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn layer_menu_ui(&mut self, ui: &mut Ui) {
         ui.menu_button("Layer", |ui| {
             for (lid, layer) in &self.document_data.flattened_document.layers {

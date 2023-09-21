@@ -7,7 +7,8 @@ use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
     let page_size = PageSize::A5;
-    let mut sketch = Sketch::with_page_size(page_size);
+    let mut sketch = Sketch::new();
+    sketch.page_size(page_size);
 
     // [`kurbo::BezPath`] a nice building API
     let mut path = kurbo::BezPath::new();

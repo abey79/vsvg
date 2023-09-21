@@ -23,6 +23,10 @@ name = "accesskit"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76eb1adf08c5bcaa8490b9851fd53cca27fa9880076f178ea9d29f05196728a8"
+dependencies = [
+ "enumn",
+ "serde",
+]
 
 [[package]]
 name = "accesskit_consumer"
@@ -122,6 +126,7 @@ dependencies = [
  "cfg-if",
  "getrandom",
  "once_cell",
+ "serde",
  "version_check",
 ]
 
@@ -841,6 +846,9 @@ name = "bitflags"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bitvec"
@@ -1391,6 +1399,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "directories-next"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "339ee130d97a610ea5a5872d2bbb130fdf68884ff09d3028b81bec8a1ac23bbc"
+dependencies = [
+ "cfg-if",
+ "dirs-sys-next",
+]
+
+[[package]]
 name = "dirs"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1404,6 +1422,17 @@ name = "dirs-sys"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi",
+]
+
+[[package]]
+name = "dirs-sys-next"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ebda144c4fe02d1f7ea1a7d9641b6fc6b580adcfa024ae48797ecdeb6825b4d"
 dependencies = [
  "libc",
  "redox_users",
@@ -1448,6 +1477,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e479a7fa3f23d4e794f8b2f8b3568dd4e47886ad1b12c9c095e141cb591eb63"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -1458,6 +1488,7 @@ checksum = "bf4596583a2c680c55b6feaa748f74890c4f9cb9c7cb69d6117110444cb65b2f"
 dependencies = [
  "bytemuck",
  "cocoa",
+ "directories-next",
  "egui",
  "egui-wgpu",
  "egui-winit",
@@ -1468,6 +1499,8 @@ dependencies = [
  "percent-encoding",
  "pollster",
  "raw-window-handle",
+ "ron",
+ "serde",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1488,6 +1521,8 @@ dependencies = [
  "epaint",
  "log",
  "nohash-hasher",
+ "ron",
+ "serde",
 ]
 
 [[package]]
@@ -1517,6 +1552,7 @@ dependencies = [
  "instant",
  "log",
  "raw-window-handle",
+ "serde",
  "smithay-clipboard",
  "webbrowser",
  "winit",
@@ -1535,6 +1571,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3857d743a6e0741cdd60b622a74c7a36ea75f5f8f11b793b41d905d2c9721a4b"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -1552,6 +1589,17 @@ name = "enumflags2_derive"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e9a1f9f7d83e59740248a6e14ecf93929ade55027844dfcea78beafccc15745"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.15",
+]
+
+[[package]]
+name = "enumn"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe4d538b570fd4ee7a01377f3e88069ecaee79e50bdc93c8895898dd2b47e37"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1586,6 +1634,7 @@ dependencies = [
  "log",
  "nohash-hasher",
  "parking_lot",
+ "serde",
 ]
 
 [[package]]
@@ -3061,6 +3110,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cbf4a6aa5f6d6888f39e980649f3ad6b666acdce1d78e95b8a2cb076e687ae30"
 
 [[package]]
+name = "ron"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b91f7eff05f748767f183df4320a63d6936e9c6107d97c9e6bdd9784f4289c94"
+dependencies = [
+ "base64",
+ "bitflags 2.4.0",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "rosvgtree"
 version = "0.1.0"
 source = "git+https://github.com/abey79/resvg?branch=vsvg#c5ec149f37ae84c1039d24ab026c0e2ed8fb8fca"
@@ -3873,6 +3934,7 @@ name = "vsvg-sketch"
 version = "0.1.0-alpha.0"
 dependencies = [
  "anyhow",
+ "egui",
  "geo",
  "itertools 0.11.0",
  "kurbo",
@@ -3897,6 +3959,7 @@ dependencies = [
  "env_logger",
  "kurbo",
  "pollster",
+ "rand",
  "raw-window-handle",
  "serde",
  "tracing-subscriber",

@@ -20,6 +20,7 @@ egui = "0.22.0"
 eframe = { version = "0.22.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
+    "persistence",
     "wgpu",
 ] }
 wgpu = "0.16.3" # same a egui

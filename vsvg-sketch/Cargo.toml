@@ -8,6 +8,7 @@ vsvg = { path = "../vsvg", features = ["geo"] }
 vsvg-viewer = { path = "../vsvg-viewer", optional = true }
 kurbo.workspace = true
 anyhow.workspace = true
+egui.workspace = true
 
 # for examples
 [dev-dependencies]
