@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 vsvg = { path = "../vsvg", features = ["geo"] }
 vsvg-viewer = { path = "../vsvg-viewer", optional = true }
+vsvg-sketch-derive = { path = "../vsvg-sketch-derive" }
 kurbo.workspace = true
 anyhow.workspace = true
 egui.workspace = true

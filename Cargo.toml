@@ -5,6 +5,7 @@ members = [
     "vsvg-cli",
     "vsvg-viewer",
     "vsvg-sketch",
+    "vsvg-sketch-derive",
     "vsvg-multi",
 ]
 
