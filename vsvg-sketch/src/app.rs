@@ -27,8 +27,11 @@ impl vsvg_viewer::ViewerApp for SketchRunner {
 }
 
 impl SketchRunner {
-    pub fn new(app: Box<dyn SketchApp>) -> Self {
-        Self { app }
+    pub fn new(app: impl SketchApp + 'static) -> Self {
+        Self {
+            app: Box::new(app),
+            //params: vec![],
+        }
     }
 
     pub fn run(self) -> anyhow::Result<()> {
@@ -36,4 +39,8 @@ impl SketchRunner {
 
         Ok(())
     }
+}
+
+pub trait UIParameter {
+    fn ui(&mut self, ui: &mut egui::Ui);
 }

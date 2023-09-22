@@ -88,11 +88,6 @@ impl Viewer {
 }
 
 impl eframe::App for Viewer {
-    /// Called by the framework to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "hello", &self.state);
-    }
-
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -143,5 +138,10 @@ impl eframe::App for Viewer {
 
         self.frame_history
             .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
+    }
+
+    /// Called by the framework to save state before shutdown.
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, "hello", &self.state);
     }
 }

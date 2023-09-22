@@ -2,7 +2,7 @@ use std::time::SystemTime;
 use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
-    SketchRunner::new(Box::new(MySketch)).run()
+    SketchRunner::new(MySketch).run()
 }
 
 struct MySketch;
