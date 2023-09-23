@@ -1,6 +1,8 @@
 //! Asteroid design kindly contributed by @Wyth@mastodon.art for my
 //! [Rusteroïds](https://github.com/abey79/rusteroids) game.
 
+#![allow(clippy::needless_range_loop)]
+
 use geo::{BooleanOps, BoundingRect, Contains};
 use itertools::Itertools;
 use rand::{Rng, SeedableRng};
@@ -11,63 +13,117 @@ use std::f64::consts::PI;
 use vsvg::Color;
 use vsvg_sketch::prelude::*;
 
-fn main() -> Result {
-    let mut rng = ChaCha8Rng::seed_from_u64(4);
+#[derive(Sketch)]
+struct AsteroidSketch {
+    seed: u64,
 
-    let mut sketch = Sketch::new();
+    #[param(slider, min = 0.1, max = 1.5)]
+    irregularity: f64,
 
-    let page_size = PageSize::A5;
-    sketch
-        .page_size(page_size)
-        .translate(page_size.w / 2.0, page_size.h / 2.0)
-        .scale(4.0 * Units::CM);
+    #[param(slider, min = 0.0, max = 0.5)]
+    spikiness: f64,
 
-    let poly = generate_polygon(1.0, 0.9, 0.13, 18, &mut rng);
+    #[param(slider, min = 3, max = 20)]
+    num_vertices: usize,
 
-    fn voronoi_recurse(
-        sketch: &mut Sketch,
-        poly: &geo::Polygon,
-        max_iter: usize,
-        min_iter: usize,
-        rng: &mut impl Rng,
-    ) {
-        let (sub_polys, segments) =
-            voronoi(poly.bounding_rect(), &generate_points_in_poly(poly, 3, rng));
+    #[param(slider, min = 3, max = 10)]
+    num_point: usize,
 
-        let segments = poly.clip(&segments, false);
+    #[param(slider, min = 1, max = 6)]
+    max_iter: usize,
 
+    #[param(slider, min = 0, max = self.max_iter-1)]
+    min_iter: usize,
+}
+
+impl Default for AsteroidSketch {
+    fn default() -> Self {
+        Self {
+            seed: 4,
+            irregularity: 0.9,
+            spikiness: 0.13,
+            num_vertices: 18,
+            num_point: 6,
+            max_iter: 4,
+            min_iter: 1,
+        }
+    }
+}
+
+impl App for AsteroidSketch {
+    fn update(&mut self, sketch: &mut Sketch) -> anyhow::Result<()> {
+        let mut rng = ChaCha8Rng::seed_from_u64(self.seed);
+
+        let page_size = PageSize::new(12. * Units::CM, 12. * Units::CM);
         sketch
-            .stroke_width(3.0)
-            .color(Color::DARK_GREEN.with_opacity(0.3))
-            .add_path(segments);
+            .page_size(page_size)
+            .translate(page_size.w / 2.0, page_size.h / 2.0)
+            .scale(4.0 * Units::CM)
+            .color(Color::DARK_BLUE);
 
-        if max_iter > 0 {
-            for p in &sub_polys {
-                for p in poly.intersection(p) {
-                    let iter = rng.gen_range(min_iter..=max_iter);
+        let poly = generate_polygon(
+            1.0,
+            self.irregularity,
+            self.spikiness,
+            self.num_vertices,
+            &mut rng,
+        );
 
-                    if iter > 0 {
-                        voronoi_recurse(
-                            sketch,
-                            &p,
-                            max_iter.saturating_sub(1),
-                            min_iter.saturating_sub(1),
-                            rng,
-                        );
+        fn voronoi_recurse(
+            sketch: &mut Sketch,
+            num_point: usize,
+            poly: &geo::Polygon,
+            max_iter: usize,
+            min_iter: usize,
+            rng: &mut impl Rng,
+        ) {
+            let (sub_polys, segments) = voronoi(
+                poly.bounding_rect(),
+                &generate_points_in_poly(poly, num_point, rng),
+            );
+
+            let segments = poly.clip(&segments, false);
+
+            sketch.add_path(segments);
+
+            if max_iter > 0 {
+                for p in &sub_polys {
+                    for p in poly.intersection(p) {
+                        let iter = rng.gen_range(min_iter..=max_iter);
+
+                        if iter > 0 {
+                            voronoi_recurse(
+                                sketch,
+                                num_point,
+                                &p,
+                                max_iter.saturating_sub(1),
+                                min_iter.saturating_sub(1),
+                                rng,
+                            );
+                        }
                     }
                 }
             }
         }
+
+        // sanity check on iter range
+        if self.min_iter >= self.max_iter {
+            self.min_iter = self.max_iter.saturating_sub(1);
+        }
+
+        voronoi_recurse(
+            sketch,
+            self.num_point,
+            &poly,
+            self.max_iter,
+            self.min_iter,
+            &mut rng,
+        );
+
+        sketch.add_path(poly);
+
+        Ok(())
     }
-
-    voronoi_recurse(&mut sketch, &poly, 4, 1, &mut rng);
-
-    sketch
-        .color(Color::DARK_BLUE.with_opacity(0.3))
-        .add_path(poly)
-        .show()?;
-
-    Ok(())
 }
 
 fn generate_polygon(
@@ -81,16 +137,35 @@ fn generate_polygon(
     spikiness *= avg_radius;
     let normal = Normal::new(avg_radius, spikiness).unwrap();
 
+    let angle_steps = random_angle_steps(num_vertices, irregularity, rng);
+
     let mut points = Vec::new();
     let mut angle = rng.gen_range(0.0..2.0 * PI);
-    for _ in 0..num_vertices {
+    for i in 0..num_vertices {
         let radius = normal.sample(rng).max(0.0).min(2.0 * avg_radius);
         let point = (radius * angle.cos(), radius * angle.sin());
         points.push(point);
-        angle += irregularity;
+        angle += angle_steps[i];
     }
 
     geo::Polygon::new(geo::LineString::from(points), vec![])
+}
+
+fn random_angle_steps(steps: usize, irregularity: f64, rng: &mut impl Rng) -> Vec<f64> {
+    let mut angles = vec![0.0; steps];
+    let lower = (2.0 * PI / (steps as f64)) - irregularity;
+    let upper = (2.0 * PI / (steps as f64)) + irregularity;
+    let mut cumsum = 0.0;
+    for i in 0..steps {
+        let angle = rng.gen_range(lower..upper);
+        angles[i] = angle;
+        cumsum += angle;
+    }
+    cumsum /= 2.0 * PI;
+    for i in 0..steps {
+        angles[i] /= cumsum;
+    }
+    angles
 }
 
 fn generate_points_in_poly(
@@ -188,4 +263,8 @@ fn voronoi(
     );
 
     (polys, segments)
+}
+
+fn main() -> Result {
+    run_default::<AsteroidSketch>()
 }

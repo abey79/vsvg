@@ -38,7 +38,7 @@ impl GrayRedWidget {
 
 /// This is where the custom UI code happens.
 impl Widget<GrayRed> for GrayRedWidget {
-    fn ui(&self, ui: &mut Ui, label: &str, value: &mut GrayRed) {
+    fn ui(&self, ui: &mut Ui, label: &str, value: &mut GrayRed) -> egui::Response {
         ui.horizontal(|ui| {
             let mut label = egui::RichText::new(label).color(self.label_color);
             if self.underline {
@@ -47,10 +47,15 @@ impl Widget<GrayRed> for GrayRedWidget {
             ui.add(egui::Label::new(label));
 
             ui.label("gr:");
-            ui.add(egui::Slider::new(&mut value.gray, 0.0..=1.0));
+            let resp1 = ui.add(egui::Slider::new(&mut value.gray, 0.0..=1.0));
             ui.label("rd:");
-            ui.add(egui::Slider::new(&mut value.red, 0.0..=1.0));
-        });
+            let resp2 = ui.add(egui::Slider::new(&mut value.red, 0.0..=1.0));
+
+            // we must return a response that combines the responses of the sub-widgets to make
+            // sure any change to the slider are reported
+            resp1 | resp2
+        })
+        .inner
     }
 }
 

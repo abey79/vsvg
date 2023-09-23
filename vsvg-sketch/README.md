@@ -49,5 +49,5 @@ Another avenue that I want to explore is targeting WebAssembly for web deploymen
 To run the example, use the following command (in this case to run `vsvg-sketch/examples/basic.rs`):
 
 ```
-cargo run --package vsvg-sketch --example basic
+cargo run --release --package vsvg-sketch --example basic
 ```

@@ -2,7 +2,7 @@ pub mod numeric_widget;
 pub mod string_widget;
 
 pub trait Widget<T> {
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T);
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> egui::Response;
 }
 
 pub trait WidgetMapper<T> {

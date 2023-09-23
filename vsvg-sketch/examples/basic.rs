@@ -1,3 +1,4 @@
+//! This example demonstrates how to directly use [`Sketch`] without using the [`run`]/[`App`] API.
 use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
