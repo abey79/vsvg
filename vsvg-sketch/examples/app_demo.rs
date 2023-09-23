@@ -26,7 +26,11 @@ impl Default for MySketch {
 }
 
 impl App for MySketch {
-    fn update(&mut self, sketch: &mut Sketch) -> anyhow::Result<()> {
+    fn update(
+        &mut self,
+        sketch: &mut Sketch,
+        _rng: &mut rand_chacha::ChaCha8Rng,
+    ) -> anyhow::Result<()> {
         sketch.page_size(PageSize::new(200.0, 200.0));
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?

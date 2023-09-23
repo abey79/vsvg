@@ -39,17 +39,30 @@ impl GrayRedWidget {
 /// This is where the custom UI code happens.
 impl Widget<GrayRed> for GrayRedWidget {
     fn ui(&self, ui: &mut Ui, label: &str, value: &mut GrayRed) -> egui::Response {
-        ui.horizontal(|ui| {
-            let mut label = egui::RichText::new(label).color(self.label_color);
-            if self.underline {
-                label = label.underline();
-            }
-            ui.add(egui::Label::new(label));
+        let mut label = egui::RichText::new(label).color(self.label_color);
+        if self.underline {
+            label = label.underline();
+        }
+        ui.add(egui::Label::new(label));
 
-            ui.label("gr:");
-            let resp1 = ui.add(egui::Slider::new(&mut value.gray, 0.0..=1.0));
-            ui.label("rd:");
-            let resp2 = ui.add(egui::Slider::new(&mut value.red, 0.0..=1.0));
+        // The UI from this function is integrated in a two column layout, for a nice alignment of
+        // the labels. It is thus important that we render only *two* top-level `ui` calls. Here, we
+        // have the label and the `ui.vertical()` call, so we're good.
+
+        ui.vertical(|ui| {
+            let resp1 = ui
+                .horizontal(|ui| {
+                    ui.label("gr:");
+                    ui.add(egui::Slider::new(&mut value.gray, 0.0..=1.0))
+                })
+                .inner;
+
+            let resp2 = ui
+                .horizontal(|ui| {
+                    ui.label("rd:");
+                    ui.add(egui::Slider::new(&mut value.red, 0.0..=1.0))
+                })
+                .inner;
 
             // we must return a response that combines the responses of the sub-widgets to make
             // sure any change to the slider are reported
@@ -73,7 +86,11 @@ struct CustomUISketch {
 }
 
 impl App for CustomUISketch {
-    fn update(&mut self, sketch: &mut Sketch) -> anyhow::Result<()> {
+    fn update(
+        &mut self,
+        sketch: &mut Sketch,
+        _rng: &mut rand_chacha::ChaCha8Rng,
+    ) -> anyhow::Result<()> {
         sketch.page_size(PageSize::new(200.0, 200.0));
 
         sketch.color(self.color);

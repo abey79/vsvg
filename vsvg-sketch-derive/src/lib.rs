@@ -55,9 +55,10 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
                     }
 
                     ui_func_tokens.extend(quote! {
-                        <#field_type as ::vsvg_sketch::widgets::WidgetMapper<#field_type>>::Type::default()
+                        changed = <#field_type as ::vsvg_sketch::widgets::WidgetMapper<#field_type>>::Type::default()
                             #chained_calls
-                            .ui(ui, #label, &mut self.#field_name),
+                            .ui(ui, #label, &mut self.#field_name).changed() || changed;
+                        ui.end_row();
                     });
                 }
             }
@@ -71,9 +72,9 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
 
         impl ::vsvg_sketch::SketchUI for #name {
             fn ui(&mut self, ui: &mut egui::Ui) -> bool {
-                [
-                    #ui_func_tokens
-                ].iter().any(|r| r.changed())
+                let mut changed = false;
+                #ui_func_tokens
+                changed
             }
         }
     })

@@ -9,7 +9,11 @@ pub use sketch::Sketch;
 
 /// This is the trait that your sketch app must implement.
 pub trait App {
-    fn update(&mut self, sketch: &mut Sketch) -> anyhow::Result<()>;
+    fn update(
+        &mut self,
+        sketch: &mut Sketch,
+        rng: &mut rand_chacha::ChaCha8Rng,
+    ) -> anyhow::Result<()>;
 
     //TODO:
     // - extra ui?

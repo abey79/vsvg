@@ -5,7 +5,7 @@
 
 use geo::{BooleanOps, BoundingRect, Contains};
 use itertools::Itertools;
-use rand::{Rng, SeedableRng};
+use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 use rand_distr::{Distribution, Normal};
 
@@ -15,8 +15,6 @@ use vsvg_sketch::prelude::*;
 
 #[derive(Sketch)]
 struct AsteroidSketch {
-    seed: u64,
-
     #[param(slider, min = 0.1, max = 1.5)]
     irregularity: f64,
 
@@ -39,7 +37,6 @@ struct AsteroidSketch {
 impl Default for AsteroidSketch {
     fn default() -> Self {
         Self {
-            seed: 4,
             irregularity: 0.9,
             spikiness: 0.13,
             num_vertices: 18,
@@ -51,9 +48,7 @@ impl Default for AsteroidSketch {
 }
 
 impl App for AsteroidSketch {
-    fn update(&mut self, sketch: &mut Sketch) -> anyhow::Result<()> {
-        let mut rng = ChaCha8Rng::seed_from_u64(self.seed);
-
+    fn update(&mut self, sketch: &mut Sketch, rng: &mut ChaCha8Rng) -> anyhow::Result<()> {
         let page_size = PageSize::new(12. * Units::CM, 12. * Units::CM);
         sketch
             .page_size(page_size)
@@ -66,7 +61,7 @@ impl App for AsteroidSketch {
             self.irregularity,
             self.spikiness,
             self.num_vertices,
-            &mut rng,
+            rng,
         );
 
         fn voronoi_recurse(
@@ -117,7 +112,7 @@ impl App for AsteroidSketch {
             &poly,
             self.max_iter,
             self.min_iter,
-            &mut rng,
+            rng,
         );
 
         sketch.add_path(poly);
