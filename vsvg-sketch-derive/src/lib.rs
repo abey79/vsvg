@@ -1,17 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{
-    parse_macro_input, Data, DataStruct, DeriveInput, Expr, Fields, FieldsNamed, Type, TypePath,
-};
-
-fn test_type(ty: &Type, type_to_check: &str) -> bool {
-    match ty {
-        Type::Path(TypePath { ref path, .. }) => path
-            .get_ident()
-            .map_or(false, |ident| ident == type_to_check),
-        _ => false,
-    }
-}
+use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Expr, Fields, FieldsNamed};
 
 #[proc_macro_derive(Sketch, attributes(param, skip))]
 pub fn sketch_derive(input: TokenStream) -> TokenStream {
@@ -65,15 +54,11 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
                         }
                     }
 
-                    if test_type(&field_type, "f64") | test_type(&field_type, "usize") {
-                        ui_func_tokens.extend(quote! {
-                            ::vsvg_sketch::widgets::NumericWidget::default()
-                                #chained_calls
-                                .ui(ui, #label, &mut self.#field_name);
-                        });
-                    } else {
-                        println!("{field_name} is not f64");
-                    }
+                    ui_func_tokens.extend(quote! {
+                        <#field_type as ::vsvg_sketch::widgets::WidgetMapper<#field_type>>::Type::default()
+                            #chained_calls
+                            .ui(ui, #label, &mut self.#field_name);
+                    });
                 }
             }
             _ => panic!("The Sketch derive macro only supports named-field structs"),

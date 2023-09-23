@@ -5,10 +5,13 @@ use vsvg_sketch::prelude::*;
 struct MySketch {
     #[param(slider, min = 0.0, max = 10.0, step = 2.0)]
     rate: f64,
-
     num_circle: usize,
-    // #[skip]
-    // irrelevant: String,
+    unused_text: String,
+
+    // we can tell [`Sketch`] to ignore some fields
+    #[skip]
+    #[allow(dead_code)]
+    irrelevant: String,
 }
 
 impl Default for MySketch {
@@ -16,6 +19,8 @@ impl Default for MySketch {
         Self {
             rate: 3.0,
             num_circle: 10,
+            unused_text: "Hello".to_string(),
+            irrelevant: String::new(),
         }
     }
 }
@@ -42,9 +47,11 @@ impl App for MySketch {
 fn main() -> Result {
     run_default::<MySketch>()
 
-    // or you can use this:
+    // or you can use this instead of implementing [`Default`]:
     // run(MySketch {
     //     rate: 3.0,
     //     num_circle: 10,
+    //     unused_text: "Hello".to_string(),
+    //     irrelevant: String::new(),
     // })
 }

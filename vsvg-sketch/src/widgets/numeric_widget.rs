@@ -28,8 +28,10 @@ impl<T: Numeric> NumericWidget<T> {
         self.slider = slider;
         self
     }
+}
 
-    pub fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) {
+impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) {
         ui.horizontal(|ui| {
             ui.add(egui::Label::new(label));
             let range = self.min.unwrap_or(T::MIN)..=self.max.unwrap_or(T::MAX);
