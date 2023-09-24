@@ -45,3 +45,16 @@ impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
         }
     }
 }
+
+crate::register_widget_ui!(f32, NumericWidget<f32>);
+crate::register_widget_ui!(f64, NumericWidget<f64>);
+crate::register_widget_ui!(i8, NumericWidget<i8>);
+crate::register_widget_ui!(u8, NumericWidget<u8>);
+crate::register_widget_ui!(i16, NumericWidget<i16>);
+crate::register_widget_ui!(u16, NumericWidget<u16>);
+crate::register_widget_ui!(i32, NumericWidget<i32>);
+crate::register_widget_ui!(u32, NumericWidget<u32>);
+crate::register_widget_ui!(i64, NumericWidget<i64>);
+crate::register_widget_ui!(u64, NumericWidget<u64>);
+crate::register_widget_ui!(isize, NumericWidget<isize>);
+crate::register_widget_ui!(usize, NumericWidget<usize>);

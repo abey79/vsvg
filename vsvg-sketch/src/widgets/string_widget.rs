@@ -7,3 +7,5 @@ impl super::Widget<String> for StringWidget {
         ui.add(egui::TextEdit::singleline(value))
     }
 }
+
+crate::register_widget_ui!(String, StringWidget);

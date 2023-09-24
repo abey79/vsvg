@@ -15,6 +15,9 @@ pub struct Runner<'a> {
     /// Should the sketch be updated?
     dirty: bool,
 
+    /// Controls whether the seed feature is enabled or not
+    enable_seed: bool,
+
     /// Random seed used to generate the sketch.
     seed: u32,
 
@@ -52,6 +55,7 @@ impl Runner<'_> {
         Self {
             app: Box::new(app),
             dirty: true,
+            enable_seed: true,
             seed: 0,
             enable_time: true,
             playing: false,
@@ -68,6 +72,11 @@ impl Runner<'_> {
     /// Sets the seed to a given value (default: 0).
     pub fn with_seed(mut self, seed: u32) -> Self {
         self.seed = seed;
+        self
+    }
+
+    pub fn with_seed_enabled(mut self, enabled: bool) -> Self {
+        self.enable_seed = enabled;
         self
     }
 
@@ -381,8 +390,10 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                         ui.separator();
                     }
 
-                    self.seed_ui(ui);
-                    ui.separator();
+                    if self.enable_seed {
+                        self.seed_ui(ui);
+                        ui.separator();
+                    }
 
                     ui.strong("Sketch Parameters");
                     let changed = egui::Grid::new("sketch_param_grid")

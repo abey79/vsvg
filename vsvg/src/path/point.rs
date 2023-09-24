@@ -33,6 +33,18 @@ impl Point {
     }
 
     #[must_use]
+    #[inline]
+    pub fn x_mut(&mut self) -> &mut f64 {
+        &mut self.data[0]
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn y_mut(&mut self) -> &mut f64 {
+        &mut self.data[1]
+    }
+
+    #[must_use]
     pub fn distance(&self, other: &Self) -> f64 {
         let dx = self.x() - other.x();
         let dy = self.y() - other.y();

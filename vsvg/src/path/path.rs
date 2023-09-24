@@ -196,7 +196,11 @@ impl Path {
                     vec![cubic.p0.into(), cubic.p1.into()],
                     vec![cubic.p2.into(), cubic.p3.into()],
                 ]),
-                _ => None,
+                kurbo::PathSeg::Quad(quad) => Some([
+                    vec![quad.p0.into(), quad.p1.into()],
+                    vec![quad.p1.into(), quad.p2.into()],
+                ]),
+                kurbo::PathSeg::Line(_) => None,
             })
             .flatten()
             .map(FlattenedPath::from)
