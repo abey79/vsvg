@@ -26,6 +26,11 @@ pub trait Transforms: Sized {
         self
     }
 
+    fn scale_unit(&mut self, u: crate::Unit) -> &mut Self {
+        self.transform(&Affine::scale(u.to_px()));
+        self
+    }
+
     /// Scale the geometry by `sx` and `sy` around the origin.
     fn scale_non_uniform(&mut self, sx: f64, sy: f64) -> &mut Self {
         self.transform(&Affine::scale_non_uniform(sx, sy));

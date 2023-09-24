@@ -41,6 +41,28 @@ impl Sketch {
         self
     }
 
+    /// Returns the sketch's width in pixels.
+    ///
+    /// If the page size is not set, it defaults to 400px.
+    pub fn width(&self) -> f64 {
+        self.document
+            .metadata()
+            .page_size
+            .map(|p| p.w())
+            .unwrap_or(400.0)
+    }
+
+    /// Returns the sketch's height in pixels.
+    ///
+    /// If the page size is not set, it defaults to 400px.
+    pub fn height(&self) -> f64 {
+        self.document
+            .metadata()
+            .page_size
+            .map(|p| p.h())
+            .unwrap_or(400.0)
+    }
+
     pub fn page_size(&mut self, page_size: PageSize) -> &mut Self {
         self.document.metadata_mut().page_size = Some(page_size);
         self

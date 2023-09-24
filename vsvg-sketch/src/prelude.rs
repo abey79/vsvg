@@ -1,8 +1,7 @@
 pub use crate::{
-    context::Context, register_widget_ui, run, run_default, sketch::Sketch, widgets::Widget, App,
-    Result,
+    context::Context, register_widget_ui, sketch::Sketch, widgets::Widget, App, Result, Runner,
 };
-pub use vsvg::{Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Transforms, Units};
+pub use vsvg::{Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Transforms, Unit};
 pub use vsvg_sketch_derive::Sketch;
 
 #[cfg(feature = "viewer")]

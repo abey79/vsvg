@@ -109,7 +109,7 @@ pub(crate) fn document_to_svg_doc<
 
     // dimensions, ensuring minimum size of 1x1
     let mut dims = if let Some(page_size) = document.metadata().page_size {
-        kurbo::Rect::from_points((0.0, 0.0), (page_size.w, page_size.h))
+        kurbo::Rect::from_points((0.0, 0.0), page_size.to_pixels())
     } else if let Some(bounds) = document.bounds() {
         bounds
     } else {

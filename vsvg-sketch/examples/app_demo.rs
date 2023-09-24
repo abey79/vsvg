@@ -26,8 +26,6 @@ impl Default for MySketch {
 
 impl App for MySketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.page_size(PageSize::new(200.0, 200.0));
-
         for i in 0..self.num_circle {
             sketch.circle(
                 100.0,
@@ -41,13 +39,7 @@ impl App for MySketch {
 }
 
 fn main() -> Result {
-    run_default::<MySketch>()
-
-    // or you can use this instead of implementing [`Default`]:
-    // run(MySketch {
-    //     rate: 3.0,
-    //     num_circle: 10,
-    //     unused_text: "Hello".to_string(),
-    //     irrelevant: String::new(),
-    // })
+    Runner::new(MySketch::default())
+        .with_page_size(PageSize::new(200.0, 200.0))
+        .run()
 }

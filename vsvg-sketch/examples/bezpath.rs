@@ -3,10 +3,12 @@
 //! This example demonstrates how to build complex shapes by building  [`kurbo::BezPath`] instances
 //! manually.
 
+//TODO: convert to sketch
+
 use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
-    let page_size = PageSize::A5;
+    let page_size = PageSize::A5V;
     let mut sketch = Sketch::new();
     sketch.page_size(page_size);
 
@@ -25,8 +27,8 @@ fn main() -> Result {
     let path3 = kurbo::BezPath::from_svg("M 0 0 A 2 1 0 0 0 3 2 Z")?;
 
     sketch
-        .translate(page_size.w / 2.0, 0.0)
-        .scale(Units::CM)
+        .translate(sketch.width() / 2.0, 0.0)
+        .scale_unit(Unit::CM)
         .translate(0.0, 7.0)
         .add_path(path)
         .translate(0.0, 6.0)

@@ -48,11 +48,9 @@ impl Default for AsteroidSketch {
 
 impl App for AsteroidSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        let page_size = PageSize::new(12. * Units::CM, 12. * Units::CM);
         sketch
-            .page_size(page_size)
-            .translate(page_size.w / 2.0, page_size.h / 2.0)
-            .scale(4.0 * Units::CM)
+            .translate(sketch.width() / 2., sketch.height() / 2.)
+            .scale_unit(4.0 * Unit::CM)
             .color(Color::DARK_BLUE);
 
         let poly = generate_polygon(
@@ -260,5 +258,8 @@ fn voronoi(
 }
 
 fn main() -> Result {
-    run_default::<AsteroidSketch>()
+    Runner::new(AsteroidSketch::default())
+        .with_page_size(PageSize::custom(12., 12., Unit::CM))
+        .with_time_enabled(false)
+        .run()
 }

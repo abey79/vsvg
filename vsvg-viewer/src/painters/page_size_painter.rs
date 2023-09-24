@@ -15,7 +15,7 @@ pub(crate) struct PageSizePainterData {
 impl PageSizePainterData {
     pub(crate) fn new(render_objects: &EngineRenderObjects, page_size: PageSize) -> Self {
         #[allow(clippy::cast_possible_truncation)]
-        let (w, h) = (page_size.w as f32, page_size.h as f32);
+        let (w, h) = (page_size.w() as f32, page_size.h() as f32);
 
         // shadow
         let shadow_vertices = [

@@ -214,10 +214,10 @@ impl DocumentWidget {
     fn fit_to_view(&mut self, viewport: &Rect) {
         let bounds =
             if let Some(page_size) = self.document_data.flattened_document.metadata().page_size {
-                if page_size.w != 0.0 && page_size.h != 0.0 {
+                if page_size.w() != 0.0 && page_size.h() != 0.0 {
                     Some(kurbo::Rect::from_points(
                         (0., 0.),
-                        (page_size.w, page_size.h),
+                        (page_size.w(), page_size.h()),
                     ))
                 } else {
                     self.document_data.flattened_document.bounds()

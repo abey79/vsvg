@@ -13,7 +13,7 @@ struct SidePanelViewerApp {
 impl SidePanelViewerApp {
     pub fn new() -> Self {
         Self {
-            document: Document::new_with_page_size(vsvg::PageSize::A6),
+            document: Document::new_with_page_size(vsvg::PageSize::A6V),
         }
     }
 }
@@ -40,8 +40,12 @@ impl ViewerApp for SidePanelViewerApp {
                 if ui.button("Add line").clicked() {
                     let mut rng = rand::thread_rng();
 
-                    let vsvg::PageSize { w, h } =
-                        self.document.metadata().page_size.unwrap_or_default();
+                    let (w, h) = self
+                        .document
+                        .metadata()
+                        .page_size
+                        .map(Into::into)
+                        .unwrap_or((200.0, 200.0));
 
                     self.document.push_path(
                         1,

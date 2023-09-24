@@ -1,12 +1,14 @@
 pub mod context;
 pub mod prelude;
+mod runner;
 pub mod sketch;
-mod sketch_runner;
 pub mod widgets;
 
 pub type Result = anyhow::Result<()>;
 
 pub use sketch::Sketch;
+
+pub use runner::Runner;
 
 /// This is the trait that your sketch app must implement.
 pub trait App {
@@ -25,13 +27,3 @@ pub trait SketchUI {
 }
 
 pub trait SketchApp: App + SketchUI {}
-
-pub fn run_default<APP: SketchApp + Default + 'static>() -> anyhow::Result<()> {
-    vsvg_viewer::show_with_viewer_app(Box::new(sketch_runner::SketchRunner::new(
-        Box::<APP>::default(),
-    )))
-}
-
-pub fn run<APP: SketchApp + 'static>(app: APP) -> anyhow::Result<()> {
-    vsvg_viewer::show_with_viewer_app(Box::new(sketch_runner::SketchRunner::new(Box::new(app))))
-}

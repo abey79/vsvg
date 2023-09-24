@@ -87,8 +87,6 @@ struct CustomUISketch {
 
 impl App for CustomUISketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.page_size(PageSize::new(200.0, 200.0));
-
         sketch.color(self.color);
         for i in 0..5 {
             sketch.circle(100.0, 100.0, 30.0 + 40.0 + i as f64 * 3.0);
@@ -99,10 +97,13 @@ impl App for CustomUISketch {
 }
 
 fn main() -> Result {
-    run(CustomUISketch {
+    Runner::new(CustomUISketch {
         color: GrayRed {
             red: 0.5,
             gray: 0.5,
         },
     })
+    .with_page_size(PageSize::new(200.0, 200.0))
+    .with_time_enabled(false)
+    .run()
 }

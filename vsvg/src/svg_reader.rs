@@ -140,7 +140,7 @@ impl Document {
 
         // add frame for the page
         let (w, h) = (tree.size.width(), tree.size.height());
-        let mut doc = Document::new_with_page_size(PageSize { w, h });
+        let mut doc = Document::new_with_page_size(PageSize::new(w, h));
 
         if single_layer {
             doc.load_tree(&tree, viewbox_transform);
@@ -387,8 +387,8 @@ mod tests {
         .unwrap();
 
         let page_size = doc.metadata().page_size.unwrap();
-        assert_eq!(page_size.w, 100.);
-        assert_eq!(page_size.h, 100.);
+        assert_eq!(page_size.w(), 100.);
+        assert_eq!(page_size.h(), 100.);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
         assert_eq!(
             doc.try_get(0).unwrap().paths[0].data,

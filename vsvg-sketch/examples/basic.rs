@@ -3,8 +3,8 @@ use vsvg_sketch::prelude::*;
 
 fn main() -> Result {
     Sketch::new()
-        .page_size(PageSize::A5)
-        .scale(Units::CM)
+        .page_size(PageSize::A5V)
+        .scale_unit(Unit::CM)
         .translate(7.0, 6.0)
         .circle(0.0, 0.0, 2.5)
         .translate(1.0, 4.0)
