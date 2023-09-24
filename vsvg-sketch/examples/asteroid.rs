@@ -6,7 +6,6 @@
 use geo::{BooleanOps, BoundingRect, Contains};
 use itertools::Itertools;
 use rand::Rng;
-use rand_chacha::ChaCha8Rng;
 use rand_distr::{Distribution, Normal};
 
 use std::f64::consts::PI;
@@ -48,7 +47,7 @@ impl Default for AsteroidSketch {
 }
 
 impl App for AsteroidSketch {
-    fn update(&mut self, sketch: &mut Sketch, rng: &mut ChaCha8Rng) -> anyhow::Result<()> {
+    fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         let page_size = PageSize::new(12. * Units::CM, 12. * Units::CM);
         sketch
             .page_size(page_size)
@@ -61,7 +60,7 @@ impl App for AsteroidSketch {
             self.irregularity,
             self.spikiness,
             self.num_vertices,
-            rng,
+            &mut ctx.rng,
         );
 
         fn voronoi_recurse(
@@ -112,7 +111,7 @@ impl App for AsteroidSketch {
             &poly,
             self.max_iter,
             self.min_iter,
-            rng,
+            &mut ctx.rng,
         );
 
         sketch.add_path(poly);

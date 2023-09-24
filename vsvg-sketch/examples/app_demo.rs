@@ -1,4 +1,3 @@
-use std::time::SystemTime;
 use vsvg_sketch::prelude::*;
 
 #[derive(Sketch)]
@@ -26,21 +25,14 @@ impl Default for MySketch {
 }
 
 impl App for MySketch {
-    fn update(
-        &mut self,
-        sketch: &mut Sketch,
-        _rng: &mut rand_chacha::ChaCha8Rng,
-    ) -> anyhow::Result<()> {
+    fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch.page_size(PageSize::new(200.0, 200.0));
-        let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs_f64();
 
         for i in 0..self.num_circle {
             sketch.circle(
                 100.0,
                 100.0,
-                (now * self.rate).sin() * 30.0 + 40.0 + i as f64 * 3.0,
+                (ctx.time * self.rate).sin() * 30.0 + 40.0 + i as f64 * 3.0,
             );
         }
 

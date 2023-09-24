@@ -86,11 +86,7 @@ struct CustomUISketch {
 }
 
 impl App for CustomUISketch {
-    fn update(
-        &mut self,
-        sketch: &mut Sketch,
-        _rng: &mut rand_chacha::ChaCha8Rng,
-    ) -> anyhow::Result<()> {
+    fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.page_size(PageSize::new(200.0, 200.0));
 
         sketch.color(self.color);

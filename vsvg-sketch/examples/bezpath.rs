@@ -21,7 +21,7 @@ fn main() -> Result {
     // it's also possible to build a path from an SVG `path` string
     let path2 = kurbo::BezPath::from_svg("M 0 0 L 1 1 Q 2 0 2 -3 C 1 -2 0 -2 -1 -5 Z")?;
 
-    // arc commands are also supported, but converted to cubic beziers
+    // arc commands are also supported, but converted to cubic Béziers
     let path3 = kurbo::BezPath::from_svg("M 0 0 A 2 1 0 0 0 3 2 Z")?;
 
     sketch

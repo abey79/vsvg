@@ -13,6 +13,7 @@ rand_distr.workspace = true
 kurbo.workspace = true
 anyhow.workspace = true
 egui.workspace = true
+web-time.workspace = true
 
 # for examples
 [dev-dependencies]

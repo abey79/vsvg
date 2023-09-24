@@ -1,3 +1,4 @@
+pub mod context;
 pub mod prelude;
 pub mod sketch;
 mod sketch_runner;
@@ -9,11 +10,7 @@ pub use sketch::Sketch;
 
 /// This is the trait that your sketch app must implement.
 pub trait App {
-    fn update(
-        &mut self,
-        sketch: &mut Sketch,
-        rng: &mut rand_chacha::ChaCha8Rng,
-    ) -> anyhow::Result<()>;
+    fn update(&mut self, sketch: &mut Sketch, ctx: &mut context::Context) -> anyhow::Result<()>;
 
     //TODO:
     // - extra ui?
