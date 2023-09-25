@@ -46,6 +46,7 @@ pub fn show(document: &Document) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Implement this trait to build a custom viewer app based on [`Viewer`].
 pub trait ViewerApp {
     fn setup(
         &mut self,
@@ -73,6 +74,12 @@ pub trait ViewerApp {
     fn title(&self) -> String {
         "vsvg ViewerApp".to_owned()
     }
+
+    /// Hook to load persistent data.
+    fn load(&mut self, _storage: &dyn eframe::Storage) {}
+
+    /// Hook to save persistent data.
+    fn save(&self, _storage: &mut dyn eframe::Storage) {}
 }
 
 pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Result<()> {

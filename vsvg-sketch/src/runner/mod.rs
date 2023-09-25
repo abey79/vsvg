@@ -2,6 +2,7 @@ mod save_ui;
 
 use crate::Sketch;
 use convert_case::Casing;
+use eframe::Storage;
 use rand::SeedableRng;
 use vsvg::{PageSize, Unit};
 
@@ -11,6 +12,9 @@ use vsvg_viewer::DocumentWidget;
 ///
 /// It can be configured using the builder pattern with the `with_*()` functions, and then run
 /// using the [`run`] method.
+///
+/// [`Runner`] implements [`vsvg_viewer::ViewerApp`] to actually display the sketch with a custom,
+/// interactive UI.
 pub struct Runner<'a> {
     /// User-provided sketch app to run.
     app: Box<dyn crate::SketchApp>,
@@ -454,5 +458,18 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
     fn title(&self) -> String {
         self.app.name()
+    }
+
+    fn load(&mut self, storage: &dyn Storage) {
+        let save_ui: Option<save_ui::SaveUI> =
+            eframe::get_value(storage, "vsvg-sketch-runner-save-ui");
+        if let Some(mut save_ui) = save_ui {
+            save_ui.update_dest_dir();
+            self.save_ui = save_ui;
+        }
+    }
+
+    fn save(&self, storage: &mut dyn Storage) {
+        eframe::set_value(storage, "vsvg-sketch-runner-save-ui", &self.save_ui);
     }
 }

@@ -42,6 +42,7 @@ impl Viewer {
         mut viewer_app: Box<dyn ViewerApp>,
     ) -> Option<Self> {
         let state = if let Some(storage) = cc.storage {
+            viewer_app.load(storage);
             eframe::get_value(storage, VSVG_VIEWER_STORAGE_KEY).unwrap_or_default()
         } else {
             ViewerState::default()
@@ -186,5 +187,6 @@ impl eframe::App for Viewer {
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, VSVG_VIEWER_STORAGE_KEY, &self.state);
+        self.viewer_app.save(storage);
     }
 }

@@ -2,11 +2,13 @@ use crate::Sketch;
 use std::fs::canonicalize;
 use std::path::PathBuf;
 
+#[derive(serde::Deserialize, serde::Serialize)]
 pub(super) struct SaveUI {
     /// The destination directory as typed/displayed in the UI by the user.
     destination_dir_str: String,
 
     /// The converted destination directory, if it exists.
+    #[serde(skip)]
     destination_dir: Option<PathBuf>,
 
     /// The output file base name.
@@ -15,6 +17,7 @@ pub(super) struct SaveUI {
     /// The last save result, if any.
     ///
     /// Used to display status.
+    #[serde(skip)]
     last_error: Option<anyhow::Result<String>>,
 }
 
@@ -36,6 +39,12 @@ impl Default for SaveUI {
 }
 
 impl SaveUI {
+    pub(super) fn update_dest_dir(&mut self) {
+        self.destination_dir = canonicalize(&self.destination_dir_str)
+            .ok()
+            .filter(|p| p.is_dir());
+    }
+
     pub(super) fn ui(&mut self, ui: &mut egui::Ui, sketch: Option<&Sketch>) {
         ui.strong("Save");
         ui.spacing_mut().text_edit_width = 250.0;
@@ -49,6 +58,15 @@ impl SaveUI {
                     ui.set_width(ui.spacing().text_edit_width);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::LEFT), |ui| {
                         if ui
+                            .add_enabled(self.destination_dir.is_some(), egui::Button::new("open"))
+                            .clicked()
+                        {
+                            if let Some(path) = &self.destination_dir {
+                                let _ = open::that(path);
+                            }
+                        }
+
+                        if ui
                             .button("…")
                             .on_hover_text("Select destination directory")
                             .clicked()
@@ -59,9 +77,7 @@ impl SaveUI {
                                 .pick_folder()
                             {
                                 self.destination_dir_str = path.to_string_lossy().to_string();
-                                self.destination_dir = canonicalize(&self.destination_dir_str)
-                                    .ok()
-                                    .filter(|p| p.is_dir());
+                                self.update_dest_dir();
                             }
                         }
 
@@ -71,9 +87,7 @@ impl SaveUI {
                             edit = edit.text_color(egui::Color32::RED);
                         }
                         if ui.add(edit).changed() {
-                            self.destination_dir = canonicalize(&self.destination_dir_str)
-                                .ok()
-                                .filter(|p| p.is_dir());
+                            self.update_dest_dir();
                         }
                     });
                 });
