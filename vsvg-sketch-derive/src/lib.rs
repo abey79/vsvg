@@ -1,6 +1,11 @@
+use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Expr, Fields, FieldsNamed};
+
+fn format_label(label: &str) -> String {
+    format!("{}:", label.to_case(Case::Lower))
+}
 
 #[proc_macro_derive(Sketch, attributes(param, skip))]
 pub fn sketch_derive(input: TokenStream) -> TokenStream {
@@ -54,10 +59,12 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
                         }
                     }
 
+                    let formatted_label = format_label(&label);
+
                     ui_func_tokens.extend(quote! {
                         changed = <#field_type as ::vsvg_sketch::widgets::WidgetMapper<#field_type>>::Type::default()
                             #chained_calls
-                            .ui(ui, #label, &mut self.#field_name).changed() || changed;
+                            .ui(ui, #formatted_label, &mut self.#field_name).changed() || changed;
                         ui.end_row();
                     });
                 }

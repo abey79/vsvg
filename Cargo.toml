@@ -17,6 +17,7 @@ rosvgtree = { git = "https://github.com/abey79/resvg", branch="vsvg" }
 
 
 [workspace.dependencies]
+convert_case = "0.6.0"
 egui = "0.22.0"
 eframe = { version = "0.22.0", default-features = false, features = [
     "accesskit",
