@@ -17,7 +17,10 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) @interpolate(linear, sample) tex_coords: vec2<f32>,
+    // I used to have @interpolate(linear, sample) here, but its not supported by WebGL
+    // and I'm not sure it was ever useful.
+    @location(0) tex_coords: vec2<f32>,
+
     @location(1) @interpolate(flat) distance: f32,
     @location(2) @interpolate(flat) color: vec4<f32>,
     @location(3) @interpolate(flat) m0: vec2<f32>,
@@ -110,7 +113,9 @@ fn vs_main(
 
 
     // all of this is needed *only* for vertices 0 and 1, thanks to flat shading
-    if (in_vertex_index < 2u) {
+    // unfortunately, it breaks on WebGL
+    /* if (in_vertex_index < 2u) */
+    {
         out.distance = d;
 
         // compute miter points
@@ -125,22 +130,9 @@ fn vs_main(
         out.m0 = rot_mat * m0;
         out.m2 = rot_mat * m2;
     }
+
     return out;
 }
-
-
-fn stroke(distance: f32, w2: f32, antialias: f32, color: vec4<f32>) -> vec4<f32> {
-    if (distance < w2) {
-        return color;
-    } else if (distance < w2 + antialias) {
-        var alpha = (distance - w2) / antialias;
-        alpha = exp(-alpha*alpha);
-        return vec4<f32>(color.rgb, color.a * alpha);
-    } else {
-        discard;
-    }
-}
-
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -187,6 +179,20 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if (false) {
         return vec4<f32>(1.0 - distance / in.width * 2., 0.0, 0.0, 1.0);
     } else {
-        return stroke(distance, in.width/2., AA/camera.scale, in.color);
+        // this used to be in a separate function, but it was breaking on WebGL, likely because
+        // naga somehow doesn't support `discard` in functions
+        let w2 = in.width/2.;
+        let antialias = AA/camera.scale;
+        let color = in.color;
+
+        if (distance < w2) {
+            return color;
+        } else if (distance < w2 + antialias) {
+            var alpha = (distance - w2) / antialias;
+            alpha = exp(-alpha*alpha);
+            return vec4<f32>(color.rgb, color.a * alpha);
+        } else {
+             discard;
+        }
     }
 }
