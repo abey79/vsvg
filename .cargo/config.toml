@@ -1,2 +1,2 @@
 [alias]
-vsvg = "run --package vsvg-cli --bin vsvg --"
+vsvg = "run --package vsvg-cli --bin vsvg --release --"
