@@ -88,10 +88,10 @@ impl Sketch {
         Ok(self)
     }
 
-    pub fn save(&mut self, path: impl AsRef<std::path::Path>) -> anyhow::Result<&mut Self> {
+    pub fn save(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
         let file = std::io::BufWriter::new(std::fs::File::create(path)?);
         self.document.to_svg(file)?;
-        Ok(self)
+        Ok(())
     }
 }
 

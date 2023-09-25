@@ -1,3 +1,5 @@
+mod save_ui;
+
 use crate::Sketch;
 use rand::SeedableRng;
 use vsvg::{PageSize, Unit};
@@ -12,15 +14,23 @@ pub struct Runner<'a> {
     /// User-provided sketch app to run.
     app: Box<dyn crate::SketchApp>,
 
+    /// Last produced sketch, for saving purposes.
+    last_sketch: Option<Sketch>,
+
     /// Should the sketch be updated?
     dirty: bool,
 
+    /// UI for saving the sketch.
+    save_ui: save_ui::SaveUI,
+
+    // ========== seed stuff
     /// Controls whether the seed feature is enabled or not
     enable_seed: bool,
 
     /// Random seed used to generate the sketch.
     seed: u32,
 
+    // ========== time stuff
     /// Controls whether the time feature is enabled or not
     enable_time: bool,
 
@@ -39,6 +49,7 @@ pub struct Runner<'a> {
     /// Time of last loop.
     last_instant: Option<web_time::Instant>,
 
+    // ========== page size stuff
     /// The configured page size.
     page_size: PageSize,
 
@@ -54,7 +65,9 @@ impl Runner<'_> {
     pub fn new(app: impl crate::SketchApp + 'static) -> Self {
         Self {
             app: Box::new(app),
+            last_sketch: None,
             dirty: true,
+            save_ui: save_ui::SaveUI::default(),
             enable_seed: true,
             seed: 0,
             enable_time: true,
@@ -395,6 +408,9 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                         ui.separator();
                     }
 
+                    self.save_ui.ui(ui, self.last_sketch.as_ref());
+                    ui.separator();
+
                     ui.strong("Sketch Parameters");
                     let changed = egui::Grid::new("sketch_param_grid")
                         .num_columns(2)
@@ -418,6 +434,11 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
             sketch.page_size(self.page_size);
             self.app.update(&mut sketch, &mut context)?;
             document_widget.set_document_data(vsvg_viewer::DocumentData::new(sketch.document()));
+            self.last_sketch = Some(sketch);
+
+            // this removes the save result status, indicating that the sketch has changed since
+            // last save
+            self.save_ui.reset_error();
         }
 
         Ok(())

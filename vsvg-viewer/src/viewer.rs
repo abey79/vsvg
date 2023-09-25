@@ -83,7 +83,48 @@ impl Viewer {
                 self.state.show_memory = true;
                 ui.close_menu();
             }
+
+            ui.separator();
+            Self::egui_debug_options_ui(ui);
         });
+    }
+
+    fn egui_debug_options_ui(ui: &mut Ui) {
+        // copied from rerun!
+
+        let mut debug = ui.style().debug;
+        let mut any_clicked = false;
+
+        any_clicked |= ui
+            .checkbox(&mut debug.debug_on_hover, "Ui debug on hover")
+            .on_hover_text("Hover over widgets to see their rectangles")
+            .changed();
+        any_clicked |= ui
+            .checkbox(&mut debug.show_expand_width, "Show expand width")
+            .on_hover_text("Show which widgets make their parent wider")
+            .changed();
+        any_clicked |= ui
+            .checkbox(&mut debug.show_expand_height, "Show expand height")
+            .on_hover_text("Show which widgets make their parent higher")
+            .changed();
+        any_clicked |= ui.checkbox(&mut debug.show_resize, "Show resize").changed();
+        any_clicked |= ui
+            .checkbox(
+                &mut debug.show_interactive_widgets,
+                "Show interactive widgets",
+            )
+            .on_hover_text("Show an overlay on all interactive widgets")
+            .changed();
+        any_clicked |= ui
+            .checkbox(&mut debug.show_blocking_widget, "Show blocking widgets")
+            .on_hover_text("Show what widget blocks the interaction of another widget")
+            .changed();
+
+        if any_clicked {
+            let mut style = (*ui.ctx().style()).clone();
+            style.debug = debug;
+            ui.ctx().set_style(style);
+        }
     }
 }
 

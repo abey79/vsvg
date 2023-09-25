@@ -14,6 +14,7 @@ kurbo.workspace = true
 anyhow.workspace = true
 egui.workspace = true
 web-time.workspace = true
+rfd = "0.12.0"
 
 # for examples
 [dev-dependencies]
