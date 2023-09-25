@@ -10,7 +10,7 @@ pub(super) struct SaveUI {
     destination_dir: Option<PathBuf>,
 
     /// The output file base name.
-    base_name: String,
+    pub(super) base_name: String,
 
     /// The last save result, if any.
     ///

@@ -26,4 +26,8 @@ pub trait SketchUI {
     fn ui(&mut self, ui: &mut egui::Ui) -> bool;
 }
 
-pub trait SketchApp: App + SketchUI {}
+pub trait SketchApp: App + SketchUI {
+    /// The name of the sketch, used the window title, the default output file name, and persistent
+    /// settings.
+    fn name(&self) -> String;
+}

@@ -27,7 +27,7 @@ pub fn show(document: &Document) -> anyhow::Result<()> {
     let document_data = Arc::new(DocumentData::new(document));
 
     eframe::run_native(
-        "vsvg",
+        "vsvg-viewer",
         native_options,
         Box::new(move |cc| {
             let style = egui::Style {
@@ -65,14 +65,25 @@ pub trait ViewerApp {
     ) -> anyhow::Result<()> {
         Ok(())
     }
+
+    /// Hook to modify the native options before starting the app.
+    fn options(&self, _native_option: &mut eframe::NativeOptions) {}
+
+    /// Window title
+    fn title(&self) -> String {
+        "vsvg ViewerApp".to_owned()
+    }
 }
 
-pub fn show_with_viewer_app(viewer_app: Box<dyn ViewerApp>) -> anyhow::Result<()> {
-    let native_options = eframe::NativeOptions::default();
+pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Result<()> {
+    let viewer_app = Box::new(viewer_app);
     let document_data = Arc::new(DocumentData::default());
 
+    let mut native_options = eframe::NativeOptions::default();
+    viewer_app.options(&mut native_options);
+
     eframe::run_native(
-        "vsvg",
+        viewer_app.title().as_str(),
         native_options,
         Box::new(move |cc| {
             let style = egui::Style {

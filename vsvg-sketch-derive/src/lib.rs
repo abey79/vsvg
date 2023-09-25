@@ -68,7 +68,11 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
     }
 
     TokenStream::from(quote! {
-        impl ::vsvg_sketch::SketchApp for #name { }
+        impl ::vsvg_sketch::SketchApp for #name {
+            fn name(&self) -> String {
+                stringify!(#name).to_string()
+            }
+        }
 
         impl ::vsvg_sketch::SketchUI for #name {
             fn ui(&mut self, ui: &mut egui::Ui) -> bool {

@@ -1,6 +1,7 @@
 mod save_ui;
 
 use crate::Sketch;
+use convert_case::Casing;
 use rand::SeedableRng;
 use vsvg::{PageSize, Unit};
 
@@ -63,11 +64,14 @@ pub struct Runner<'a> {
 impl Runner<'_> {
     /// Create a new [`Runner`] with the provided [`SketchApp`] instance.
     pub fn new(app: impl crate::SketchApp + 'static) -> Self {
+        let mut save_ui = save_ui::SaveUI::default();
+        save_ui.base_name = app.name().to_case(convert_case::Case::Snake);
+
         Self {
             app: Box::new(app),
             last_sketch: None,
             dirty: true,
-            save_ui: save_ui::SaveUI::default(),
+            save_ui,
             enable_seed: true,
             seed: 0,
             enable_time: true,
@@ -149,7 +153,7 @@ impl Runner<'_> {
 impl Runner<'static> {
     /// Execute the sketch app.
     pub fn run(self) -> anyhow::Result<()> {
-        vsvg_viewer::show_with_viewer_app(Box::new(self))
+        vsvg_viewer::show_with_viewer_app(self)
     }
 }
 
@@ -442,5 +446,13 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         }
 
         Ok(())
+    }
+
+    fn options(&self, native_option: &mut eframe::NativeOptions) {
+        native_option.app_id = Some(format!("vsvg.sketch.{}", self.title()));
+    }
+
+    fn title(&self) -> String {
+        self.app.name()
     }
 }

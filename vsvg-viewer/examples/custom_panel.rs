@@ -65,5 +65,5 @@ impl ViewerApp for SidePanelViewerApp {
 }
 
 fn main() -> anyhow::Result<()> {
-    show_with_viewer_app(Box::new(SidePanelViewerApp::new()))
+    show_with_viewer_app(SidePanelViewerApp::new())
 }

@@ -7,6 +7,8 @@ use crate::document_widget::DocumentWidget;
 use crate::ViewerApp;
 use std::sync::Arc;
 
+const VSVG_VIEWER_STORAGE_KEY: &str = "vsvg-viewer-state";
+
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 struct ViewerState {
@@ -40,7 +42,7 @@ impl Viewer {
         mut viewer_app: Box<dyn ViewerApp>,
     ) -> Option<Self> {
         let state = if let Some(storage) = cc.storage {
-            eframe::get_value(storage, "hello").unwrap_or_default()
+            eframe::get_value(storage, VSVG_VIEWER_STORAGE_KEY).unwrap_or_default()
         } else {
             ViewerState::default()
         };
@@ -183,6 +185,6 @@ impl eframe::App for Viewer {
 
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "hello", &self.state);
+        eframe::set_value(storage, VSVG_VIEWER_STORAGE_KEY, &self.state);
     }
 }

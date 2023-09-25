@@ -13,10 +13,12 @@ rand_distr.workspace = true
 kurbo.workspace = true
 anyhow.workspace = true
 egui.workspace = true
+eframe.workspace = true
 web-time.workspace = true
 rfd = { version = "0.12.0", default_features = false, features = [
     "xdg-portal",
 ] }
+convert_case = "0.6.0"
 
 # for examples
 [dev-dependencies]
