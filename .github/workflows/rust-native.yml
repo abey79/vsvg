@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      - master
+      - release/*
+  pull_request:
+    branches:
+      - master
+      - release/*
+
+name: Continuous integration
+
+jobs:
+  check:
+    name: "Lint, tests, and clippy -- Native"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run : |
+          just fmt
+          just clippy
+          just test

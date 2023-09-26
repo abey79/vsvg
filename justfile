@@ -2,11 +2,13 @@ install:
     cargo install --path vsvg
 
 clippy:
-    cargo clippy --workspace --bins --examples
+    cargo clippy -D warnings --workspace --bins --examples
 
 clippy-wasm:
-    cargo clippy --workspace --exclude vsvg-multi --exclude vsvg-cli --bins --target wasm32-unknown-unknown
+    cargo clippy -D warnings --workspace --exclude vsvg-multi --exclude vsvg-cli --bins --target wasm32-unknown-unknown
 
+fmt:
+    cargo fmt --all -- --check
 
 web-build:
     cargo build -p whiskers-web-demo --lib --target wasm32-unknown-unknown --release
@@ -15,3 +17,6 @@ web-build:
 
 web-serve:
     basic-http-server whiskers-web-demo/web
+
+test:
+    cargo test

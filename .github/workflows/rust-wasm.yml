@@ -12,31 +12,21 @@ name: Continuous integration
 
 jobs:
   check:
-    name: "Lint, tests, and checks"
+    name: "Clippy -- Wasm"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
+          target: wasm32-unknown-unknown
           toolchain: stable
           override: true
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "wasm-"
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+      - run: |
+          just clippy-wasm
