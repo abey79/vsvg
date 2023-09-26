@@ -3,7 +3,7 @@
 //! This example demonstrates how to build complex shapes by building  [`kurbo::BezPath`] instances
 //! manually.
 
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 #[derive(Sketch)]
 struct BezpathSketch {

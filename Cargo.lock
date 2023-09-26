@@ -2589,6 +2589,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "msvg"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui",
+]
+
+[[package]]
 name = "naga"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4113,52 +4121,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vsvg-multi"
-version = "0.1.0"
-dependencies = [
- "eframe",
- "egui",
-]
-
-[[package]]
-name = "vsvg-sketch"
-version = "0.1.0-alpha.0"
-dependencies = [
- "anyhow",
- "convert_case",
- "eframe",
- "egui",
- "geo",
- "getrandom",
- "itertools 0.11.0",
- "kurbo",
- "log",
- "open",
- "rand",
- "rand_chacha",
- "rand_distr",
- "rfd",
- "serde",
- "voronoice",
- "vsvg",
- "vsvg-sketch-derive",
- "vsvg-viewer",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-time",
-]
-
-[[package]]
-name = "vsvg-sketch-derive"
-version = "0.1.0-alpha.0"
-dependencies = [
- "convert_case",
- "proc-macro2",
- "quote",
- "syn 2.0.37",
-]
-
-[[package]]
 name = "vsvg-viewer"
 version = "0.1.0-alpha.0"
 dependencies = [
@@ -4485,10 +4447,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "whiskers"
+version = "0.1.0-alpha.0"
+dependencies = [
+ "anyhow",
+ "convert_case",
+ "eframe",
+ "egui",
+ "geo",
+ "getrandom",
+ "itertools 0.11.0",
+ "kurbo",
+ "log",
+ "open",
+ "rand",
+ "rand_chacha",
+ "rand_distr",
+ "rfd",
+ "serde",
+ "voronoice",
+ "vsvg",
+ "vsvg-viewer",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-time",
+ "whiskers-derive",
+]
+
+[[package]]
+name = "whiskers-derive"
+version = "0.1.0-alpha.0"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.37",
+]
+
+[[package]]
 name = "whiskers-web-demo"
 version = "0.1.0-alpha.0"
 dependencies = [
- "vsvg-sketch",
+ "whiskers",
 ]
 
 [[package]]

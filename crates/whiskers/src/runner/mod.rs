@@ -475,7 +475,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
     }
 
     fn load(&mut self, storage: &dyn Storage) {
-        let save_ui: Option<SaveUI> = eframe::get_value(storage, "vsvg-sketch-runner-save-ui");
+        let save_ui: Option<SaveUI> = eframe::get_value(storage, "whiskers-runner-save-ui");
         #[allow(unused_mut)]
         if let Some(mut save_ui) = save_ui {
             #[cfg(not(target_arch = "wasm32"))]
@@ -486,6 +486,6 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
     }
 
     fn save(&self, storage: &mut dyn Storage) {
-        eframe::set_value(storage, "vsvg-sketch-runner-save-ui", &self.save_ui);
+        eframe::set_value(storage, "whiskers-runner-save-ui", &self.save_ui);
     }
 }

@@ -1,5 +1,5 @@
 use egui::Ui;
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 /// Very custom data structure that is not supported by default
 #[derive(Debug, Clone, Copy)]

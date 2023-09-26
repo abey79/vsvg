@@ -10,7 +10,7 @@ use rand_distr::{Distribution, Normal};
 
 use std::f64::consts::PI;
 use vsvg::Color;
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 #[derive(Sketch)]
 struct AsteroidSketch {

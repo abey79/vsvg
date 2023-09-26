@@ -1,7 +1,7 @@
 //! Asteroid design kindly contributed by @Wyth@mastodon.art for my
 //! [Rusteroïds](https://github.com/abey79/rusteroids) game.
 
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 #[derive(Sketch)]
 pub struct WhiskersDemoSketch {

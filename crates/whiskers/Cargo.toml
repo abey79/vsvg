@@ -1,12 +1,12 @@
 [package]
-name = "vsvg-sketch"
+name = "whiskers"
 version = "0.1.0-alpha.0"
 edition = "2021"
 
 [dependencies]
 vsvg = { path = "../vsvg", features = ["geo"] }
 vsvg-viewer = { path = "../vsvg-viewer", optional = true }
-vsvg-sketch-derive = { path = "../vsvg-sketch-derive" }
+whiskers-derive = { path = "../whiskers-derive" }
 log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true

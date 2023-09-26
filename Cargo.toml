@@ -1,13 +1,7 @@
 [workspace]
 
 members = [
-    "vsvg",
-    "vsvg-cli",
-    "vsvg-viewer",
-    "vsvg-sketch",
-    "vsvg-sketch-derive",
-    "vsvg-multi",
-    "whiskers-web-demo",
+    "crates/*"
 ]
 
 resolver = "2"
