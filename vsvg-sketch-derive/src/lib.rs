@@ -82,7 +82,7 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
         }
 
         impl ::vsvg_sketch::SketchUI for #name {
-            fn ui(&mut self, ui: &mut egui::Ui) -> bool {
+            fn ui(&mut self, ui: &mut ::vsvg_sketch::prelude::egui::Ui) -> bool {
                 let mut changed = false;
                 #ui_func_tokens
                 changed

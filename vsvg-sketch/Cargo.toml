@@ -7,20 +7,28 @@ edition = "2021"
 vsvg = { path = "../vsvg", features = ["geo"] }
 vsvg-viewer = { path = "../vsvg-viewer", optional = true }
 vsvg-sketch-derive = { path = "../vsvg-sketch-derive" }
+log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 rand_distr.workspace = true
+getrandom.workspace = true
 kurbo.workspace = true
 anyhow.workspace = true
 egui.workspace = true
 eframe.workspace = true
 serde.workspace = true
 web-time.workspace = true
+convert_case.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rfd = { version = "0.12.0", default_features = false, features = [
     "xdg-portal",
 ] }
 open = "5.0.0"
-convert_case.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4.37"
+wasm-bindgen = "0.2.87"
 
 # for examples
 [dev-dependencies]

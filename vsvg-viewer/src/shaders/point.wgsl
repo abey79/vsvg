@@ -14,7 +14,9 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) @interpolate(linear, sample) tex_coords: vec2<f32>,
+    // I used to have @interpolate(linear, sample) here, but its not supported by WebGL
+    // and I'm not sure it was ever useful.
+    @location(0) tex_coords: vec2<f32>,
     @location(1) @interpolate(flat) color: vec4<f32>,
     @location(2) @interpolate(flat) w2: f32,
 }

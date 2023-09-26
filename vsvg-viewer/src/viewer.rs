@@ -23,7 +23,7 @@ struct ViewerState {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-pub(crate) struct Viewer {
+pub struct Viewer {
     state: ViewerState,
 
     /// widget to display the [`vsvg::Document`]
@@ -36,6 +36,7 @@ pub(crate) struct Viewer {
 }
 
 impl Viewer {
+    #[must_use]
     pub fn new<'a>(
         cc: &'a eframe::CreationContext<'a>,
         document_data: Arc<DocumentData>,
@@ -64,6 +65,7 @@ impl Viewer {
     }
 
     #[allow(clippy::unused_self)]
+    #[cfg(not(target_arch = "wasm32"))]
     fn menu_file(&self, frame: &mut Frame, ui: &mut Ui) {
         ui.menu_button("File", |ui| {
             if ui.button("Quit").clicked() {
@@ -136,7 +138,9 @@ impl eframe::App for Viewer {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
+                #[cfg(not(target_arch = "wasm32"))]
                 self.menu_file(frame, ui);
+
                 self.document_widget.view_menu_ui(ui);
                 self.document_widget.layer_menu_ui(ui);
                 self.menu_debug(ui);

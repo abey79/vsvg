@@ -1,2 +1,7 @@
 [alias]
 vsvg = "run --package vsvg-cli --bin vsvg --release --"
+
+
+# for PyCharm IDE when working on wasm target
+#[build]
+#target = "wasm32-unknown-unknown"

@@ -1,0 +1,39 @@
+name: Wasm CI
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+  pull_request:
+    branches:
+      - master
+      - release/*
+
+jobs:
+  check:
+    name: "clippy, build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          target: wasm32-unknown-unknown
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "wasm-"
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - uses: jetli/wasm-bindgen-action@v0.2.0
+
+      - run: just clippy-wasm
+
+      - run: just web-build

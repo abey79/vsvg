@@ -1,4 +1,12 @@
-mod save_ui;
+#[cfg(not(target_arch = "wasm32"))]
+mod save_ui_native;
+#[cfg(target_arch = "wasm32")]
+mod save_ui_wasm;
+
+#[cfg(not(target_arch = "wasm32"))]
+use save_ui_native::SaveUI;
+#[cfg(target_arch = "wasm32")]
+use save_ui_wasm::SaveUI;
 
 use crate::Sketch;
 use convert_case::Casing;
@@ -26,7 +34,7 @@ pub struct Runner<'a> {
     dirty: bool,
 
     /// UI for saving the sketch.
-    save_ui: save_ui::SaveUI,
+    save_ui: SaveUI,
 
     // ========== seed stuff
     /// Controls whether the seed feature is enabled or not
@@ -68,8 +76,11 @@ pub struct Runner<'a> {
 impl Runner<'_> {
     /// Create a new [`Runner`] with the provided [`SketchApp`] instance.
     pub fn new(app: impl crate::SketchApp + 'static) -> Self {
-        let mut save_ui = save_ui::SaveUI::default();
-        save_ui.base_name = app.name().to_case(convert_case::Case::Snake);
+        let mut save_ui = SaveUI::default();
+        #[allow(clippy::field_reassign_with_default)]
+        {
+            save_ui.base_name = app.name().to_case(convert_case::Case::Snake);
+        }
 
         Self {
             app: Box::new(app),
@@ -154,6 +165,7 @@ impl Runner<'_> {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Runner<'static> {
     /// Execute the sketch app.
     pub fn run(self) -> anyhow::Result<()> {
@@ -446,12 +458,14 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
             // this removes the save result status, indicating that the sketch has changed since
             // last save
+            #[cfg(not(target_arch = "wasm32"))]
             self.save_ui.reset_error();
         }
 
         Ok(())
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn options(&self, native_option: &mut eframe::NativeOptions) {
         native_option.app_id = Some(format!("vsvg.sketch.{}", self.title()));
     }
@@ -461,10 +475,12 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
     }
 
     fn load(&mut self, storage: &dyn Storage) {
-        let save_ui: Option<save_ui::SaveUI> =
-            eframe::get_value(storage, "vsvg-sketch-runner-save-ui");
+        let save_ui: Option<SaveUI> = eframe::get_value(storage, "vsvg-sketch-runner-save-ui");
+        #[allow(unused_mut)]
         if let Some(mut save_ui) = save_ui {
+            #[cfg(not(target_arch = "wasm32"))]
             save_ui.update_dest_dir();
+
             self.save_ui = save_ui;
         }
     }
