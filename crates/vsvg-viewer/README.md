@@ -8,7 +8,7 @@ This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 This crate implements an extensible [egui](https://egui.rs)- and [wgpu](https://wgpu.rs)-based viewer for *vsvg*. It's very much similar to *vpype-viewer*, but built on much stronger foundations:
 
-- The egui crate is an [immediate-mode](https://en.wikipedia.org/wiki/Immediate_mode_GUI) UI framework, which makes it suited for easy customisation and highly interactive projects (such as [*vsvg-sketch*](../vsvg-sketch/README.md)).
+- The egui crate is an [immediate-mode](https://en.wikipedia.org/wiki/Immediate_mode_GUI) UI framework, which makes it suited for easy customisation and highly interactive projects (such as [*whiskers*](../whiskers/README.md)).
 - The wgpu crate is a wrapper over modern native *and web* graphics APIs. It's future-proof.
 
 This combination enables targeting WebAssembly too.
@@ -60,6 +60,6 @@ Your app must implement the `vsvg_viewer::ViewerApp` trait, which offers hooks t
 
 A basic example for a custom app is provided in the `examples/` directory.
 
-[*vsvg-sketch*](../vsvg-sketch/README.md)) uses this API to implement its sketch runner:
+[*whiskers*](../whiskers/README.md)) uses this API to implement its sketch runner:
 
 <img width="1237" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/636a343b-d175-4b8a-9acf-812ae64f2b32">

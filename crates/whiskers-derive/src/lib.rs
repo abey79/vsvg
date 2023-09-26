@@ -62,7 +62,7 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
                     let formatted_label = format_label(&label);
 
                     ui_func_tokens.extend(quote! {
-                        changed = <#field_type as ::vsvg_sketch::widgets::WidgetMapper<#field_type>>::Type::default()
+                        changed = <#field_type as ::whiskers::widgets::WidgetMapper<#field_type>>::Type::default()
                             #chained_calls
                             .ui(ui, #formatted_label, &mut self.#field_name).changed() || changed;
                         ui.end_row();
@@ -75,14 +75,14 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
     }
 
     TokenStream::from(quote! {
-        impl ::vsvg_sketch::SketchApp for #name {
+        impl ::whiskers::SketchApp for #name {
             fn name(&self) -> String {
                 stringify!(#name).to_string()
             }
         }
 
-        impl ::vsvg_sketch::SketchUI for #name {
-            fn ui(&mut self, ui: &mut ::vsvg_sketch::prelude::egui::Ui) -> bool {
+        impl ::whiskers::SketchUI for #name {
+            fn ui(&mut self, ui: &mut ::whiskers::prelude::egui::Ui) -> bool {
                 let mut changed = false;
                 #ui_func_tokens
                 changed

@@ -1,5 +1,5 @@
 //! This example demonstrates how to directly use [`Sketch`] without using the [`run`]/[`App`] API.
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 fn main() -> Result {
     Sketch::new()

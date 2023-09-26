@@ -3,7 +3,7 @@ pub use crate::{
     Result, Runner,
 };
 pub use vsvg::{Color, Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Point, Transforms, Unit};
-pub use vsvg_sketch_derive::Sketch;
+pub use whiskers_derive::Sketch;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use vsvg_viewer::show;

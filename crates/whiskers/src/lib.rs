@@ -34,7 +34,7 @@ pub trait SketchApp: App + SketchUI {
 
 /// Declare the main entry point for wasm builds.
 ///
-/// Note: this macro requires `use vsvg_sketch::prelude::*;` to be present in the module.
+/// Note: this macro requires `use whiskers::prelude::*;` to be present in the module.
 #[macro_export]
 macro_rules! wasm_sketch {
     ($t: expr) => {
@@ -62,7 +62,7 @@ macro_rules! wasm_sketch {
 #[macro_export]
 macro_rules! wasm_main {
     ($lib: ident) => {
-        fn main() -> vsvg_sketch::prelude::anyhow::Result<()> {
+        fn main() -> whiskers::prelude::anyhow::Result<()> {
             $lib::main_func()
         }
     };

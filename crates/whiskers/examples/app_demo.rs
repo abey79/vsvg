@@ -1,4 +1,4 @@
-use vsvg_sketch::prelude::*;
+use whiskers::prelude::*;
 
 #[derive(Sketch)]
 struct MySketch {

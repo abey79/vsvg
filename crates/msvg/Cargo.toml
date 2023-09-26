@@ -1,5 +1,5 @@
 [package]
-name = "vsvg-multi"
+name = "msvg"
 version = "0.1.0"
 edition = "2021"
 
