@@ -53,7 +53,7 @@ jobs:
       - name: Optimize Wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:
-          file: whiskers-web-demo/web/whiskers_web_bg.wasm
+          file: crates/whiskers-web-demo/web/whiskers_web_bg.wasm
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -61,7 +61,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: "whiskers-web-demo/web"
+          path: "crates/whiskers-web-demo/web"
 
       - name: Deploy to GitHub Pages
         id: deployment
