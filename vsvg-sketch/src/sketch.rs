@@ -82,7 +82,12 @@ impl Sketch {
         &self.document
     }
 
+    pub fn document_mut(&mut self) -> &mut Document {
+        &mut self.document
+    }
+
     #[cfg(feature = "viewer")]
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn show(&mut self) -> anyhow::Result<&mut Self> {
         vsvg_viewer::show(self.document())?;
         Ok(self)

@@ -8,13 +8,14 @@ mod document_widget;
 mod engine;
 mod frame_history;
 mod painters;
-mod viewer;
+pub mod viewer;
+#[cfg(target_arch = "wasm32")]
+pub mod web_handle;
+
+pub use viewer::Viewer;
 
 pub use crate::document_widget::DocumentWidget;
 pub use crate::engine::DocumentData;
-use crate::viewer::Viewer;
-use std::sync::Arc;
-use vsvg::Document;
 
 /// Empty viewer app for [`show()`]
 struct EmptyViewerApp;
@@ -22,9 +23,12 @@ struct EmptyViewerApp;
 impl ViewerApp for EmptyViewerApp {}
 
 /// Show a document in a window.
-pub fn show(document: &Document) -> anyhow::Result<()> {
+///
+/// For native use only.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn show(document: &vsvg::Document) -> anyhow::Result<()> {
     let native_options = eframe::NativeOptions::default();
-    let document_data = Arc::new(DocumentData::new(document));
+    let document_data = std::sync::Arc::new(DocumentData::new(document));
 
     eframe::run_native(
         "vsvg-viewer",
@@ -68,6 +72,7 @@ pub trait ViewerApp {
     }
 
     /// Hook to modify the native options before starting the app.
+    #[cfg(not(target_arch = "wasm32"))]
     fn options(&self, _native_option: &mut eframe::NativeOptions) {}
 
     /// Window title
@@ -82,9 +87,13 @@ pub trait ViewerApp {
     fn save(&self, _storage: &mut dyn eframe::Storage) {}
 }
 
+/// Show a custom [`ViewerApp`].
+///
+/// For native use only.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Result<()> {
     let viewer_app = Box::new(viewer_app);
-    let document_data = Arc::new(DocumentData::default());
+    let document_data = std::sync::Arc::new(DocumentData::default());
 
     let mut native_options = eframe::NativeOptions::default();
     viewer_app.options(&mut native_options);

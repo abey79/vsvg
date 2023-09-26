@@ -1,6 +1,6 @@
 pub mod context;
 pub mod prelude;
-mod runner;
+pub mod runner;
 pub mod sketch;
 pub mod widgets;
 
@@ -30,4 +30,19 @@ pub trait SketchApp: App + SketchUI {
     /// The name of the sketch, used the window title, the default output file name, and persistent
     /// settings.
     fn name(&self) -> String;
+}
+
+/// Declare the main entry point for wasm builds.
+#[macro_export]
+macro_rules! wasm_main {
+    ($t: expr) => {
+        #[cfg(target_arch = "wasm32")]
+        #[::eframe::wasm_bindgen::prelude::wasm_bindgen]
+        pub async fn start(
+            handle: &::vsvg_viewer::web_handle::WebHandle,
+            canvas_id: &str,
+        ) -> std::result::Result<(), wasm_bindgen::JsValue> {
+            handle.start(canvas_id, $t).await
+        }
+    };
 }
