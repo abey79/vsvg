@@ -34,6 +34,6 @@ jobs:
 
       - uses: jetli/wasm-bindgen-action@v0.2.0
 
-      - run: |
-          just clippy-wasm
-          just web-build
+      - run: just clippy-wasm
+
+      - run: just web-build

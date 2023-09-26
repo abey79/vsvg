@@ -29,7 +29,6 @@ jobs:
         with:
           tool: just
 
-      - run : |
-          just fmt
-          just clippy
-          just test
+      - run: just fmt
+      - run: just clippy
+      - run: just test
