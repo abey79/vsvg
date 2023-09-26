@@ -22,7 +22,7 @@ jobs:
           target: wasm32-unknown-unknown
           toolchain: stable
           override: true
-          components: rustfmt, clippy
+          components: clippy
 
       - uses: Swatinem/rust-cache@v2
         with:
