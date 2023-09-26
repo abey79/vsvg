@@ -28,5 +28,9 @@ jobs:
         with:
           prefix-key: "wasm-"
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - run: |
           just clippy-wasm
