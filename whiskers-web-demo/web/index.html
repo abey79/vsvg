@@ -125,7 +125,7 @@
     // Here we tell bindgen the path to the wasm file so it can start
     // initialization and return to us a promise when it's done.
     console.debug("Loading wasm…");
-    wasm_bindgen("./whiskers_web_demo_bg_opt.wasm")
+    wasm_bindgen("./whiskers_web_demo_bg.wasm")
         .then(on_wasm_loaded)
         .catch(on_error);
 
