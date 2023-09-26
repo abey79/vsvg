@@ -4488,28 +4488,7 @@ dependencies = [
 name = "whiskers-web-demo"
 version = "0.1.0-alpha.0"
 dependencies = [
- "anyhow",
- "convert_case",
- "eframe",
- "egui",
- "geo",
- "getrandom",
- "itertools 0.11.0",
- "kurbo",
- "log",
- "rand",
- "rand_chacha",
- "rand_distr",
- "serde",
- "voronoice",
- "vsvg",
  "vsvg-sketch",
- "vsvg-sketch-derive",
- "vsvg-viewer",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-time",
- "wgpu",
 ]
 
 [[package]]

@@ -33,16 +33,37 @@ pub trait SketchApp: App + SketchUI {
 }
 
 /// Declare the main entry point for wasm builds.
+///
+/// Note: this macro requires `use vsvg_sketch::prelude::*;` to be present in the module.
 #[macro_export]
-macro_rules! wasm_main {
+macro_rules! wasm_sketch {
     ($t: expr) => {
         #[cfg(target_arch = "wasm32")]
-        #[::eframe::wasm_bindgen::prelude::wasm_bindgen]
+        #[wasm_bindgen::prelude::wasm_bindgen]
         pub async fn start(
-            handle: &::vsvg_viewer::web_handle::WebHandle,
+            handle: &vsvg_viewer::web_handle::WebHandle,
             canvas_id: &str,
         ) -> std::result::Result<(), wasm_bindgen::JsValue> {
             handle.start(canvas_id, $t).await
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        pub fn main_func() -> Result {
+            $t.run()
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        pub fn main_func() -> Result {
+            Ok(())
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! wasm_main {
+    ($lib: ident) => {
+        fn main() -> vsvg_sketch::prelude::anyhow::Result<()> {
+            $lib::main_func()
         }
     };
 }

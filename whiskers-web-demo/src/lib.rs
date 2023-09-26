@@ -53,4 +53,4 @@ impl App for WhiskersDemoSketch {
     }
 }
 
-wasm_main!(Runner::new(WhiskersDemoSketch::default()).with_time_enabled(false));
+wasm_sketch!(Runner::new(WhiskersDemoSketch::default()).with_time_enabled(false));
