@@ -8,7 +8,7 @@ pub type Result = anyhow::Result<()>;
 
 pub use sketch::Sketch;
 
-pub use runner::Runner;
+pub use runner::{AnimationOptions, LayoutOptions, PageSizeOptions, Runner};
 
 /// This is the trait that your sketch app must implement.
 pub trait App {

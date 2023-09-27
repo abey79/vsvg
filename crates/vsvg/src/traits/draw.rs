@@ -1,4 +1,5 @@
 use crate::path::into_bezpath::IntoBezPathTolerance;
+use crate::{Point, Polyline};
 use kurbo::Vec2;
 
 pub trait Draw {
@@ -71,6 +72,20 @@ pub trait Draw {
     /// Draw a line from (`x1`, `y1`) to (`x2`, `y2`).
     fn line(&mut self, x1: f64, y1: f64, x2: f64, y2: f64) -> &mut Self {
         self.add_path(kurbo::Line::new((x1, y1), (x2, y2)))
+    }
+
+    /// Draw a polyline from a sequence of points, optionally closing it.
+    fn polyline(
+        &mut self,
+        points: impl IntoIterator<Item = impl Into<Point>>,
+        close: bool,
+    ) -> &mut Self {
+        let mut polyline = Polyline::from_iter(points);
+        if close {
+            polyline.close();
+        }
+
+        self.add_path(polyline)
     }
 
     /// Draw a rectangle centered on (`x`, `y`) with width `w` and height `h`.

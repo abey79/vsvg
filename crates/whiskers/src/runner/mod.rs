@@ -1,3 +1,4 @@
+mod animation;
 mod layout;
 pub mod page_size;
 #[cfg(not(target_arch = "wasm32"))]
@@ -12,6 +13,7 @@ use save_ui_native::SaveUI;
 use save_ui_wasm::SaveUI;
 
 use crate::Sketch;
+pub use animation::AnimationOptions;
 use convert_case::Casing;
 use eframe::Storage;
 pub use layout::LayoutOptions;
@@ -38,13 +40,16 @@ pub struct Runner<'a> {
     /// Should the sketch be updated?
     dirty: bool,
 
-    /// Options and UI for the sketch page size.
+    /// Options and UI for the page size panel.
     page_size_options: PageSizeOptions,
 
-    /// UI for the sketch layout options.
+    /// Options and UI for the layout panel.
     layout_options: LayoutOptions,
 
-    /// UI for saving the sketch.
+    /// Options and UI for the animation panel.
+    animation_options: AnimationOptions,
+
+    /// Options and UI for save panel.
     save_ui: SaveUI,
 
     // ========== seed stuff
@@ -52,21 +57,6 @@ pub struct Runner<'a> {
     seed: u32,
 
     // ========== time stuff
-    /// Controls whether the time is running or not.
-    playing: bool,
-
-    /// Current sketch time.
-    time: f64,
-
-    /// Length of the time loop
-    loop_time: f64,
-
-    /// Is the time looping?
-    is_looping: bool,
-
-    /// Time of last loop.
-    last_instant: Option<web_time::Instant>,
-
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
@@ -86,13 +76,9 @@ impl Runner<'_> {
             dirty: true,
             page_size_options: PageSizeOptions::default(),
             layout_options: LayoutOptions::default(),
+            animation_options: AnimationOptions::default(),
             save_ui,
             seed: 0,
-            playing: false,
-            time: 0.0,
-            loop_time: 3.0,
-            is_looping: false,
-            last_instant: None,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -125,24 +111,11 @@ impl Runner<'_> {
         }
     }
 
-    /// Sets the initial time.
-    pub fn with_time(self, time: f64) -> Self {
-        Self { time, ..self }
-    }
-
-    /// Sets the initial play/pause state.
-    pub fn with_time_playing(self, playing: bool) -> Self {
-        Self { playing, ..self }
-    }
-
-    /// Sets the time loop length.
-    pub fn with_loop_time(self, loop_time: f64) -> Self {
-        Self { loop_time, ..self }
-    }
-
-    /// Enables or disables the time looping.
-    pub fn with_looping_enabled(self, is_looping: bool) -> Self {
-        Self { is_looping, ..self }
+    pub fn with_animation_options(self, options: impl Into<AnimationOptions>) -> Self {
+        Self {
+            animation_options: options.into(),
+            ..self
+        }
     }
 }
 
@@ -182,57 +155,6 @@ impl Runner<'_> {
         self.dirty = dirty || self.dirty;
     }
 
-    fn time_ui(&mut self, ui: &mut egui::Ui) {
-        collapsing_header(ui, "Animation", "", false, |ui| {
-            ui.horizontal(|ui| {
-                ui.label("time:");
-                let max_time = if self.is_looping {
-                    self.loop_time
-                } else {
-                    f64::MAX
-                };
-                ui.add_enabled(
-                    !self.playing,
-                    egui::DragValue::new(&mut self.time)
-                        .speed(0.1)
-                        .clamp_range(0.0..=max_time)
-                        .suffix(" s"),
-                )
-                .dirty(self);
-            });
-
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.is_looping, "loop time:");
-                ui.add_enabled(
-                    self.is_looping,
-                    egui::DragValue::new(&mut self.loop_time)
-                        .speed(0.1)
-                        .clamp_range(0.0..=f64::MAX)
-                        .suffix(" s"),
-                );
-            });
-
-            ui.horizontal(|ui| {
-                if ui.button("reset").clicked() {
-                    self.time = 0.0;
-                    self.dirty();
-                }
-                if ui
-                    .add_enabled(!self.playing, egui::Button::new("play"))
-                    .clicked()
-                {
-                    self.playing = true;
-                }
-                if ui
-                    .add_enabled(self.playing, egui::Button::new("pause"))
-                    .clicked()
-                {
-                    self.playing = false;
-                }
-            });
-        });
-    }
-
     fn seed_ui(&mut self, ui: &mut egui::Ui) {
         collapsing_header(
             ui,
@@ -269,25 +191,6 @@ impl Runner<'_> {
             },
         );
     }
-
-    fn update_time(&mut self) {
-        let now = web_time::Instant::now();
-
-        if let Some(last_instant) = self.last_instant {
-            if self.playing {
-                let delta = now - last_instant;
-                self.time += delta.as_secs_f64();
-
-                if self.is_looping {
-                    self.time %= self.loop_time;
-                }
-
-                self.dirty();
-            }
-        }
-
-        self.last_instant = Some(web_time::Instant::now());
-    }
 }
 
 impl vsvg_viewer::ViewerApp for Runner<'_> {
@@ -296,7 +199,9 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         ctx: &egui::Context,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
-        self.update_time();
+        if self.animation_options.update_time() {
+            self.dirty();
+        }
 
         egui::SidePanel::right("right_panel")
             .default_width(200.)
@@ -320,7 +225,10 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                                 self.dirty();
                             }
 
-                            self.time_ui(ui);
+                            if self.animation_options.ui(ui) {
+                                self.dirty();
+                            }
+
                             self.seed_ui(ui);
 
                             self.save_ui.ui(ui, self.last_sketch.as_ref());
@@ -343,7 +251,8 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
             let mut context = crate::context::Context {
                 rng: rand_chacha::ChaCha8Rng::seed_from_u64(self.seed as u64),
-                time: self.time,
+                time: self.animation_options.time,
+                loop_time: self.animation_options.loop_time,
             };
 
             let mut sketch = Sketch::new();
@@ -390,11 +299,16 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                 self.page_size_options = page_size_options;
             }
         }
+
+        if let Some(animation_options) = eframe::get_value(storage, "whiskers-animation") {
+            self.animation_options = animation_options;
+        }
     }
 
     fn save(&self, storage: &mut dyn Storage) {
         eframe::set_value(storage, "whiskers-runner-save-ui", &self.save_ui);
         eframe::set_value(storage, "whiskers-layout-options", &self.layout_options);
         eframe::set_value(storage, "whiskers-page-size", &self.page_size_options);
+        eframe::set_value(storage, "whiskers-animation", &self.animation_options);
     }
 }

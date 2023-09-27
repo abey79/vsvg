@@ -5,13 +5,29 @@ use kurbo::Affine;
 // ======================================================================================
 // The path data for `FlattenedPath` is `Polyline`.
 
+/// A [`Polyline`] is a sequence of connected [`Point`]s. It's considered closed if the first and
+/// last points are the same.
+///
+/// [`Polyline`] is the data structure used by [`FlattenedPath`].
+///
+/// It can be constructed with a vector of [`Point`]s, or from an iterator of [`Point`]-compatible
+/// items.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Polyline(Vec<Point>);
 
 impl Polyline {
+    /// Crate a new [`Polyline`] from a vector of [`Point`].
     #[must_use]
     pub fn new(points: Vec<Point>) -> Self {
         Self(points)
+    }
+
+    /// Ensures the polyline is closed.
+    pub fn close(&mut self) {
+        if self.0.is_empty() || self.0[0] == self.0[self.0.len() - 1] {
+            return;
+        }
+        self.0.push(self.0[0]);
     }
 
     #[must_use]
@@ -27,6 +43,12 @@ impl Polyline {
     #[must_use]
     pub fn into_points(self) -> Vec<Point> {
         self.0
+    }
+}
+
+impl<P: Into<Point>> FromIterator<P> for Polyline {
+    fn from_iter<T: IntoIterator<Item = P>>(points: T) -> Self {
+        Self(points.into_iter().map(Into::into).collect())
     }
 }
 
@@ -161,5 +183,43 @@ mod tests {
         );
     }
 
-    //TODO: test start, end, is_point
+    #[test]
+    fn test_polyline() {
+        let mut p = Polyline::from_iter([(0., 0.), (1., 0.), (1., 1.)]);
+
+        assert_eq!(
+            p.points(),
+            &[Point::new(0., 0.), Point::new(1., 0.), Point::new(1., 1.)]
+        );
+
+        assert_eq!(p.start(), Some(Point::new(0., 0.)));
+        assert_eq!(p.end(), Some(Point::new(1., 1.)));
+        assert!(!p.is_point());
+
+        p.close();
+        assert_eq!(
+            p.points(),
+            &[
+                Point::new(0., 0.),
+                Point::new(1., 0.),
+                Point::new(1., 1.),
+                Point::new(0., 0.)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_polyline_is_point() {
+        let mut p = Polyline::from_iter([(0., 0.)]);
+
+        assert_eq!(p.points(), &[Point::new(0., 0.)]);
+
+        assert_eq!(p.start(), Some(Point::new(0., 0.)));
+        assert_eq!(p.end(), Some(Point::new(0., 0.)));
+        assert!(p.is_point());
+
+        let p1 = p.clone();
+        p.close();
+        assert_eq!(p, p1);
+    }
 }

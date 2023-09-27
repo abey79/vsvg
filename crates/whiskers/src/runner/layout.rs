@@ -33,6 +33,7 @@ impl Display for LayoutOptions {
 }
 
 impl LayoutOptions {
+    #[must_use]
     pub(crate) fn ui(&mut self, ui: &mut egui::Ui) -> bool {
         collapsing_header(ui, "Layout", self.to_string(), true, |ui| {
             let mut changed = false;
