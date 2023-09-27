@@ -260,6 +260,5 @@ fn voronoi(
 fn main() -> Result {
     Runner::new(AsteroidSketch::default())
         .with_page_size_options(PageSize::custom(12., 12., Unit::Cm))
-        .with_time_enabled(false)
         .run()
 }

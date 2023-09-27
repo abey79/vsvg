@@ -48,6 +48,6 @@ impl App for WhiskersDemoSketch {
     }
 }
 
-wasm_sketch!(Runner::new(WhiskersDemoSketch::default())
-    .with_time_enabled(false)
-    .with_layout_option(LayoutOptions::centered()));
+wasm_sketch!(
+    Runner::new(WhiskersDemoSketch::default()).with_layout_option(LayoutOptions::centered())
+);

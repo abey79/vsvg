@@ -48,16 +48,10 @@ pub struct Runner<'a> {
     save_ui: SaveUI,
 
     // ========== seed stuff
-    /// Controls whether the seed feature is enabled or not
-    enable_seed: bool,
-
     /// Random seed used to generate the sketch.
     seed: u32,
 
     // ========== time stuff
-    /// Controls whether the time feature is enabled or not
-    enable_time: bool,
-
     /// Controls whether the time is running or not.
     playing: bool,
 
@@ -93,9 +87,7 @@ impl Runner<'_> {
             page_size_options: PageSizeOptions::default(),
             layout_options: LayoutOptions::default(),
             save_ui,
-            enable_seed: true,
             seed: 0,
-            enable_time: true,
             playing: false,
             time: 0.0,
             loop_time: 3.0,
@@ -108,11 +100,6 @@ impl Runner<'_> {
     /// Sets the seed to a given value (default: 0).
     pub fn with_seed(mut self, seed: u32) -> Self {
         self.seed = seed;
-        self
-    }
-
-    pub fn with_seed_enabled(mut self, enabled: bool) -> Self {
-        self.enable_seed = enabled;
         self
     }
 
@@ -134,14 +121,6 @@ impl Runner<'_> {
     pub fn with_layout_option(self, options: impl Into<LayoutOptions>) -> Self {
         Self {
             layout_options: options.into(),
-            ..self
-        }
-    }
-
-    /// Enables or disables the time feature.
-    pub fn with_time_enabled(self, time: bool) -> Self {
-        Self {
-            enable_time: time,
             ..self
         }
     }
@@ -204,7 +183,7 @@ impl Runner<'_> {
     }
 
     fn time_ui(&mut self, ui: &mut egui::Ui) {
-        collapsing_header(ui, "Animation", "", |ui| {
+        collapsing_header(ui, "Animation", "", false, |ui| {
             ui.horizontal(|ui| {
                 ui.label("time:");
                 let max_time = if self.is_looping {
@@ -259,6 +238,7 @@ impl Runner<'_> {
             ui,
             "Random Number Generator",
             format!("seed: {}", self.seed),
+            false,
             |ui| {
                 ui.horizontal(|ui| {
                     ui.label("seed:");
@@ -316,9 +296,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         ctx: &egui::Context,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
-        if self.enable_time {
-            self.update_time();
-        }
+        self.update_time();
 
         egui::SidePanel::right("right_panel")
             .default_width(200.)
@@ -342,17 +320,12 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                                 self.dirty();
                             }
 
-                            if self.enable_time {
-                                self.time_ui(ui);
-                            }
-
-                            if self.enable_seed {
-                                self.seed_ui(ui);
-                            }
+                            self.time_ui(ui);
+                            self.seed_ui(ui);
 
                             self.save_ui.ui(ui, self.last_sketch.as_ref());
 
-                            collapsing_header(ui, "Sketch Parameters", "", |ui| {
+                            collapsing_header(ui, "Sketch Parameters", "", true, |ui| {
                                 let changed = egui::Grid::new("sketch_param_grid")
                                     .num_columns(2)
                                     .show(ui, |ui| self.app.ui(ui))

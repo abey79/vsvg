@@ -43,7 +43,7 @@ impl PageSizeOptions {
 
 impl PageSizeOptions {
     pub(crate) fn ui(&mut self, ui: &mut egui::Ui) -> bool {
-        collapsing_header(ui, "Page Size", self.page_size.to_string(), |ui| {
+        collapsing_header(ui, "Page Size", self.page_size.to_string(), true, |ui| {
             if self.locked {
                 ui.label(format!("Locked to {}", self.page_size));
                 return false;

@@ -93,7 +93,5 @@ impl App for BezpathSketch {
 fn main() -> Result {
     Runner::new(BezpathSketch::default())
         .with_page_size_options(PageSize::A5V)
-        .with_time_enabled(false)
-        .with_seed_enabled(false)
         .run()
 }

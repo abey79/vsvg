@@ -34,7 +34,7 @@ impl Display for LayoutOptions {
 
 impl LayoutOptions {
     pub(crate) fn ui(&mut self, ui: &mut egui::Ui) -> bool {
-        collapsing_header(ui, "Layout", self.to_string(), |ui| {
+        collapsing_header(ui, "Layout", self.to_string(), true, |ui| {
             let mut changed = false;
             changed |= ui.radio_value(self, LayoutOptions::Off, "Off").changed();
             changed |= ui

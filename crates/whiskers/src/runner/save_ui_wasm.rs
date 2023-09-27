@@ -27,7 +27,7 @@ impl Default for SaveUI {
 
 impl SaveUI {
     pub(super) fn ui(&mut self, ui: &mut egui::Ui, sketch: Option<&Sketch>) {
-        collapsing_header(ui, "Save", "", |ui| {
+        collapsing_header(ui, "Save", "", true, |ui| {
             ui.spacing_mut().text_edit_width = 250.0;
 
             egui::Grid::new("sketch_save_ui")
