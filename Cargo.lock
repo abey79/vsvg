@@ -4142,7 +4142,6 @@ dependencies = [
  "vsvg",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "web-sys",
  "wgpu",
  "winit",
 ]
@@ -4457,6 +4456,7 @@ dependencies = [
  "geo",
  "getrandom",
  "itertools 0.11.0",
+ "js-sys",
  "kurbo",
  "log",
  "open",
@@ -4470,6 +4470,7 @@ dependencies = [
  "vsvg-viewer",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "web-sys",
  "web-time",
  "whiskers-derive",
 ]
