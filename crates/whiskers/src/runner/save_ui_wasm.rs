@@ -1,3 +1,4 @@
+use crate::runner::collapsing_header;
 use crate::Sketch;
 use vsvg::DocumentTrait;
 use wasm_bindgen::{JsCast, JsValue};
@@ -26,39 +27,40 @@ impl Default for SaveUI {
 
 impl SaveUI {
     pub(super) fn ui(&mut self, ui: &mut egui::Ui, sketch: Option<&Sketch>) {
-        ui.strong("Save");
-        ui.spacing_mut().text_edit_width = 250.0;
+        collapsing_header(ui, "Save", "", |ui| {
+            ui.spacing_mut().text_edit_width = 250.0;
 
-        egui::Grid::new("sketch_save_ui")
-            .num_columns(2)
-            .show(ui, |ui| {
-                ui.label("name:");
-                ui.text_edit_singleline(&mut self.base_name);
+            egui::Grid::new("sketch_save_ui")
+                .num_columns(2)
+                .show(ui, |ui| {
+                    ui.label("name:");
+                    ui.text_edit_singleline(&mut self.base_name);
 
-                ui.end_row();
+                    ui.end_row();
 
-                ui.horizontal(|_| {});
-                ui.horizontal(|ui| {
-                    if ui
-                        .add_enabled(sketch.is_some(), egui::Button::new("download"))
-                        .clicked()
-                    {
-                        if let Some(sketch) = sketch {
-                            let res = save_and_download(&self.base_name, sketch.document());
-                            self.last_error = Some(res);
+                    ui.horizontal(|_| {});
+                    ui.horizontal(|ui| {
+                        if ui
+                            .add_enabled(sketch.is_some(), egui::Button::new("download"))
+                            .clicked()
+                        {
+                            if let Some(sketch) = sketch {
+                                let res = save_and_download(&self.base_name, sketch.document());
+                                self.last_error = Some(res);
+                            }
                         }
-                    }
 
-                    if let Some(Err(error)) = &self.last_error {
-                        ui.label(
-                            egui::WidgetText::from("ERROR")
-                                .strong()
-                                .color(egui::Color32::RED),
-                        )
-                        .on_hover_text(error.to_string());
-                    }
+                        if let Some(Err(error)) = &self.last_error {
+                            ui.label(
+                                egui::WidgetText::from("ERROR")
+                                    .strong()
+                                    .color(egui::Color32::RED),
+                            )
+                            .on_hover_text(error.to_string());
+                        }
+                    });
                 });
-            });
+        });
     }
 }
 
