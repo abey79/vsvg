@@ -2,6 +2,7 @@
 //! [Rusteroïds](https://github.com/abey79/rusteroids) game.
 
 use whiskers::prelude::*;
+use whiskers::runner::LayoutOptions;
 
 #[derive(Sketch)]
 pub struct WhiskersDemoSketch {
@@ -32,13 +33,6 @@ impl App for WhiskersDemoSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.scale_unit(Unit::CM);
 
-        //TODO: this is not ergonomic, mul/div with Unit should yield to float and scale_unit
-        // should go.
-        sketch.translate(
-            (sketch.width() / Unit::CM.to_px() - self.col_count as f64 * self.offset_cm) / 2.0,
-            (sketch.height() / Unit::CM.to_px() - self.row_count as f64 * self.offset_cm) / 2.0,
-        );
-
         for j in 0..self.row_count {
             for i in 0..self.col_count {
                 sketch.rect(
@@ -49,8 +43,11 @@ impl App for WhiskersDemoSketch {
                 );
             }
         }
+
         Ok(())
     }
 }
 
-wasm_sketch!(Runner::new(WhiskersDemoSketch::default()).with_time_enabled(false));
+wasm_sketch!(Runner::new(WhiskersDemoSketch::default())
+    .with_time_enabled(false)
+    .with_layout_option(LayoutOptions::centered()));

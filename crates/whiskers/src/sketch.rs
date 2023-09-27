@@ -78,6 +78,11 @@ impl Sketch {
         self
     }
 
+    pub fn center(&mut self) -> &mut Self {
+        self.document_mut().center_content();
+        self
+    }
+
     pub fn document(&self) -> &Document {
         &self.document
     }

@@ -1,7 +1,9 @@
+mod layout;
 #[cfg(not(target_arch = "wasm32"))]
 mod save_ui_native;
 #[cfg(target_arch = "wasm32")]
 mod save_ui_wasm;
+pub mod ui;
 
 #[cfg(not(target_arch = "wasm32"))]
 use save_ui_native::SaveUI;
@@ -11,7 +13,9 @@ use save_ui_wasm::SaveUI;
 use crate::Sketch;
 use convert_case::Casing;
 use eframe::Storage;
+pub use layout::LayoutOptions;
 use rand::SeedableRng;
+pub use ui::*;
 use vsvg::{PageSize, Unit};
 
 use vsvg_viewer::DocumentWidget;
@@ -35,6 +39,9 @@ pub struct Runner<'a> {
 
     /// UI for saving the sketch.
     save_ui: SaveUI,
+
+    /// UI for the sketch layout options.
+    layout_options: LayoutOptions,
 
     // ========== seed stuff
     /// Controls whether the seed feature is enabled or not
@@ -87,6 +94,7 @@ impl Runner<'_> {
             last_sketch: None,
             dirty: true,
             save_ui,
+            layout_options: LayoutOptions::default(),
             enable_seed: true,
             seed: 0,
             enable_time: true,
@@ -132,6 +140,14 @@ impl Runner<'_> {
         Self {
             page_size,
             page_size_locked: true,
+            ..self
+        }
+    }
+
+    /// Sets the default layout options.
+    pub fn with_layout_option(self, options: impl Into<LayoutOptions>) -> Self {
+        Self {
+            layout_options: options.into(),
             ..self
         }
     }
@@ -202,178 +218,187 @@ impl Runner<'_> {
     }
 
     fn page_size_ui(&mut self, ui: &mut egui::Ui) {
-        ui.strong("Page Size");
-
-        if self.page_size_locked {
-            ui.label(format!("Locked to {}", self.page_size));
-            return;
-        }
-
-        let mut new_page_size = self.page_size;
-
-        ui.horizontal(|ui| {
-            ui.label("format:");
-
-            egui::ComboBox::from_id_source("sketch_page_size")
-                .selected_text(new_page_size.to_format().unwrap_or("Custom"))
-                .width(120.)
-                .show_ui(ui, |ui| {
-                    let orig = if matches!(new_page_size, PageSize::Custom(..)) {
-                        new_page_size
-                    } else {
-                        PageSize::Custom(new_page_size.w(), new_page_size.h(), vsvg::Unit::PX)
-                    };
-                    ui.selectable_value(&mut new_page_size, orig, "Custom");
-
-                    ui.separator();
-
-                    for page_size in &vsvg::PAGE_SIZES {
-                        ui.selectable_value(&mut new_page_size, *page_size, page_size.to_string());
-                    }
-                });
-
-            if ui.button("flip").clicked() {
-                new_page_size = new_page_size.flip();
+        collapsing_header(ui, "Page Size", self.page_size.to_string(), |ui| {
+            if self.page_size_locked {
+                ui.label(format!("Locked to {}", self.page_size));
+                return;
             }
-        });
 
-        new_page_size = if let PageSize::Custom(mut w, mut h, mut unit) = new_page_size {
+            let mut new_page_size = self.page_size;
+
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut w)
-                        .speed(1.0)
-                        .clamp_range(0.0..=f64::MAX),
-                );
+                ui.label("format:");
 
-                ui.label("x");
-                ui.add(
-                    egui::DragValue::new(&mut h)
-                        .speed(1.0)
-                        .clamp_range(0.0..=f64::MAX),
-                );
-
-                let orig_unit = unit;
-                egui::ComboBox::from_id_source("sketch_page_size_unit")
-                    .selected_text(unit.to_str())
-                    .width(40.)
+                egui::ComboBox::from_id_source("sketch_page_size")
+                    .selected_text(new_page_size.to_format().unwrap_or("Custom"))
+                    .width(120.)
                     .show_ui(ui, |ui| {
-                        const UNITS: [Unit; 8] = [
-                            Unit::PX,
-                            Unit::IN,
-                            Unit::FT,
-                            Unit::MM,
-                            Unit::CM,
-                            Unit::M,
-                            Unit::PC,
-                            Unit::PT,
-                        ];
+                        let orig = if matches!(new_page_size, PageSize::Custom(..)) {
+                            new_page_size
+                        } else {
+                            PageSize::Custom(new_page_size.w(), new_page_size.h(), vsvg::Unit::PX)
+                        };
+                        ui.selectable_value(&mut new_page_size, orig, "Custom");
 
-                        for u in &UNITS {
-                            ui.selectable_value(&mut unit, *u, u.to_str());
+                        ui.separator();
+
+                        for page_size in &vsvg::PAGE_SIZES {
+                            ui.selectable_value(
+                                &mut new_page_size,
+                                *page_size,
+                                page_size.to_string(),
+                            );
                         }
                     });
-                let factor = orig_unit.to_px() / unit.to_px();
-                w *= factor;
-                h *= factor;
+
+                if ui.button("flip").clicked() {
+                    new_page_size = new_page_size.flip();
+                }
             });
 
-            PageSize::Custom(w, h, unit)
-        } else {
-            ui.label(format!(
-                "{:.1}x{:.1} mm",
-                new_page_size.w() / Unit::MM.to_px(),
-                new_page_size.h() / Unit::MM.to_px()
-            ));
+            new_page_size = if let PageSize::Custom(mut w, mut h, mut unit) = new_page_size {
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut w)
+                            .speed(1.0)
+                            .clamp_range(0.0..=f64::MAX),
+                    );
 
-            new_page_size
-        };
+                    ui.label("x");
+                    ui.add(
+                        egui::DragValue::new(&mut h)
+                            .speed(1.0)
+                            .clamp_range(0.0..=f64::MAX),
+                    );
 
-        if new_page_size != self.page_size {
-            self.page_size = new_page_size;
-            self.dirty();
-        }
+                    let orig_unit = unit;
+                    egui::ComboBox::from_id_source("sketch_page_size_unit")
+                        .selected_text(unit.to_str())
+                        .width(40.)
+                        .show_ui(ui, |ui| {
+                            const UNITS: [Unit; 8] = [
+                                Unit::PX,
+                                Unit::IN,
+                                Unit::FT,
+                                Unit::MM,
+                                Unit::CM,
+                                Unit::M,
+                                Unit::PC,
+                                Unit::PT,
+                            ];
+
+                            for u in &UNITS {
+                                ui.selectable_value(&mut unit, *u, u.to_str());
+                            }
+                        });
+                    let factor = orig_unit.to_px() / unit.to_px();
+                    w *= factor;
+                    h *= factor;
+                });
+
+                PageSize::Custom(w, h, unit)
+            } else {
+                ui.label(format!(
+                    "{:.1}x{:.1} mm",
+                    new_page_size.w() / Unit::MM.to_px(),
+                    new_page_size.h() / Unit::MM.to_px()
+                ));
+
+                new_page_size
+            };
+
+            if new_page_size != self.page_size {
+                self.page_size = new_page_size;
+                self.dirty();
+            }
+        });
     }
 
     fn time_ui(&mut self, ui: &mut egui::Ui) {
-        ui.strong("Time");
+        collapsing_header(ui, "Animation", "", |ui| {
+            ui.horizontal(|ui| {
+                ui.label("time:");
+                let max_time = if self.is_looping {
+                    self.loop_time
+                } else {
+                    f64::MAX
+                };
+                ui.add_enabled(
+                    !self.playing,
+                    egui::DragValue::new(&mut self.time)
+                        .speed(0.1)
+                        .clamp_range(0.0..=max_time)
+                        .suffix(" s"),
+                )
+                .dirty(self);
+            });
 
-        ui.horizontal(|ui| {
-            ui.label("time:");
-            let max_time = if self.is_looping {
-                self.loop_time
-            } else {
-                f64::MAX
-            };
-            ui.add_enabled(
-                !self.playing,
-                egui::DragValue::new(&mut self.time)
-                    .speed(0.1)
-                    .clamp_range(0.0..=max_time)
-                    .suffix(" s"),
-            )
-            .dirty(self);
-        });
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut self.is_looping, "loop time:");
+                ui.add_enabled(
+                    self.is_looping,
+                    egui::DragValue::new(&mut self.loop_time)
+                        .speed(0.1)
+                        .clamp_range(0.0..=f64::MAX)
+                        .suffix(" s"),
+                );
+            });
 
-        ui.horizontal(|ui| {
-            ui.checkbox(&mut self.is_looping, "loop time:");
-            ui.add_enabled(
-                self.is_looping,
-                egui::DragValue::new(&mut self.loop_time)
-                    .speed(0.1)
-                    .clamp_range(0.0..=f64::MAX)
-                    .suffix(" s"),
-            );
-        });
-
-        ui.horizontal(|ui| {
-            if ui.button("reset").clicked() {
-                self.time = 0.0;
-                self.dirty();
-            }
-            if ui
-                .add_enabled(!self.playing, egui::Button::new("play"))
-                .clicked()
-            {
-                self.playing = true;
-            }
-            if ui
-                .add_enabled(self.playing, egui::Button::new("pause"))
-                .clicked()
-            {
-                self.playing = false;
-            }
+            ui.horizontal(|ui| {
+                if ui.button("reset").clicked() {
+                    self.time = 0.0;
+                    self.dirty();
+                }
+                if ui
+                    .add_enabled(!self.playing, egui::Button::new("play"))
+                    .clicked()
+                {
+                    self.playing = true;
+                }
+                if ui
+                    .add_enabled(self.playing, egui::Button::new("pause"))
+                    .clicked()
+                {
+                    self.playing = false;
+                }
+            });
         });
     }
 
     fn seed_ui(&mut self, ui: &mut egui::Ui) {
-        ui.strong("Random Number Generator");
+        collapsing_header(
+            ui,
+            "Random Number Generator",
+            format!("seed: {}", self.seed),
+            |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("seed:");
+                    ui.add(egui::DragValue::new(&mut self.seed).speed(1.0))
+                        .dirty(self);
+                });
 
-        ui.horizontal(|ui| {
-            ui.label("seed:");
-            ui.add(egui::DragValue::new(&mut self.seed).speed(1.0))
-                .dirty(self);
-        });
-
-        ui.horizontal(|ui| {
-            if ui.button("random").clicked() {
-                self.seed = rand::random();
-                self.dirty();
-            }
-            if ui
-                .add_enabled(self.seed != 0, egui::Button::new("prev"))
-                .clicked()
-            {
-                self.seed = self.seed.saturating_sub(1);
-                self.dirty();
-            }
-            if ui
-                .add_enabled(self.seed != u32::MAX, egui::Button::new("next"))
-                .clicked()
-            {
-                self.seed = self.seed.saturating_add(1);
-                self.dirty();
-            }
-        });
+                ui.horizontal(|ui| {
+                    if ui.button("random").clicked() {
+                        self.seed = rand::random();
+                        self.dirty();
+                    }
+                    if ui
+                        .add_enabled(self.seed != 0, egui::Button::new("prev"))
+                        .clicked()
+                    {
+                        self.seed = self.seed.saturating_sub(1);
+                        self.dirty();
+                    }
+                    if ui
+                        .add_enabled(self.seed != u32::MAX, egui::Button::new("next"))
+                        .clicked()
+                    {
+                        self.seed = self.seed.saturating_add(1);
+                        self.dirty();
+                    }
+                });
+            },
+        );
     }
 
     fn update_time(&mut self) {
@@ -409,35 +434,42 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         egui::SidePanel::right("right_panel")
             .default_width(200.)
             .show(ctx, |ui| {
-                // let the UI breeze a little bit
                 ui.spacing_mut().item_spacing.y = 6.0;
-                ui.spacing_mut().slider_width = 200.0;
+                ui.spacing_mut().slider_width = 170.0;
                 ui.visuals_mut().slider_trailing_fill = true;
+                ui.visuals_mut().collapsing_header_frame = true;
 
-                ui.vertical(|ui| {
-                    self.page_size_ui(ui);
-                    ui.separator();
+                egui::ScrollArea::vertical()
+                    .id_source("side_bar_scroll")
+                    .show(ui, |ui| {
+                        // let the UI breeze a little bit
 
-                    if self.enable_time {
-                        self.time_ui(ui);
-                        ui.separator();
-                    }
+                        ui.vertical(|ui| {
+                            self.page_size_ui(ui);
 
-                    if self.enable_seed {
-                        self.seed_ui(ui);
-                        ui.separator();
-                    }
+                            if self.layout_options.ui(ui) {
+                                self.dirty();
+                            }
 
-                    self.save_ui.ui(ui, self.last_sketch.as_ref());
-                    ui.separator();
+                            if self.enable_time {
+                                self.time_ui(ui);
+                            }
 
-                    ui.strong("Sketch Parameters");
-                    let changed = egui::Grid::new("sketch_param_grid")
-                        .num_columns(2)
-                        .show(ui, |ui| self.app.ui(ui))
-                        .inner;
-                    self.set_dirty(changed);
-                })
+                            if self.enable_seed {
+                                self.seed_ui(ui);
+                            }
+
+                            self.save_ui.ui(ui, self.last_sketch.as_ref());
+
+                            collapsing_header(ui, "Sketch Parameters", "", |ui| {
+                                let changed = egui::Grid::new("sketch_param_grid")
+                                    .num_columns(2)
+                                    .show(ui, |ui| self.app.ui(ui))
+                                    .inner;
+                                self.set_dirty(changed);
+                            });
+                        })
+                    });
             });
 
         if self.dirty {
@@ -453,6 +485,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
             let mut sketch = Sketch::new();
             sketch.page_size(self.page_size);
             self.app.update(&mut sketch, &mut context)?;
+            self.layout_options.apply(&mut sketch);
             document_widget.set_document_data(vsvg_viewer::DocumentData::new(sketch.document()));
             self.last_sketch = Some(sketch);
 
@@ -483,9 +516,14 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
             self.save_ui = save_ui;
         }
+
+        if let Some(layout_options) = eframe::get_value(storage, "whiskers-layout-options") {
+            self.layout_options = layout_options;
+        }
     }
 
     fn save(&self, storage: &mut dyn Storage) {
         eframe::set_value(storage, "whiskers-runner-save-ui", &self.save_ui);
+        eframe::set_value(storage, "whiskers-layout-options", &self.layout_options);
     }
 }

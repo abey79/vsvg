@@ -70,18 +70,43 @@ impl Document {
         )
     }
 
-    pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {
+    /// Crops the contents to the bounds provided.
+    pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) {
         self.layers.iter_mut().for_each(|(_, layer)| {
             layer.crop(x_min, y_min, x_max, y_max);
         });
-        self
+    }
+
+    /// Translates the content of the document so that it's centered on the page.
+    ///
+    /// If the document has no page size defined, the content is translated such that its bounds
+    /// become `(0, 0, content_width, content_height)`.
+    pub fn center_content(&mut self) {
+        let Some(bounds) = self.bounds() else {
+            return;
+        };
+
+        let (dx, dy) = if let Some(page_size) = self.metadata().page_size {
+            let (w, h) = page_size.to_pixels();
+            let content_width = bounds.width();
+            let content_height = bounds.height();
+
+            (
+                (w - content_width) / 2. - bounds.x0,
+                (h - content_height) / 2. - bounds.y0,
+            )
+        } else {
+            (-bounds.x0, -bounds.y0)
+        };
+
+        self.translate(dx, dy);
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{Layer, LayerTrait};
+    use crate::{Layer, LayerTrait, Unit};
 
     #[test]
     fn test_document_bounds() {
@@ -119,5 +144,22 @@ mod test {
             doc.layers[&2].paths[0],
             Path::from(kurbo::Rect::new(0., 0., 10., 10.))
         );
+    }
+
+    #[test]
+    fn test_document_center_no_page_size() {
+        let mut doc = Document::default();
+        doc.push_path(2, kurbo::Line::new((10., 10.), (25., 53.)));
+        doc.center_content();
+        assert_eq!(doc.bounds(), Some(kurbo::Rect::new(0., 0., 15., 43.)));
+    }
+
+    #[test]
+    fn test_document_center_with_page_size() {
+        let mut doc = Document::default();
+        doc.metadata_mut().page_size = Some(PageSize::Custom(300., 200., Unit::PX));
+        doc.push_path(2, kurbo::Line::new((10., 10.), (30., 70.)));
+        doc.center_content();
+        assert_eq!(doc.bounds(), Some(kurbo::Rect::new(140., 70.0, 160., 130.)));
     }
 }
