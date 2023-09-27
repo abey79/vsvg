@@ -1,22 +1,21 @@
 # *whiskers*
 
-This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
-
-**Status**: WIP and undocumented, but already usable by learning from the examples.
-
+Part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 ## What's this?
 
-*whiskers* is a [Processing](https://processing.org)-like interactive sketch environment and API built over [*vsvg*](../vsvg/README.md) and [*vsvg-viewer*](../vsvg-viewer/README.md), similar to *vsketch*.
+*whiskers* is a [Processing](https://processing.org)-like interactive sketch environment and API built over [*vsvg*](../vsvg/README.md) and [*vsvg-viewer*](../vsvg-viewer/README.md). It's similar to *vsketch*, but faster, web-ready, and with much stronger foundations.
 
-Here is how a basic sketch might look:
+<img width="1116" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/bfecf0a1-a0a1-4d27-8a42-6ad95ac438fa">
+
+Here is the code for this basic sketch:
 
 ```rust
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[derive(Sketch)]  // <- this is the magic to make the sketch interactive
 struct HelloWorldSketch {
-    width: f64,
+    width: f64,   // <- interactive UI is automagically built for these fields
     height: f64,
 }
 
@@ -33,6 +32,7 @@ impl App for HelloWorldSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.color(Color::DARK_RED).stroke_width(3.0);
 
+        // the `Sketch` API is a delight to work with
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)
             .rect(0., 0., self.width, self.height);
@@ -47,11 +47,6 @@ fn main() -> Result {
         .run()
 }
 ```
-
-This is how it's run:
-
-<img width="1116" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/bfecf0a1-a0a1-4d27-8a42-6ad95ac438fa">
-
 
 ## Features
 
@@ -70,10 +65,10 @@ This is how it's run:
 
 ## Isn't that *vsketch*?
 
-Compared to *vsketch*, *whiskers* offers the following advantages:
+Compared to [*vsketch*](https://github.com/abey79/vsketch), *whiskers* offers the following advantages:
 
 - It's in Rust, so it's faaast! 🚀
-- Sketches can be compiled to WebAssembly and published on the Web (try [here](https://bylr.info/vsvg/)).
+- Sketches can be compiled to WebAssembly and published on the Web (try it [here](https://bylr.info/vsvg/)).
 - It's built on a stack (mainly [egui](https://egui.rs) and [wgpu](https://wgpu.rs)) that's *much* faster and easier to work with.
 
 On the other hand:
@@ -94,7 +89,9 @@ cargo run --release --package whiskers --example asteroid
 
 ## Non-interactive use
 
-The `whiskers::Sketch` object can be used stand-alone, without the interactive sketch runner. For example, this is how I create the generative asteroids in my [Rusteroïds](https://github.com/abey79/rusteroids) toy game.
+The `whiskers::Sketch` object can be used stand-alone, without the interactive sketch runner. This is useful if you want to use the drawing capabilities in your own tools.
+
+For example, I use `whiskers::Sketch` to build the generative asteroids in my [Rusteroïds](https://github.com/abey79/rusteroids) toy game.
 
 Here is how the code could look:
 
@@ -115,4 +112,4 @@ fn main() -> Result {
 }
 ```
 
-If the `viewer` feature of *whiskers is enabled, the sketch can be displayed using the basic viewer using `sketch.show()`.
+If the `viewer` feature of *whiskers is enabled (which it is by default), the sketch can be displayed using the basic viewer using `sketch.show()`.
