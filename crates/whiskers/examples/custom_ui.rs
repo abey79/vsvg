@@ -103,7 +103,7 @@ fn main() -> Result {
             gray: 0.5,
         },
     })
-    .with_page_size(PageSize::new(200.0, 200.0))
+    .with_page_size_options(PageSize::new(200.0, 200.0))
     .with_time_enabled(false)
     .run()
 }

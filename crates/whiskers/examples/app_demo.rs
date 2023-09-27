@@ -40,6 +40,6 @@ impl App for MySketch {
 
 fn main() -> Result {
     Runner::new(MySketch::default())
-        .with_page_size(PageSize::new(200.0, 200.0))
+        .with_page_size_options(PageSize::new(200.0, 200.0))
         .run()
 }

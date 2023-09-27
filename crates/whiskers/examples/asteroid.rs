@@ -50,7 +50,7 @@ impl App for AsteroidSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch
             .translate(sketch.width() / 2., sketch.height() / 2.)
-            .scale_unit(4.0 * Unit::CM)
+            .scale(4.0 * Unit::Cm)
             .color(Color::DARK_BLUE);
 
         let poly = generate_polygon(
@@ -259,7 +259,7 @@ fn voronoi(
 
 fn main() -> Result {
     Runner::new(AsteroidSketch::default())
-        .with_page_size(PageSize::custom(12., 12., Unit::CM))
+        .with_page_size_options(PageSize::custom(12., 12., Unit::Cm))
         .with_time_enabled(false)
         .run()
 }

@@ -31,7 +31,7 @@ impl Default for WhiskersDemoSketch {
 
 impl App for WhiskersDemoSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.scale_unit(Unit::CM);
+        sketch.scale_unit(Unit::Cm);
 
         for j in 0..self.row_count {
             for i in 0..self.col_count {

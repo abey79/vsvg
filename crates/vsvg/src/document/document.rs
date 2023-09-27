@@ -157,7 +157,7 @@ mod test {
     #[test]
     fn test_document_center_with_page_size() {
         let mut doc = Document::default();
-        doc.metadata_mut().page_size = Some(PageSize::Custom(300., 200., Unit::PX));
+        doc.metadata_mut().page_size = Some(PageSize::Custom(300., 200., Unit::Px));
         doc.push_path(2, kurbo::Line::new((10., 10.), (30., 70.)));
         doc.center_content();
         assert_eq!(doc.bounds(), Some(kurbo::Rect::new(140., 70.0, 160., 130.)));

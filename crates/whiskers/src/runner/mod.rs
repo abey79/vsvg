@@ -1,4 +1,5 @@
 mod layout;
+pub mod page_size;
 #[cfg(not(target_arch = "wasm32"))]
 mod save_ui_native;
 #[cfg(target_arch = "wasm32")]
@@ -14,9 +15,9 @@ use crate::Sketch;
 use convert_case::Casing;
 use eframe::Storage;
 pub use layout::LayoutOptions;
+pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
 pub use ui::*;
-use vsvg::{PageSize, Unit};
 
 use vsvg_viewer::DocumentWidget;
 
@@ -37,11 +38,14 @@ pub struct Runner<'a> {
     /// Should the sketch be updated?
     dirty: bool,
 
-    /// UI for saving the sketch.
-    save_ui: SaveUI,
+    /// Options and UI for the sketch page size.
+    page_size_options: PageSizeOptions,
 
     /// UI for the sketch layout options.
     layout_options: LayoutOptions,
+
+    /// UI for saving the sketch.
+    save_ui: SaveUI,
 
     // ========== seed stuff
     /// Controls whether the seed feature is enabled or not
@@ -69,13 +73,6 @@ pub struct Runner<'a> {
     /// Time of last loop.
     last_instant: Option<web_time::Instant>,
 
-    // ========== page size stuff
-    /// The configured page size.
-    page_size: PageSize,
-
-    /// Enable the page size UI.
-    page_size_locked: bool,
-
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
@@ -93,8 +90,9 @@ impl Runner<'_> {
             app: Box::new(app),
             last_sketch: None,
             dirty: true,
-            save_ui,
+            page_size_options: PageSizeOptions::default(),
             layout_options: LayoutOptions::default(),
+            save_ui,
             enable_seed: true,
             seed: 0,
             enable_time: true,
@@ -103,8 +101,6 @@ impl Runner<'_> {
             loop_time: 3.0,
             is_looping: false,
             last_instant: None,
-            page_size: PageSize::A4V,
-            page_size_locked: false,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -127,19 +123,9 @@ impl Runner<'_> {
     }
 
     /// Sets the default page size, which can be modified using the Page Size UI.
-    pub fn with_page_size(self, page_size: PageSize) -> Self {
+    pub fn with_page_size_options(self, page_size_options: impl Into<PageSizeOptions>) -> Self {
         Self {
-            page_size,
-            page_size_locked: false,
-            ..self
-        }
-    }
-
-    /// Sets the page size and disable the Page Size UI.
-    pub fn with_locked_page_size(self, page_size: PageSize) -> Self {
-        Self {
-            page_size,
-            page_size_locked: true,
+            page_size_options: page_size_options.into(),
             ..self
         }
     }
@@ -215,103 +201,6 @@ impl Runner<'_> {
     #[inline]
     fn set_dirty(&mut self, dirty: bool) {
         self.dirty = dirty || self.dirty;
-    }
-
-    fn page_size_ui(&mut self, ui: &mut egui::Ui) {
-        collapsing_header(ui, "Page Size", self.page_size.to_string(), |ui| {
-            if self.page_size_locked {
-                ui.label(format!("Locked to {}", self.page_size));
-                return;
-            }
-
-            let mut new_page_size = self.page_size;
-
-            ui.horizontal(|ui| {
-                ui.label("format:");
-
-                egui::ComboBox::from_id_source("sketch_page_size")
-                    .selected_text(new_page_size.to_format().unwrap_or("Custom"))
-                    .width(120.)
-                    .show_ui(ui, |ui| {
-                        let orig = if matches!(new_page_size, PageSize::Custom(..)) {
-                            new_page_size
-                        } else {
-                            PageSize::Custom(new_page_size.w(), new_page_size.h(), vsvg::Unit::PX)
-                        };
-                        ui.selectable_value(&mut new_page_size, orig, "Custom");
-
-                        ui.separator();
-
-                        for page_size in &vsvg::PAGE_SIZES {
-                            ui.selectable_value(
-                                &mut new_page_size,
-                                *page_size,
-                                page_size.to_string(),
-                            );
-                        }
-                    });
-
-                if ui.button("flip").clicked() {
-                    new_page_size = new_page_size.flip();
-                }
-            });
-
-            new_page_size = if let PageSize::Custom(mut w, mut h, mut unit) = new_page_size {
-                ui.horizontal(|ui| {
-                    ui.add(
-                        egui::DragValue::new(&mut w)
-                            .speed(1.0)
-                            .clamp_range(0.0..=f64::MAX),
-                    );
-
-                    ui.label("x");
-                    ui.add(
-                        egui::DragValue::new(&mut h)
-                            .speed(1.0)
-                            .clamp_range(0.0..=f64::MAX),
-                    );
-
-                    let orig_unit = unit;
-                    egui::ComboBox::from_id_source("sketch_page_size_unit")
-                        .selected_text(unit.to_str())
-                        .width(40.)
-                        .show_ui(ui, |ui| {
-                            const UNITS: [Unit; 8] = [
-                                Unit::PX,
-                                Unit::IN,
-                                Unit::FT,
-                                Unit::MM,
-                                Unit::CM,
-                                Unit::M,
-                                Unit::PC,
-                                Unit::PT,
-                            ];
-
-                            for u in &UNITS {
-                                ui.selectable_value(&mut unit, *u, u.to_str());
-                            }
-                        });
-                    let factor = orig_unit.to_px() / unit.to_px();
-                    w *= factor;
-                    h *= factor;
-                });
-
-                PageSize::Custom(w, h, unit)
-            } else {
-                ui.label(format!(
-                    "{:.1}x{:.1} mm",
-                    new_page_size.w() / Unit::MM.to_px(),
-                    new_page_size.h() / Unit::MM.to_px()
-                ));
-
-                new_page_size
-            };
-
-            if new_page_size != self.page_size {
-                self.page_size = new_page_size;
-                self.dirty();
-            }
-        });
     }
 
     fn time_ui(&mut self, ui: &mut egui::Ui) {
@@ -445,7 +334,9 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                         // let the UI breeze a little bit
 
                         ui.vertical(|ui| {
-                            self.page_size_ui(ui);
+                            if self.page_size_options.ui(ui) {
+                                self.dirty();
+                            }
 
                             if self.layout_options.ui(ui) {
                                 self.dirty();
@@ -483,7 +374,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
             };
 
             let mut sketch = Sketch::new();
-            sketch.page_size(self.page_size);
+            sketch.page_size(self.page_size_options.page_size);
             self.app.update(&mut sketch, &mut context)?;
             self.layout_options.apply(&mut sketch);
             document_widget.set_document_data(vsvg_viewer::DocumentData::new(sketch.document()));
@@ -520,10 +411,17 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         if let Some(layout_options) = eframe::get_value(storage, "whiskers-layout-options") {
             self.layout_options = layout_options;
         }
+
+        if !self.page_size_options.locked {
+            if let Some(page_size_options) = eframe::get_value(storage, "whiskers-page-size") {
+                self.page_size_options = page_size_options;
+            }
+        }
     }
 
     fn save(&self, storage: &mut dyn Storage) {
         eframe::set_value(storage, "whiskers-runner-save-ui", &self.save_ui);
         eframe::set_value(storage, "whiskers-layout-options", &self.layout_options);
+        eframe::set_value(storage, "whiskers-page-size", &self.page_size_options);
     }
 }

@@ -7,20 +7,21 @@ edition = "2021"
 
 
 [dependencies]
-kurbo.workspace = true
-usvg = "0.29.0"
-rosvgtree = "0.1.0"
-rctree = "*"  # Let usvg decide on the version
-svg = "0.13.1"
-rayon = "1.6.1"
 arrayvec = "0.7.2"
-lyon_geom = "1.0.4"
-regex = "1.7.1"
-lazy_static = "1.4.0"
+bitvec = "1.0.1"
 indexmap = { version = "1.9.2", features = ["rayon"] }
 kdtree = "0.7.0"
-bitvec = "1.0.1"
+kurbo.workspace = true
+lazy_static = "1.4.0"
+lyon_geom = "1.0.4"
+rayon = "1.6.1"
+rctree = "*"  # Let usvg decide on the version
+regex = "1.7.1"
+rosvgtree = "0.1.0"
+serde.workspace = true
+svg = "0.13.1"
 time = { version = "0.3.20", features = ["formatting"] }
+usvg = "0.29.0"
 
 geo = { version = "0.26.0", optional = true }
 

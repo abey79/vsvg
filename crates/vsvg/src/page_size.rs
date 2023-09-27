@@ -26,7 +26,7 @@ pub const PAGE_SIZES: [PageSize; 22] = [
     PageSize::TabloidH,
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum PageSize {
     A6V,
     A6H,
@@ -109,7 +109,7 @@ impl PageSize {
         } else if (w, h) == Self::TABLOID_SIZE {
             Self::TabloidV
         } else {
-            Self::Custom(w, h, Unit::PX)
+            Self::Custom(w, h, Unit::Px)
         };
 
         if flip {
@@ -305,7 +305,7 @@ mod test {
         assert_eq!(format!("{}", PageSize::A6V), "A6 (V)");
         assert_eq!(format!("{}", PageSize::LegalV), "Legal (V)");
         assert_eq!(
-            format!("{}", PageSize::Custom(100.0, 200.0, Unit::PX)),
+            format!("{}", PageSize::Custom(100.0, 200.0, Unit::Px)),
             "100.0x200.0px"
         );
     }
@@ -347,8 +347,8 @@ mod test {
         assert_eq!(PageSize::TabloidV.flip(), PageSize::TabloidH);
 
         assert_eq!(
-            PageSize::custom(100.0, 200.0, Unit::PX).flip(),
-            PageSize::custom(200.0, 100.0, Unit::PX)
+            PageSize::custom(100.0, 200.0, Unit::Px).flip(),
+            PageSize::custom(200.0, 100.0, Unit::Px)
         );
     }
 }

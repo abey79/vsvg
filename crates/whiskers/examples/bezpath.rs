@@ -69,7 +69,7 @@ impl App for BezpathSketch {
                 .stroke_width(1.0);
         }
 
-        sketch.scale_unit(Unit::CM).translate(6.0, 7.0);
+        sketch.scale_unit(Unit::Cm).translate(6.0, 7.0);
 
         paint_cross(sketch);
         sketch.add_path(path).translate(0.0, 6.0);
@@ -92,7 +92,7 @@ impl App for BezpathSketch {
 
 fn main() -> Result {
     Runner::new(BezpathSketch::default())
-        .with_locked_page_size(PageSize::A5V)
+        .with_page_size_options(PageSize::A5V)
         .with_time_enabled(false)
         .with_seed_enabled(false)
         .run()

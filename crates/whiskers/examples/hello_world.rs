@@ -29,6 +29,6 @@ impl App for HelloWorldSketch {
 
 fn main() -> Result {
     Runner::new(HelloWorldSketch::default())
-        .with_page_size(PageSize::A5H)
+        .with_page_size_options(PageSize::A5H)
         .run()
 }

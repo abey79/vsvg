@@ -4098,6 +4098,7 @@ dependencies = [
  "rctree",
  "regex",
  "rosvgtree",
+ "serde",
  "svg",
  "time",
  "usvg",
