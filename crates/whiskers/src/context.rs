@@ -1,3 +1,6 @@
+use rand::Rng;
+use std::ops::Range;
+
 /// Context passed to [`SketchApp::update`].
 pub struct Context {
     /// Random number generator pre-seeded by the UI.
@@ -20,5 +23,14 @@ impl Context {
         } else {
             self.time / self.loop_time
         }
+    }
+
+    /// Helper function to generate a random number in a given range. This function accepts an empty
+    /// range, in which case it will always return the start value.
+    pub fn rng_range(&mut self, range: Range<f64>) -> f64 {
+        if range.is_empty() {
+            return range.start;
+        }
+        self.rng.gen_range(range)
     }
 }

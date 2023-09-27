@@ -6,7 +6,7 @@ use vsvg::{
 
 pub struct Sketch {
     document: Document,
-    transform: Affine,
+    transform_stack: Vec<Affine>,
     target_layer: LayerID,
     tolerance: f64,
     path_metadata: PathMetadata,
@@ -29,7 +29,7 @@ impl Sketch {
         Self {
             document,
             tolerance: DEFAULT_TOLERANCE,
-            transform: Affine::default(),
+            transform_stack: vec![Affine::default()],
             target_layer,
             path_metadata: PathMetadata::default(),
         }
@@ -78,6 +78,47 @@ impl Sketch {
         self
     }
 
+    /// Push the current matrix onto the stack.
+    ///
+    /// A copy of the current transform matrix is pushed onto the stack. Use this before applying
+    /// temporary transforms that you want to revert later with [`pop_matrix`].
+    pub fn push_matrix(&mut self) -> &mut Self {
+        self.transform_stack
+            .push(self.transform_stack.last().copied().unwrap_or_default());
+        self
+    }
+
+    /// Push the identity matrix onto the stack.
+    ///
+    /// Use this if you want to temporarily reset the transform matrix and later revert to the
+    /// current matrix with [`pop_matrix`].
+    pub fn push_matrix_reset(&mut self) -> &mut Self {
+        self.transform_stack.push(Affine::default());
+        self
+    }
+
+    /// Pop the current transform matrix from the stack, restoring the previously pushed matrix.
+    pub fn pop_matrix(&mut self) -> &mut Self {
+        if self.transform_stack.len() == 1 {
+            log::warn!("pop_matrix: stack underflow");
+            return self;
+        }
+
+        self.transform_stack.pop();
+        self
+    }
+
+    /// Push the current matrix onto the stack, apply the given function, then pop the matrix.
+    ///
+    /// This is a convenience method for draw code that require a temporary change of the current
+    /// transform matrix.
+    pub fn push_matrix_and(&mut self, f: impl FnOnce(&mut Self)) -> &mut Self {
+        self.push_matrix();
+        f(self);
+        self.pop_matrix();
+        self
+    }
+
     pub fn center(&mut self) -> &mut Self {
         self.document_mut().center_content();
         self
@@ -107,7 +148,12 @@ impl Sketch {
 
 impl Transforms for Sketch {
     fn transform(&mut self, affine: &Affine) -> &mut Self {
-        self.transform *= *affine;
+        if let Some(matrix) = self.transform_stack.last_mut() {
+            *matrix *= *affine;
+        } else {
+            log::warn!("transform: no matrix on the stack");
+        }
+
         self
     }
 }
@@ -117,7 +163,11 @@ impl vsvg::Draw for Sketch {
         let mut path: Path =
             Path::from_tolerance_metadata(path, self.tolerance, self.path_metadata.clone());
 
-        path.apply_transform(self.transform);
+        if let Some(&matrix) = self.transform_stack.last() {
+            path.apply_transform(matrix);
+        } else {
+            log::warn!("add_path: no matrix on the stack");
+        }
 
         self.document.push_path(self.target_layer, path);
         self

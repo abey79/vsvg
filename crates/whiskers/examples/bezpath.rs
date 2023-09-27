@@ -69,7 +69,7 @@ impl App for BezpathSketch {
                 .stroke_width(1.0);
         }
 
-        sketch.scale_unit(Unit::Cm).translate(6.0, 7.0);
+        sketch.scale(Unit::Cm).translate(6.0, 7.0);
 
         paint_cross(sketch);
         sketch.add_path(path).translate(0.0, 6.0);

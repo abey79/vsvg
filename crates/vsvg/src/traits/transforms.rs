@@ -21,13 +21,8 @@ pub trait Transforms: Sized {
     }
 
     /// Scale the geometry by `s` around the origin.
-    fn scale(&mut self, s: f64) -> &mut Self {
-        self.transform(&Affine::scale(s));
-        self
-    }
-
-    fn scale_unit(&mut self, u: crate::Unit) -> &mut Self {
-        self.transform(&Affine::scale(u.to_px()));
+    fn scale(&mut self, s: impl Into<f64>) -> &mut Self {
+        self.transform(&Affine::scale(s.into()));
         self
     }
 

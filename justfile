@@ -22,3 +22,5 @@ web-serve:
 
 test:
     cargo test
+
+lint: clippy clippy-wasm fmt test

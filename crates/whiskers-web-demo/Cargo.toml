@@ -8,3 +8,4 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 whiskers = { path = "../whiskers", features = ["viewer"] }
+itertools.workspace = true
