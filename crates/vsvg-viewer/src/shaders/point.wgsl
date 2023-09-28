@@ -1,6 +1,7 @@
 struct CameraUniform {
     view_proj: mat4x4<f32>,
     scale: f32,
+    anti_alias: f32, // ignored for now
     screen_size: vec2<f32>,
 };
 
@@ -22,6 +23,7 @@ struct VertexOutput {
 }
 
 
+// TODO: should use the CameraUniform's value?
 const AA: f32 = 1.5;
 
 fn unpack_color(color: u32) -> vec4<f32> {

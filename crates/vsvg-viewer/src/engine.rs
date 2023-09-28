@@ -30,7 +30,7 @@ pub(crate) enum DisplayMode {
     Outline,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub(crate) struct ViewerOptions {
     /// display mode
     pub display_mode: DisplayMode,
@@ -53,22 +53,52 @@ pub(crate) struct ViewerOptions {
     /// layer visibility
     #[serde(skip)]
     pub layer_visibility: HashMap<LayerID, bool>,
+
+    /// anti alias parameter
+    #[serde(skip)]
+    pub anti_alias: f32,
+}
+
+impl Default for ViewerOptions {
+    fn default() -> Self {
+        Self {
+            display_mode: DisplayMode::default(),
+            show_point: false,
+            show_pen_up: false,
+            show_control_points: false,
+            override_width: None,
+            override_opacity: None,
+            layer_visibility: HashMap::default(),
+            anti_alias: 0.5,
+        }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 struct CameraUniform {
     projection: [[f32; 4]; 4],
+
+    // these two must be grouped to avoid padding
     scale: f32,
+    anti_alias: f32,
+
     screen_size: [f32; 2],
-    _padding: [u8; 4], // WGSL uniform buffer requires 16-byte alignment
+    // no padding: this is already 16-byte aligned!
 }
 
 impl CameraUniform {
-    fn update(&mut self, m: cgmath::Matrix4<f32>, scale: f32, screen_size: (f32, f32)) {
+    fn update(
+        &mut self,
+        m: cgmath::Matrix4<f32>,
+        scale: f32,
+        screen_size: (f32, f32),
+        anti_alias: f32,
+    ) {
         self.projection = m.into();
         self.scale = scale;
         self.screen_size = [screen_size.0, screen_size.1];
+        self.anti_alias = anti_alias;
     }
 }
 
@@ -330,6 +360,7 @@ impl Engine {
             projection(origin, scale, rect.width(), rect.height()),
             scale,
             (rect.width(), rect.height()),
+            self.viewer_options.lock().unwrap().anti_alias,
         );
 
         queue.write_buffer(

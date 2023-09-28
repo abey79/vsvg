@@ -20,6 +20,9 @@ pub struct WhiskersDemoSketch {
 
     #[param(slider, min = 0., max = 3.)]
     rand_offset_cm: f64,
+
+    #[param(slider, min = 0., max = 10.)]
+    stroke_width: f64,
 }
 
 impl Default for WhiskersDemoSketch {
@@ -31,13 +34,14 @@ impl Default for WhiskersDemoSketch {
             box_size_cm: 1.,
             rand_angle_deg: 45.,
             rand_offset_cm: 0.3,
+            stroke_width: 1.0,
         }
     }
 }
 
 impl App for WhiskersDemoSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.scale(Unit::Cm);
+        sketch.scale(Unit::Cm).stroke_width(self.stroke_width);
 
         for (i, j) in iproduct!(0..self.col_count, 0..self.row_count) {
             sketch.push_matrix_and(|sketch| {

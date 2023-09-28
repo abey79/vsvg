@@ -1,6 +1,7 @@
 struct CameraUniform {
     view_proj: mat4x4<f32>,
     scale: f32,
+    anti_alias: f32,
     screen_size: vec2<f32>,
 };
 
@@ -27,9 +28,6 @@ struct VertexOutput {
     @location(4) @interpolate(flat) m2: vec2<f32>,
     @location(5) @interpolate(flat) width: f32,
 }
-
-
-const AA: f32 = .5;
 
 
 fn compute_miter(p0: vec2<f32>, p1: vec2<f32>, n: vec2<f32>, crit_length: f32, w2: f32) -> vec2<f32> {
@@ -79,7 +77,7 @@ fn vs_main(
         return out;
     }
 
-    let w2 = instance.width/2. + AA / camera.scale;
+    let w2 = instance.width/2. + (camera.anti_alias / camera.scale) / 2.;
 
     let d = distance(instance.p1, instance.p2);
     let v = normalize(instance.p2 - instance.p1);
@@ -182,14 +180,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         // this used to be in a separate function, but it was breaking on WebGL, likely because
         // naga somehow doesn't support `discard` in functions
         let w2 = in.width/2.;
-        let antialias = AA/camera.scale;
+        let antialias = (camera.anti_alias/camera.scale) / 2.;
         let color = in.color;
 
-        if (distance < w2) {
+        if (distance < w2 - antialias) {
             return color;
         } else if (distance < w2 + antialias) {
-            var alpha = (distance - w2) / antialias;
-            alpha = smoothstep(1.0, 0.0, alpha);
+            //var alpha = (distance - w2 - antialias) / antialias;
+            let alpha = smoothstep(w2 + antialias, w2 - antialias, distance);
             return vec4<f32>(color.rgb, color.a * alpha);
         } else {
              discard;

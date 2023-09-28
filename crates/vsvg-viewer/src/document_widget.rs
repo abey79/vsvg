@@ -192,6 +192,15 @@ impl DocumentWidget {
                 self.must_fit_to_view = true;
                 ui.close_menu();
             }
+
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("AA:");
+                ui.add(egui::Slider::new(
+                    &mut self.viewer_options.lock().unwrap().anti_alias,
+                    0.0..=2.0,
+                ));
+            })
         });
     }
 
