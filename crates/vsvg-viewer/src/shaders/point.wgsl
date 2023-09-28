@@ -73,7 +73,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return in.color;
     } else if (distance < in.w2 + aa) {
         var alpha = (distance - in.w2) / aa;
-        alpha = exp(-alpha*alpha);
+        alpha = smoothstep(1.0, 0.0, alpha);
         return vec4<f32>(in.color.rgb, in.color.a * alpha);
     } else {
         discard;

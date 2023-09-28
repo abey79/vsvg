@@ -21,7 +21,7 @@ struct VertexOutput {
     // and I'm not sure it was ever useful.
     @location(0) tex_coords: vec2<f32>,
 
-    @location(1) @interpolate(flat) distance: f32,
+    @location(1) distance: f32,
     @location(2) @interpolate(flat) color: vec4<f32>,
     @location(3) @interpolate(flat) m0: vec2<f32>,
     @location(4) @interpolate(flat) m2: vec2<f32>,
@@ -189,7 +189,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             return color;
         } else if (distance < w2 + antialias) {
             var alpha = (distance - w2) / antialias;
-            alpha = exp(-alpha*alpha);
+            alpha = smoothstep(1.0, 0.0, alpha);
             return vec4<f32>(color.rgb, color.a * alpha);
         } else {
              discard;
