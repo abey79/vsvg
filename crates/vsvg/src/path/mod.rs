@@ -5,7 +5,7 @@ mod metadata;
 mod path;
 mod point;
 
-use crate::svg_writer::SvgPathWriter;
+use crate::writer::SvgPathWriter;
 use crate::Transforms;
 
 pub use flattened_path::{FlattenedPath, Polyline};

@@ -1,43 +1,44 @@
-use kurbo::PathEl;
-
+use crate::svg::inkscape_layer_preprocessor::{preprocess_inkscape_layer, GroupInfo};
+use crate::{
+    Color, Document, DocumentTrait, IntoBezPath, Layer, LayerID, LayerTrait, PageSize, Path,
+    PathTrait,
+};
+use kurbo::{BezPath, PathEl};
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::error::Error;
-use std::fs;
-use std::path;
-
-use crate::{
-    Color, Document, DocumentTrait, Layer, LayerID, LayerTrait, PageSize, Path, PathTrait,
+use std::{error::Error, fs, path};
+use usvg::{
+    tiny_skia_path::PathSegment, utils::view_box_to_transform, NodeExt, Transform, Tree,
+    TreeParsing,
 };
 
-use usvg::utils::view_box_to_transform;
-use usvg::{GroupMode, PathSegment, Transform, Tree};
+impl IntoBezPath for usvg::tiny_skia_path::Path {
+    fn into_bezpath(self) -> BezPath {
+        fn p2p(p: usvg::tiny_skia_path::Point) -> kurbo::Point {
+            kurbo::Point::new(f64::from(p.x), f64::from(p.y))
+        }
+
+        self.segments()
+            .map(|seg| match seg {
+                PathSegment::MoveTo(p) => PathEl::MoveTo(p2p(p)),
+                PathSegment::LineTo(p) => PathEl::LineTo(p2p(p)),
+                PathSegment::QuadTo(p0, p1) => PathEl::QuadTo(p2p(p0), p2p(p1)),
+                PathSegment::CubicTo(p0, p1, p2) => PathEl::CurveTo(p2p(p0), p2p(p1), p2p(p2)),
+                PathSegment::Close => PathEl::ClosePath,
+            })
+            .collect()
+    }
+}
 
 impl Path {
     #[must_use]
     fn from_usvg(svg_path: &usvg::Path, transform: &Transform) -> Self {
-        let bezpath = usvg::TransformedPath::new(&svg_path.data, *transform)
-            .map(|elem| match elem {
-                PathSegment::MoveTo { x, y } => PathEl::MoveTo(kurbo::Point::new(x, y)),
-                PathSegment::LineTo { x, y } => PathEl::LineTo(kurbo::Point::new(x, y)),
-                PathSegment::CurveTo {
-                    x1,
-                    y1,
-                    x2,
-                    y2,
-                    x,
-                    y,
-                } => PathEl::CurveTo(
-                    kurbo::Point::new(x1, y1),
-                    kurbo::Point::new(x2, y2),
-                    kurbo::Point::new(x, y),
-                ),
-                PathSegment::ClosePath => PathEl::ClosePath,
-            })
-            .collect();
+        let mut skia_path = (*svg_path.data).clone();
+        skia_path = skia_path.transform(*transform).unwrap();
+        skia_path = skia_path.transform(svg_path.transform).unwrap();
 
         let mut res = Self {
-            data: bezpath,
+            data: skia_path.into_bezpath(),
             ..Default::default()
         };
 
@@ -51,7 +52,7 @@ impl Path {
                     a: stroke.opacity.to_u8(),
                 };
             }
-            res.metadata_mut().stroke_width = stroke.width.get();
+            res.metadata_mut().stroke_width = f64::from(stroke.width.get());
         }
 
         res
@@ -60,8 +61,7 @@ impl Path {
 
 fn parse_group(group: &usvg::Node, transform: &Transform, layer: &mut Layer) {
     group.children().for_each(|node| {
-        let mut child_transform = *transform;
-        child_transform.append(&node.borrow().transform());
+        let child_transform = transform.pre_concat(node.transform());
 
         match *node.borrow() {
             usvg::NodeKind::Path(ref path) => {
@@ -133,13 +133,23 @@ impl Document {
     /// 3. If neither of the above rules apply, then the layer ID is determined by the top-level
     ///    group's order of appearance in the SVG file.
     pub fn from_string(svg: &str, single_layer: bool) -> Result<Self, Box<dyn Error>> {
-        let tree = Tree::from_str(svg, &usvg::Options::default())?;
+        let preprocessed_svg;
+
+        let tree = Tree::from_str(
+            if single_layer {
+                svg
+            } else {
+                preprocessed_svg = preprocess_inkscape_layer(svg)?;
+                preprocessed_svg.as_str()
+            },
+            &usvg::Options::default(),
+        )?;
 
         let viewbox_transform =
             view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
 
         // add frame for the page
-        let (w, h) = (tree.size.width(), tree.size.height());
+        let (w, h) = (f64::from(tree.size.width()), f64::from(tree.size.height()));
         let mut doc = Document::new_with_page_size(PageSize::new(w, h));
 
         if single_layer {
@@ -156,8 +166,7 @@ impl Document {
     fn load_tree(&mut self, tree: &Tree, viewbox_transform: Transform) {
         let layer = self.get_mut(0);
         for child in tree.root.children() {
-            let mut transform = viewbox_transform;
-            transform.append(&child.borrow().transform());
+            let transform = viewbox_transform.pre_concat(child.transform());
 
             match *child.borrow() {
                 usvg::NodeKind::Group(_) => {
@@ -177,38 +186,44 @@ impl Document {
     fn load_tree_multilayer(&mut self, tree: &Tree, viewbox_transform: Transform) {
         let mut top_level_index = 0;
         for child in tree.root.children() {
-            let mut transform = viewbox_transform;
-            transform.append(&child.borrow().transform());
+            let transform = viewbox_transform.pre_concat(child.transform());
 
             match *child.borrow() {
-                usvg::NodeKind::Group(ref group_info) => {
+                usvg::NodeKind::Group(ref group_data) => {
+                    let group_info = GroupInfo::decode(&group_data.id);
                     let layer_id;
                     let layer_name;
-                    match group_info.mode {
-                        // top-level group without layer information
-                        GroupMode::Normal => {
-                            top_level_index += 1;
-                            layer_id = layer_id_from_attribute(&group_info.id, None);
-                            layer_name = if group_info.id.is_empty() {
-                                None
-                            } else {
-                                Some(&group_info.id)
-                            }
-                        }
+                    match group_info {
                         // top-level group with inkscape layer information
-                        GroupMode::Layer(ref label) => {
+                        Some(group_info) if group_info.groupmode.as_deref() == Some("layer") => {
                             top_level_index += 1;
-                            layer_id = layer_id_from_attribute(&group_info.id, Some(label));
-                            layer_name = if !label.is_empty() {
-                                Some(label)
-                            } else if !group_info.id.is_empty() {
-                                Some(&group_info.id)
+                            layer_id = layer_id_from_attribute(
+                                group_info.id.as_deref().unwrap_or(""),
+                                group_info.label.as_deref(),
+                            );
+
+                            layer_name = if group_info.label.is_some() {
+                                group_info.label
                             } else {
-                                None
-                            }
+                                group_info.id
+                            };
                         }
+
+                        // top-level group without layer information
+                        Some(group_info) => {
+                            top_level_index += 1;
+                            layer_id = layer_id_from_attribute(
+                                group_info.id.as_deref().unwrap_or(""),
+                                None,
+                            );
+                            layer_name =
+                                group_info
+                                    .id
+                                    .and_then(|id| if id.is_empty() { None } else { Some(id) });
+                        }
+
                         // this is a top-level path that was embedded in a group by usvg
-                        GroupMode::Virtual => {
+                        None => {
                             layer_id = Some(0);
                             layer_name = None;
                         }
@@ -393,6 +408,54 @@ mod tests {
         assert_eq!(
             doc.try_get(0).unwrap().paths[0].data,
             BezPath::from_svg("M 0 0 L 100 100").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_transforms() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" >
+                <g transform="translate(10, 20)">
+                    <g transform="rotate(90)">
+                        <line x1="0" y1="0" x2="10" y2="10" transform="scale(0.5, 0.5)" />
+                    </g>
+                </g>
+            </svg>"#,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(doc.try_get(1).unwrap().paths.len(), 1);
+        assert_eq!(
+            doc.try_get(1).unwrap().paths[0].data,
+            // ground truth obtained with vpype
+            BezPath::from_svg("M 10 20 L 5 25").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_transforms_viewbox() {
+        let doc = Document::from_string(
+            r#"<?xml version="1.0"?>
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+               width="100" height="100" viewBox="0 0 100 50">
+                <g transform="translate(10, 20)">
+                    <g transform="rotate(90)">
+                        <line x1="0" y1="0" x2="10" y2="10" transform="scale(0.5, 0.5)" />
+                    </g>
+                </g>
+            </svg>"#,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(doc.try_get(1).unwrap().paths.len(), 1);
+        assert_eq!(
+            doc.try_get(1).unwrap().paths[0].data,
+            // ground truth obtained with vpype
+            BezPath::from_svg("M 10 45 L 5 50").unwrap()
         );
     }
 }
