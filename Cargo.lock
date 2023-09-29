@@ -2377,6 +2377,15 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a53776d271cfb873b17c618af0298445c88afc52837f3e948fa3fafd131f449"
+dependencies = [
+ "arrayvec",
+]
+
+[[package]]
+name = "kurbo"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d676038719d1c892f91e6e85121550143c75880b42f7feff6d413a078cf91fb3"
@@ -3312,7 +3321,8 @@ dependencies = [
 [[package]]
 name = "rosvgtree"
 version = "0.1.0"
-source = "git+https://github.com/abey79/resvg?branch=vsvg#c5ec149f37ae84c1039d24ab026c0e2ed8fb8fca"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdc23d1ace03d6b8153c7d16f0708cd80b61ee8e80304954803354e67e40d150"
 dependencies = [
  "log",
  "roxmltree",
@@ -3619,9 +3629,9 @@ checksum = "9e08d8363704e6c71fc928674353e6b7c23dcea9d82d7012c8faf2a3a025f8d0"
 
 [[package]]
 name = "strict-num"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9df65f20698aeed245efdde3628a6b559ea1239bbb871af1b6e3b58c413b2bd1"
+checksum = "6637bab7722d379c8b41ba849228d680cc12d0a45ba1fa2b48f2a30577a06731"
 dependencies = [
  "float-cmp",
 ]
@@ -3640,11 +3650,11 @@ checksum = "02d815ad337e8449d2374d4248448645edfe74e699343dd5719139d93fa87112"
 
 [[package]]
 name = "svgtypes"
-version = "0.10.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98ffacedcdcf1da6579c907279b4f3c5492fbce99fbbf227f5ed270a589c2765"
+checksum = "c9ee29c1407a5b18ccfe5f6ac82ac11bab3b14407e09c209a6c1a32098b19734"
 dependencies = [
- "kurbo",
+ "kurbo 0.8.3",
  "siphasher",
 ]
 
@@ -4021,13 +4031,14 @@ checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 [[package]]
 name = "usvg"
 version = "0.29.0"
-source = "git+https://github.com/abey79/resvg?branch=vsvg#c5ec149f37ae84c1039d24ab026c0e2ed8fb8fca"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63b6bb4e62619d9f68aa2d8a823fea2bff302340a1f2d45c264d5b0be170832e"
 dependencies = [
  "base64",
  "data-url",
  "flate2",
  "imagesize",
- "kurbo",
+ "kurbo 0.9.4",
  "log",
  "rctree",
  "rosvgtree",
@@ -4100,7 +4111,7 @@ dependencies = [
  "glam",
  "indexmap 1.9.3",
  "kdtree",
- "kurbo",
+ "kurbo 0.9.4",
  "lazy_static",
  "log",
  "lyon_geom",
@@ -4127,7 +4138,7 @@ dependencies = [
  "dhat",
  "eframe",
  "egui",
- "kurbo",
+ "kurbo 0.9.4",
  "rand",
  "rand_chacha",
  "serde",
@@ -4148,7 +4159,7 @@ dependencies = [
  "egui",
  "env_logger",
  "js-sys",
- "kurbo",
+ "kurbo 0.9.4",
  "log",
  "pollster",
  "rand",
@@ -4473,7 +4484,7 @@ dependencies = [
  "getrandom",
  "itertools 0.11.0",
  "js-sys",
- "kurbo",
+ "kurbo 0.9.4",
  "log",
  "open",
  "rand",

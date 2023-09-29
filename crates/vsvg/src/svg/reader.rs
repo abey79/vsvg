@@ -10,8 +10,9 @@ use crate::{
     Color, Document, DocumentTrait, Layer, LayerID, LayerTrait, PageSize, Path, PathTrait,
 };
 
+use crate::svg::inkscape_layer_preprocessor::{preprocess_inkscape_layer, GroupInfo};
 use usvg::utils::view_box_to_transform;
-use usvg::{GroupMode, PathSegment, Transform, Tree};
+use usvg::{PathSegment, Transform, Tree};
 
 impl Path {
     #[must_use]
@@ -133,7 +134,17 @@ impl Document {
     /// 3. If neither of the above rules apply, then the layer ID is determined by the top-level
     ///    group's order of appearance in the SVG file.
     pub fn from_string(svg: &str, single_layer: bool) -> Result<Self, Box<dyn Error>> {
-        let tree = Tree::from_str(svg, &usvg::Options::default())?;
+        let preprocessed_svg;
+
+        let tree = Tree::from_str(
+            if single_layer {
+                svg
+            } else {
+                preprocessed_svg = preprocess_inkscape_layer(svg)?;
+                preprocessed_svg.as_str()
+            },
+            &usvg::Options::default(),
+        )?;
 
         let viewbox_transform =
             view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
@@ -181,38 +192,75 @@ impl Document {
             transform.append(&child.borrow().transform());
 
             match *child.borrow() {
-                usvg::NodeKind::Group(ref group_info) => {
+                usvg::NodeKind::Group(ref group_data) => {
+                    let group_info = GroupInfo::decode(&group_data.id);
                     let layer_id;
                     let layer_name;
-                    match group_info.mode {
-                        // top-level group without layer information
-                        GroupMode::Normal => {
-                            top_level_index += 1;
-                            layer_id = layer_id_from_attribute(&group_info.id, None);
-                            layer_name = if group_info.id.is_empty() {
-                                None
-                            } else {
-                                Some(&group_info.id)
-                            }
-                        }
+                    match group_info {
                         // top-level group with inkscape layer information
-                        GroupMode::Layer(ref label) => {
+                        Some(group_info) if group_info.groupmode.as_deref() == Some("layer") => {
                             top_level_index += 1;
-                            layer_id = layer_id_from_attribute(&group_info.id, Some(label));
-                            layer_name = if !label.is_empty() {
-                                Some(label)
-                            } else if !group_info.id.is_empty() {
-                                Some(&group_info.id)
+                            layer_id = layer_id_from_attribute(
+                                group_info.id.as_deref().unwrap_or(""),
+                                group_info.label.as_deref(),
+                            );
+
+                            layer_name = if group_info.label.is_some() {
+                                group_info.label
                             } else {
-                                None
-                            }
+                                group_info.id
+                            };
                         }
+
+                        // top-level group without layer information
+                        Some(group_info) => {
+                            top_level_index += 1;
+                            layer_id = layer_id_from_attribute(
+                                group_info.id.as_deref().unwrap_or(""),
+                                None,
+                            );
+                            layer_name =
+                                group_info
+                                    .id
+                                    .and_then(|id| if id.is_empty() { None } else { Some(id) });
+                        }
+
                         // this is a top-level path that was embedded in a group by usvg
-                        GroupMode::Virtual => {
+                        None => {
                             layer_id = Some(0);
                             layer_name = None;
                         }
                     }
+
+                    // match group_data.mode {
+                    //     // top-level group without layer information
+                    //     GroupMode::Normal => {
+                    //         top_level_index += 1;
+                    //         layer_id = layer_id_from_attribute(&group_data.id, None);
+                    //         layer_name = if group_data.id.is_empty() {
+                    //             None
+                    //         } else {
+                    //             Some(&group_data.id)
+                    //         }
+                    //     }
+                    //     // top-level group with inkscape layer information
+                    //     GroupMode::Layer(ref label) => {
+                    //         top_level_index += 1;
+                    //         layer_id = layer_id_from_attribute(&group_data.id, Some(label));
+                    //         layer_name = if !label.is_empty() {
+                    //             Some(label)
+                    //         } else if !group_data.id.is_empty() {
+                    //             Some(&group_data.id)
+                    //         } else {
+                    //             None
+                    //         }
+                    //     }
+                    //     // this is a top-level path that was embedded in a group by usvg
+                    //     GroupMode::Virtual => {
+                    //         layer_id = Some(0);
+                    //         layer_name = None;
+                    //     }
+                    // }
 
                     let layer = self.get_mut(layer_id.unwrap_or(top_level_index));
                     parse_group(&child, &transform, layer);

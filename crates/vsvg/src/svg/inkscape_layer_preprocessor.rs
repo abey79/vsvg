@@ -74,18 +74,18 @@ impl GroupInfo {
     /// This function decodes a [`GroupInfo`] from a string that was previously encoded by
     /// [`GroupInfo::encode`]. It implements the semantics that an empty `id` attribute corresponds
     /// to a spurious, `usvg`-added group, as originally empty
-    pub(crate) fn decode(s: String) -> Option<Self> {
+    pub(crate) fn decode(s: &str) -> Option<Self> {
         if s.is_empty() {
             return None;
         }
 
-        let group_info = Self::decode_impl(&s, &base64::prelude::BASE64_URL_SAFE_NO_PAD);
+        let group_info = Self::decode_impl(s, &base64::prelude::BASE64_URL_SAFE_NO_PAD);
 
         Some(group_info.unwrap_or_else(|| {
             let id = if s.starts_with("__vsvg_missing__") {
                 None
             } else {
-                Some(s)
+                Some(s.to_owned())
             };
 
             GroupInfo {
@@ -164,7 +164,7 @@ mod tests {
         let encoded = gi.clone().encode().unwrap();
         assert!(encoded.starts_with("__vsvg_encoded__"));
 
-        let decoded = GroupInfo::decode(encoded);
+        let decoded = GroupInfo::decode(encoded.as_str());
         assert_eq!(decoded, Some(gi));
     }
 
@@ -175,7 +175,7 @@ mod tests {
         let encoded = gi.clone().encode().unwrap();
         assert!(encoded.starts_with("__vsvg_encoded__"));
 
-        let decoded = GroupInfo::decode(encoded);
+        let decoded = GroupInfo::decode(encoded.as_str());
         assert_eq!(decoded, Some(gi));
     }
 
@@ -187,7 +187,7 @@ mod tests {
         let encoded = gi.clone().encode().unwrap();
         assert!(encoded.starts_with("__vsvg_encoded__"));
 
-        let decoded = GroupInfo::decode(encoded);
+        let decoded = GroupInfo::decode(encoded.as_str());
         assert_eq!(decoded, Some(gi));
     }
 
@@ -197,7 +197,7 @@ mod tests {
         let encoded = gi.clone().encode().unwrap();
         assert!(encoded.starts_with("__vsvg_missing__"));
 
-        let decoded = GroupInfo::decode(encoded);
+        let decoded = GroupInfo::decode(encoded.as_str());
         assert_eq!(decoded, Some(gi));
     }
 
@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_group_info_decode_from_empty() {
-        let gi = GroupInfo::decode(String::new());
+        let gi = GroupInfo::decode("");
         assert_eq!(gi, None);
     }
 
