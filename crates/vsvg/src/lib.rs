@@ -16,7 +16,6 @@ pub mod path;
 pub mod path_index;
 pub mod stats;
 mod svg;
-pub mod svg_writer;
 pub mod test_utils;
 mod traits;
 mod unit;

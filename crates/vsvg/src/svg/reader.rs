@@ -15,16 +15,18 @@ use usvg::{
 impl IntoBezPath for usvg::tiny_skia_path::Path {
     fn into_bezpath(self) -> BezPath {
         fn p2p(p: usvg::tiny_skia_path::Point) -> kurbo::Point {
-            kurbo::Point::new(p.x as f64, p.y as f64)
+            kurbo::Point::new(f64::from(p.x), f64::from(p.y))
         }
 
-        BezPath::from_iter(self.segments().map(|seg| match seg {
-            PathSegment::MoveTo(p) => PathEl::MoveTo(p2p(p)),
-            PathSegment::LineTo(p) => PathEl::LineTo(p2p(p)),
-            PathSegment::QuadTo(p0, p1) => PathEl::QuadTo(p2p(p0), p2p(p1)),
-            PathSegment::CubicTo(p0, p1, p2) => PathEl::CurveTo(p2p(p0), p2p(p1), p2p(p2)),
-            PathSegment::Close => PathEl::ClosePath,
-        }))
+        self.segments()
+            .map(|seg| match seg {
+                PathSegment::MoveTo(p) => PathEl::MoveTo(p2p(p)),
+                PathSegment::LineTo(p) => PathEl::LineTo(p2p(p)),
+                PathSegment::QuadTo(p0, p1) => PathEl::QuadTo(p2p(p0), p2p(p1)),
+                PathSegment::CubicTo(p0, p1, p2) => PathEl::CurveTo(p2p(p0), p2p(p1), p2p(p2)),
+                PathSegment::Close => PathEl::ClosePath,
+            })
+            .collect()
     }
 }
 
@@ -50,7 +52,7 @@ impl Path {
                     a: stroke.opacity.to_u8(),
                 };
             }
-            res.metadata_mut().stroke_width = stroke.width.get() as f64;
+            res.metadata_mut().stroke_width = f64::from(stroke.width.get());
         }
 
         res
@@ -148,7 +150,7 @@ impl Document {
 
         // add frame for the page
         let (w, h) = (tree.size.width(), tree.size.height());
-        let mut doc = Document::new_with_page_size(PageSize::new(w as f64, h as f64));
+        let mut doc = Document::new_with_page_size(PageSize::new(f64::from(w), f64::from(h)));
 
         if single_layer {
             doc.load_tree(&tree, viewbox_transform);
@@ -156,7 +158,7 @@ impl Document {
             doc.load_tree_multilayer(&tree, viewbox_transform);
         }
 
-        doc.crop(0., 0., w as f64, h as f64);
+        doc.crop(0., 0., f64::from(w), f64::from(h));
         Ok(doc)
     }
 
