@@ -24,7 +24,7 @@ regex = "1.7.1"
 rosvgtree = "0.3.0"
 serde.workspace = true
 serde_json.workspace = true
-svg = "0.13.1"
+svg = "0.14.0"
 thiserror.workspace = true
 time = { version = "0.3.20", features = ["formatting"] }
 usvg = "0.35.0"
