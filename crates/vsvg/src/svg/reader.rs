@@ -149,8 +149,8 @@ impl Document {
             view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
 
         // add frame for the page
-        let (w, h) = (tree.size.width(), tree.size.height());
-        let mut doc = Document::new_with_page_size(PageSize::new(f64::from(w), f64::from(h)));
+        let (w, h) = (f64::from(tree.size.width()), f64::from(tree.size.height()));
+        let mut doc = Document::new_with_page_size(PageSize::new(w, h));
 
         if single_layer {
             doc.load_tree(&tree, viewbox_transform);
@@ -158,7 +158,7 @@ impl Document {
             doc.load_tree_multilayer(&tree, viewbox_transform);
         }
 
-        doc.crop(0., 0., f64::from(w), f64::from(h));
+        doc.crop(0., 0., w, h);
         Ok(doc)
     }
 
