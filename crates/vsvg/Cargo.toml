@@ -1,10 +1,14 @@
 [package]
 name = "vsvg"
-description = "Rust prototype of vpype-core V2"
+description = "Core library for pen-plotter graphics."
 authors = ["Antoine Beyeler"]
 version = "0.1.0-alpha.0"
 edition = "2021"
-
+readme = "README.md"
+homepage = "https://github.com/abey79/vsvg"
+repository = "https://github.com/abey79/vsvg"
+license-file = "../../LICENSE"
+categories = ["graphics", "visualization"]
 
 [dependencies]
 anyhow.workspace = true

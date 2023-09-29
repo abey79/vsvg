@@ -1,11 +1,17 @@
 [package]
 name = "whiskers-web-demo"
+description = "Official demo sketch for whiskers."
 version = "0.1.0-alpha.0"
 edition = "2021"
+readme = "README.md"
+homepage = "https//bylr.info/vsvg/"
+repository = "https://github.com/abey79/vsvg"
+license-file = "../../LICENSE"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-whiskers = { path = "../whiskers", features = ["viewer"] }
+whiskers = { version = "0.1.0-alpha.0", path = "../whiskers", features = ["viewer"] }
 itertools.workspace = true
