@@ -15,7 +15,7 @@ anyhow.workspace = true
 arrayvec = "0.7.2"
 base64 = "0.21.4"
 bitvec = "1.0.1"
-indexmap = { version = "1.9.2", features = ["rayon"] }
+indexmap = { version = "2.0.2", features = ["rayon"] }
 kdtree = "0.7.0"
 kurbo.workspace = true
 lazy_static = "1.4.0"
