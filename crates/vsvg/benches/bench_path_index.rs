@@ -1,10 +1,10 @@
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use rand::Rng;
 use std::time::Duration;
-use vsvg_core::flattened_layer::FlattenedLayer;
-use vsvg_core::path_index::{IndexBuilder, ReindexStrategy};
-use vsvg_core::point::Point;
-use vsvg_core::{test_file, Document};
+use vsvg::{
+    path_index::{IndexBuilder, ReindexStrategy},
+    test_file, Document, DocumentTrait, FlattenedLayer, LayerTrait, Point,
+};
 
 pub fn bench_path_index(c: &mut Criterion) {
     let mut group = c.benchmark_group("path_index");
@@ -44,7 +44,7 @@ pub fn bench_path_index(c: &mut Criterion) {
 }
 
 pub fn bench_huge_index(c: &mut Criterion) {
-    let mut layer = FlattenedLayer::new();
+    let mut layer = FlattenedLayer::default();
     let mut rng = rand::thread_rng();
     const NUM: usize = 1_000_000;
     //let num: f64 = task_rng().gen_range(-40.0, 1.3e4);
