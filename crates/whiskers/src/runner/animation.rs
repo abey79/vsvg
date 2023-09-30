@@ -1,6 +1,6 @@
 use crate::runner::collapsing_header;
 
-/// Options controlling the sketch animation support.
+/// Controls the animation feature of the runner.
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct AnimationOptions {
     /// Controls whether the time is running or not.
@@ -44,6 +44,7 @@ impl AnimationOptions {
     }
 
     /// Sets the [`AnimationOptions`] to play mode by default.
+    #[must_use]
     pub fn play(self) -> Self {
         Self {
             playing: true,

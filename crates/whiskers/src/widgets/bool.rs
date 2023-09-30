@@ -1,3 +1,4 @@
+/// Widget to display [`bool`] sketch parameters.
 #[derive(Default)]
 pub struct BoolWidget;
 

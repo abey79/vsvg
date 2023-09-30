@@ -1,6 +1,7 @@
 use crate::runner::collapsing_header;
 use vsvg::{PageSize, Unit};
 
+/// Controls the page size feature of the runner.
 #[derive(serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct PageSizeOptions {
     /// The configured page size.

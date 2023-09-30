@@ -29,3 +29,7 @@ pub use path::*;
 pub use path_index::IndexBuilder;
 pub use traits::*;
 pub use unit::*;
+
+// re-export
+#[cfg(feature = "geo")]
+pub use ::geo;

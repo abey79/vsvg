@@ -1,11 +1,11 @@
 mod animation;
 mod layout;
-pub mod page_size;
+mod page_size;
 #[cfg(not(target_arch = "wasm32"))]
 mod save_ui_native;
 #[cfg(target_arch = "wasm32")]
 mod save_ui_wasm;
-pub mod ui;
+mod ui;
 
 #[cfg(not(target_arch = "wasm32"))]
 use save_ui_native::SaveUI;
@@ -23,10 +23,10 @@ pub use ui::*;
 
 use vsvg_viewer::DocumentWidget;
 
-/// The [`Runner`] is the main entry point for executing a [`SketchApp`].
+/// The [`Runner`] is the main entry point for executing a [`crate::SketchApp`].
 ///
 /// It can be configured using the builder pattern with the `with_*()` functions, and then run
-/// using the [`run`] method.
+/// using the [`Runner::run`] method.
 ///
 /// [`Runner`] implements [`vsvg_viewer::ViewerApp`] to actually display the sketch with a custom,
 /// interactive UI.
@@ -62,7 +62,7 @@ pub struct Runner<'a> {
 
 // public methods
 impl Runner<'_> {
-    /// Create a new [`Runner`] with the provided [`SketchApp`] instance.
+    /// Create a new [`Runner`] with the provided [`crate::SketchApp`] instance.
     pub fn new(app: impl crate::SketchApp + 'static) -> Self {
         let mut save_ui = SaveUI::default();
         #[allow(clippy::field_reassign_with_default)]
@@ -84,18 +84,21 @@ impl Runner<'_> {
     }
 
     /// Sets the seed to a given value (default: 0).
+    #[must_use]
     pub fn with_seed(mut self, seed: u32) -> Self {
         self.seed = seed;
         self
     }
 
     /// Randomizes the seed.
+    #[must_use]
     pub fn with_random_seed(mut self) -> Self {
         self.seed = rand::random();
         self
     }
 
     /// Sets the default page size, which can be modified using the Page Size UI.
+    #[must_use]
     pub fn with_page_size_options(self, page_size_options: impl Into<PageSizeOptions>) -> Self {
         Self {
             page_size_options: page_size_options.into(),
@@ -104,6 +107,7 @@ impl Runner<'_> {
     }
 
     /// Sets the default layout options.
+    #[must_use]
     pub fn with_layout_option(self, options: impl Into<LayoutOptions>) -> Self {
         Self {
             layout_options: options.into(),
@@ -111,6 +115,8 @@ impl Runner<'_> {
         }
     }
 
+    /// Sets the default animation options.
+    #[must_use]
     pub fn with_animation_options(self, options: impl Into<AnimationOptions>) -> Self {
         Self {
             animation_options: options.into(),
@@ -250,7 +256,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
             ctx.request_repaint();
 
             let mut context = crate::context::Context {
-                rng: rand_chacha::ChaCha8Rng::seed_from_u64(self.seed as u64),
+                rng: rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(self.seed)),
                 time: self.animation_options.time,
                 loop_time: self.animation_options.loop_time,
             };

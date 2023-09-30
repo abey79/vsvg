@@ -14,10 +14,12 @@ pub enum LayoutOptions {
 }
 
 impl LayoutOptions {
+    /// Create a new [`LayoutOptions`] instance with layout disabled.
     pub fn off() -> Self {
         Self::Off
     }
 
+    /// Create a new [`LayoutOptions`] instance with layout set to centered.
     pub fn centered() -> Self {
         Self::Center
     }

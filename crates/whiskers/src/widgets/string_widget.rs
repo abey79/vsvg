@@ -1,3 +1,4 @@
+/// Widget for the [`String`] type.
 #[derive(Default)]
 pub struct StringWidget;
 

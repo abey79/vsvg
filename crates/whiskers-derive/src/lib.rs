@@ -79,9 +79,7 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
             fn name(&self) -> String {
                 stringify!(#name).to_string()
             }
-        }
 
-        impl ::whiskers::SketchUI for #name {
             fn ui(&mut self, ui: &mut ::whiskers::prelude::egui::Ui) -> bool {
                 let mut changed = false;
                 #ui_func_tokens

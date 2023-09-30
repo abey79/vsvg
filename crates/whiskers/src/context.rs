@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::ops::Range;
 
-/// Context passed to [`SketchApp::update`].
+/// Context passed to [`crate::App::update`].
 pub struct Context {
     /// Random number generator pre-seeded by the UI.
     pub rng: rand_chacha::ChaCha8Rng,
@@ -17,6 +17,7 @@ impl Context {
     /// Time parameter, normalized by the loop time.
     ///
     /// Always returns 0.0 if the loop time is set to 0.0.
+    #[must_use]
     pub fn normalized_time(&self) -> f64 {
         if self.loop_time == 0.0 {
             0.0

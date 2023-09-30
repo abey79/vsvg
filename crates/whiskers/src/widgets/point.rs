@@ -1,6 +1,7 @@
 use egui::{Response, Ui};
 use vsvg::Point;
 
+/// Widget for the [`Point`] type.
 #[derive(Default)]
 pub struct PointWidget;
 

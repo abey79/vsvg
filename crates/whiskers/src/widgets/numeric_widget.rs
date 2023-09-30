@@ -1,5 +1,8 @@
 use egui::emath::Numeric;
 
+/// A widget for built-in numeric values.
+///
+/// This widget piggybacks on the [`Numeric`] trait for its implementation.
 #[derive(Default)]
 pub struct NumericWidget<T: Numeric> {
     min: Option<T>,
@@ -9,21 +12,29 @@ pub struct NumericWidget<T: Numeric> {
 }
 
 impl<T: Numeric> NumericWidget<T> {
+    /// Sets the minimum value for the widget.
+    #[must_use]
     pub fn min(mut self, min: T) -> Self {
         self.min = Some(min);
         self
     }
 
+    /// Sets the maximum value for the widget.
+    #[must_use]
     pub fn max(mut self, max: T) -> Self {
         self.max = Some(max);
         self
     }
 
+    /// Sets the step value for the widget.
+    #[must_use]
     pub fn step(mut self, step: T) -> Self {
         self.step = Some(step);
         self
     }
 
+    /// Sets whether the widget should be displayed as a slider or not.
+    #[must_use]
     pub fn slider(mut self, slider: bool) -> Self {
         self.slider = slider;
         self

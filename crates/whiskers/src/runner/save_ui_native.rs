@@ -27,8 +27,7 @@ impl Default for SaveUI {
         let target_dir = canonicalize("./").ok().filter(|p| p.is_dir());
         let target_dir_str = target_dir
             .as_ref()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or("./".to_string());
+            .map_or("./".to_string(), |p| p.to_string_lossy().to_string());
 
         Self {
             destination_dir_str: target_dir_str,
@@ -123,9 +122,9 @@ impl SaveUI {
                             if let Some(sketch) = sketch {
                                 if let Some(path) = self.get_output_path() {
                                     self.last_error = Some(sketch.save(&path).map(|_| {
-                                        path.file_name()
-                                            .map(|s| s.to_string_lossy().to_string())
-                                            .unwrap_or("<unknown>".to_string())
+                                        path.file_name().map_or("<unknown>".to_string(), |s| {
+                                            s.to_string_lossy().to_string()
+                                        })
                                     }));
                                 }
                             }
@@ -134,7 +133,7 @@ impl SaveUI {
                         if let Some(last_error) = &self.last_error {
                             let txt = match last_error {
                                 Ok(file_name) => file_name.to_string(),
-                                Err(err) => format!("Error: {}", err),
+                                Err(err) => format!("Error: {err}"),
                             };
                             let label =
                                 egui::WidgetText::from(txt)

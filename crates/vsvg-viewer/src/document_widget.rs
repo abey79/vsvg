@@ -4,10 +4,10 @@ use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
 use vsvg::{DocumentTrait, LayerTrait};
 
-/// Widget to display a [`vsvg_core::Document`] in a egui application.
+/// Widget to display a [`vsvg::Document`] in an egui application.
 ///
-/// The widget is an egui wrapper around [`Engine`]. It holds the state needed for rendering, such
-/// as the scale and pan offset.
+/// The widget is an egui wrapper around the internal `Engine` instance. It holds the state needed
+/// for rendering, such as the scale and pan offset.
 ///
 /// It supports multiple UI features:
 ///  - GPU-accelerated rendering of the document, typically in the central panel
