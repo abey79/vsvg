@@ -31,7 +31,6 @@ pub use page_size::*;
 pub use path::*;
 pub use path_index::*;
 pub use stats::*;
-pub use svg::*;
 pub use traits::*;
 pub use unit::*;
 
