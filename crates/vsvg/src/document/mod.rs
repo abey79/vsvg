@@ -6,8 +6,8 @@ mod document;
 mod flattened_document;
 mod metadata;
 
+use crate::document_to_svg_doc;
 use crate::stats::LayerStats;
-use crate::writer::document_to_svg_doc;
 pub use document::Document;
 pub use flattened_document::FlattenedDocument;
 pub use metadata::DocumentMetadata;

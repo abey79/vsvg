@@ -1,8 +1,8 @@
 //!
 use kurbo::Affine;
-use vsvg::path::IntoBezPathTolerance;
 use vsvg::{
-    Document, DocumentTrait, LayerID, PageSize, Path, PathMetadata, Transforms, DEFAULT_TOLERANCE,
+    Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path, PathMetadata,
+    Transforms, DEFAULT_TOLERANCE,
 };
 
 /// Primary interface for drawing.

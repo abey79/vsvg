@@ -41,6 +41,7 @@ where
 
     /// Transpose the geometry axes. This is used to provide a default implementation of `crop_y`
     /// using `crop_x`.
+    #[must_use]
     fn transpose_axes(self) -> Self;
 
     /// Crop the geometry to a given vertically-split, half-plane defined with a X coordinate.

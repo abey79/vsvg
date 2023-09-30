@@ -5,8 +5,7 @@ mod metadata;
 mod path;
 mod point;
 
-use crate::writer::SvgPathWriter;
-use crate::Transforms;
+use crate::{SvgPathWriter, Transforms};
 
 pub use flattened_path::{FlattenedPath, Polyline};
 pub use into_bezpath::{IntoBezPath, IntoBezPathTolerance};

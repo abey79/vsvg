@@ -8,25 +8,30 @@
 
 mod color;
 mod crop;
-pub mod document;
-pub mod layer;
-pub mod optimization;
+mod document;
+mod layer;
+mod optimization;
 mod page_size;
-pub mod path;
-pub mod path_index;
-pub mod stats;
+mod path;
+mod path_index;
+mod stats;
 mod svg;
-pub mod test_utils;
+mod test_utils;
 mod traits;
 mod unit;
 
 pub use crate::svg::*;
 pub use color::*;
+
+pub use crop::*;
 pub use document::*;
 pub use layer::*;
+pub use optimization::*;
 pub use page_size::*;
 pub use path::*;
-pub use path_index::IndexBuilder;
+pub use path_index::*;
+pub use stats::*;
+pub use svg::*;
 pub use traits::*;
 pub use unit::*;
 

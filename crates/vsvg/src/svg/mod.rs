@@ -1,3 +1,6 @@
 mod inkscape_layer_preprocessor;
-pub mod reader;
-pub mod writer;
+mod reader;
+mod writer;
+
+pub use reader::*;
+pub use writer::*;
