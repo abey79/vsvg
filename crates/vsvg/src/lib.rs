@@ -20,12 +20,12 @@ pub mod test_utils;
 mod traits;
 mod unit;
 
+pub use crate::svg::*;
 pub use color::*;
 pub use document::*;
 pub use layer::*;
 pub use page_size::*;
 pub use path::*;
 pub use path_index::IndexBuilder;
-pub use svg::*;
 pub use traits::*;
 pub use unit::*;
