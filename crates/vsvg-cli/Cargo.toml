@@ -2,7 +2,7 @@
 name = "vsvg-cli"
 description = "An experimental CLI SVG manipulation and viewer tool for plotter users."
 authors = ["Antoine Beyeler"]
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"

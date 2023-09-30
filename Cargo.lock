@@ -2264,7 +2264,7 @@ dependencies = [
 
 [[package]]
 name = "msvg"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "eframe",
  "egui",
@@ -3789,7 +3789,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
@@ -3822,7 +3822,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg-cli"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "clap 4.2.5",
  "dhat",
@@ -3839,7 +3839,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg-viewer"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4164,7 +4164,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "anyhow",
  "convert_case",
@@ -4194,7 +4194,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers-derive"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -4204,7 +4204,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers-web-demo"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "itertools 0.11.0",
  "whiskers",
