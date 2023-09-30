@@ -64,6 +64,21 @@ impl App for WhiskersDemoSketch {
     }
 }
 
-wasm_sketch!(
-    Runner::new(WhiskersDemoSketch::default()).with_layout_option(LayoutOptions::centered())
-);
+wasm_sketch!(Runner::new(WhiskersDemoSketch::default())
+    .with_layout_option(LayoutOptions::centered())
+    .with_info_options(
+        InfoOptions::default()
+            .description(
+                "This sketch is a recreation of the classic \"Schotter\" series by Georg Nees \
+            (1968-1970).\n\nGeorg Nees (born 1926, Nuremberg) is considered one of the founders \
+            of computer art and graphics. He was also one of the first people to exhibit his \
+            computer graphics, at the studio gallery of the Technische Hochschule in Stuttgart in \
+            February 1965. In 1969, he received his doctorate on the subject of Generative \
+            Computer Graphics."
+            )
+            .author("Antoine Beyeler")
+            .author_url("https://bylr.info/")
+            .source_url(
+                "https://github.com/abey79/vsvg/blob/master/crates/whiskers-web-demo/src/lib.rs"
+            )
+    ));

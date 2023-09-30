@@ -104,7 +104,7 @@ mod sketch;
 pub mod widgets;
 
 pub use context::Context;
-pub use runner::{AnimationOptions, LayoutOptions, PageSizeOptions, Runner};
+pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
 pub use sketch::Sketch;
 
 /// This is a convenience alias to the [`anyhow::Result`] type, which you can use for your sketch's

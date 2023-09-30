@@ -1,5 +1,5 @@
 pub use crate::{
-    register_widget_ui, wasm_sketch, widgets::Widget, AnimationOptions, App, Context,
+    register_widget_ui, wasm_sketch, widgets::Widget, AnimationOptions, App, Context, InfoOptions,
     LayoutOptions, PageSizeOptions, Result, Runner, Sketch,
 };
 pub use vsvg::{Color, Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Point, Transforms, Unit};

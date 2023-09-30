@@ -1,4 +1,5 @@
 mod animation;
+mod info;
 mod layout;
 mod page_size;
 #[cfg(not(target_arch = "wasm32"))]
@@ -16,6 +17,7 @@ use crate::Sketch;
 pub use animation::AnimationOptions;
 use convert_case::Casing;
 use eframe::Storage;
+pub use info::InfoOptions;
 pub use layout::LayoutOptions;
 pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
@@ -39,6 +41,9 @@ pub struct Runner<'a> {
 
     /// Should the sketch be updated?
     dirty: bool,
+
+    /// Options and UI for the info panel.
+    info_options: InfoOptions,
 
     /// Options and UI for the page size panel.
     page_size_options: PageSizeOptions,
@@ -74,6 +79,7 @@ impl Runner<'_> {
             app: Box::new(app),
             last_sketch: None,
             dirty: true,
+            info_options: InfoOptions::default(),
             page_size_options: PageSizeOptions::default(),
             layout_options: LayoutOptions::default(),
             animation_options: AnimationOptions::default(),
@@ -95,6 +101,15 @@ impl Runner<'_> {
     pub fn with_random_seed(mut self) -> Self {
         self.seed = rand::random();
         self
+    }
+
+    /// Sets the info options.
+    #[must_use]
+    pub fn with_info_options(self, info_options: impl Into<InfoOptions>) -> Self {
+        Self {
+            info_options: info_options.into(),
+            ..self
+        }
     }
 
     /// Sets the default page size, which can be modified using the Page Size UI.
@@ -223,6 +238,8 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                         // let the UI breeze a little bit
 
                         ui.vertical(|ui| {
+                            self.info_options.ui(ui);
+
                             if self.page_size_options.ui(ui) {
                                 self.dirty();
                             }
