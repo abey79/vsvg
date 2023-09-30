@@ -11,9 +11,9 @@ license-file = "../../LICENSE"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
 [dependencies]
-vsvg = { version = "0.1.0-alpha.0", path = "../vsvg", features = ["geo"] }
-vsvg-viewer = { version = "0.1.0-alpha.0", path = "../vsvg-viewer", optional = true }
-whiskers-derive = { version = "0.1.0-alpha.0", path = "../whiskers-derive" }
+vsvg = { workspace = true, features = ["geo"] }
+vsvg-viewer = { workspace = true, optional = true }
+whiskers-derive.workspace = true
 log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true

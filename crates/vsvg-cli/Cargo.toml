@@ -25,8 +25,8 @@ rand.workspace = true
 rand_chacha.workspace = true
 tracing-subscriber = "0.3.16"
 clap = { version = "4.1.6", features = ["cargo"]}
-vsvg = { version = "0.1.0-alpha.0", path = "../vsvg", features = ["egui"] }
-vsvg-viewer = { version = "0.1.0-alpha.0", path = "../vsvg-viewer"}
+vsvg = { workspace = true, features = ["egui"] }
+vsvg-viewer.workspace = true
 dhat = { version = "0.3.2", optional = true } # for heap profiling
 
 

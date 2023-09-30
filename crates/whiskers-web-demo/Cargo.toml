@@ -13,5 +13,5 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-whiskers = { version = "0.1.0-alpha.0", path = "../whiskers", features = ["viewer"] }
+whiskers = { workspace = true, features = ["viewer"] }
 itertools.workspace = true

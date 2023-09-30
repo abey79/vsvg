@@ -3810,7 +3810,6 @@ dependencies = [
  "quick-xml",
  "rand",
  "rand_chacha",
- "rayon",
  "regex",
  "rosvgtree",
  "serde",
