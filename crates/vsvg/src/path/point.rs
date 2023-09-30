@@ -167,13 +167,6 @@ impl From<glam::Vec2> for Point {
     }
 }
 
-#[cfg(feature = "bevy")]
-impl From<bevy::math::Vec2> for Point {
-    fn from(p: bevy::math::Vec2) -> Self {
-        Self::new(f64::from(p.x), f64::from(p.y))
-    }
-}
-
 impl Mul<Point> for kurbo::Affine {
     type Output = Point;
 

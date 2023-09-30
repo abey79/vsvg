@@ -2,10 +2,10 @@ install:
     cargo install --path crates/vsvg-cli
 
 clippy $RUSTFLAGS="-Dwarnings":
-    cargo clippy --workspace --bins --examples
+    cargo clippy --workspace --all-features --bins --examples
 
 clippy-wasm $RUSTFLAGS="-Dwarnings":
-    cargo clippy --workspace --exclude msvg --exclude vsvg-cli --bins --target wasm32-unknown-unknown
+    cargo clippy --workspace --all-features --exclude msvg --exclude vsvg-cli --bins --target wasm32-unknown-unknown
 
 fmt:
     cargo fmt --all -- --check
