@@ -99,7 +99,7 @@ mod numeric_widget;
 mod point;
 mod string_widget;
 
-pub use bool::*;
+pub use crate::widgets::bool::*;
 pub use numeric_widget::*;
 pub use point::*;
 pub use string_widget::*;
