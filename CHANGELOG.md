@@ -1,6 +1,6 @@
 # Change log
 
-## 0.1.0 (unknown release date)
+## 0.1.0 (2023-10-01)
 
 * Initial release, including:
   * *vsvg*

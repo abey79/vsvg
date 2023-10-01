@@ -2,7 +2,7 @@
 name = "msvg"
 description = "Fast SVG browser for pen-plotter users"
 authors = ["Antoine Beyeler"]
-version = "0.1.0-alpha.3"
+version = "0.1.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"

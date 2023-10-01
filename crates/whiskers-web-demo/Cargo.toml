@@ -1,7 +1,7 @@
 [package]
 name = "whiskers-web-demo"
 description = "Official demo sketch for whiskers."
-version = "0.1.0-alpha.3"
+version = "0.1.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https//bylr.info/vsvg/"
