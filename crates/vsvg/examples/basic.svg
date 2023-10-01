@@ -1,0 +1,27 @@
+<svg height="400.00000" viewBox="0.00000 0.00000 350.00000 400.00000" width="350.00000"
+     xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns"
+     xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns">
+    <metadata>
+        <rdf:RDF>
+            <cc:Work>
+                <dc:format>
+                    image/svg+xml
+                </dc:format>
+                <dc:date>
+                    2023-10-01T11:24:21.889211000Z
+                </dc:date>
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <g id="layer1" inkscape:groupmode="layer" inkscape:label="">
+        <path d="M0,0 L100,100 L200,0 L0,0" fill="none" stroke="#000000" stroke-width="1"/>
+    </g>
+    <g id="layer2" inkscape:groupmode="layer" inkscape:label="Layer 2">
+        <path d="M80,50 C80,66.55745,66.55745,80,50,80 C33.44255,80,20,66.55745,20,50 C20,33.44255,33.44255,20,50,20 C66.55745,20,80,33.44255,80,50 z"
+              fill="none" stroke="#000000" stroke-width="1"/>
+    </g>
+    <g id="layer3" inkscape:groupmode="layer" inkscape:label="">
+        <path d="M200,200 L200,400 Q500,300,200,200 z" fill="none" stroke="#006400" stroke-width="3"/>
+    </g>
+</svg>

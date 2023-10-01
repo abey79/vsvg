@@ -1,10 +1,11 @@
 use arrayvec::ArrayVec;
-use kurbo::{CubicBez, Line, Point};
+use kurbo::{CubicBez, Line, Point, QuadBez};
 use std::ops::Range;
 
 //TODO: remove dependency on lyon_geom by reimplementing the x-axis intersection code.
+//TODO: implement cropping for QuadBez
 
-fn k2l(bez: CubicBez) -> lyon_geom::CubicBezierSegment<f64> {
+fn k2l_cubic(bez: CubicBez) -> lyon_geom::CubicBezierSegment<f64> {
     lyon_geom::CubicBezierSegment {
         from: lyon_geom::point(bez.p0.x, bez.p0.y),
         ctrl1: lyon_geom::point(bez.p1.x, bez.p1.y),
@@ -13,7 +14,7 @@ fn k2l(bez: CubicBez) -> lyon_geom::CubicBezierSegment<f64> {
     }
 }
 
-fn l2k(cbs: lyon_geom::CubicBezierSegment<f64>) -> CubicBez {
+fn l2k_cubic(cbs: lyon_geom::CubicBezierSegment<f64>) -> CubicBez {
     CubicBez {
         p0: Point::new(cbs.from.x, cbs.from.y),
         p1: Point::new(cbs.ctrl1.x, cbs.ctrl1.y),
@@ -128,7 +129,7 @@ impl Crop<2> for Line {
 
 impl Crop<3> for CubicBez {
     fn transpose_axes(self) -> Self {
-        CubicBez {
+        Self {
             p0: Point::new(self.p0.y, self.p0.x),
             p1: Point::new(self.p1.y, self.p1.x),
             p2: Point::new(self.p2.y, self.p2.x),
@@ -137,7 +138,7 @@ impl Crop<3> for CubicBez {
     }
 
     fn crop_x(self, x: f64, keep_smaller: bool) -> ArrayVec<Self, 3> {
-        let cbs = k2l(self);
+        let cbs = k2l_cubic(self);
         let mut intsct = cbs.solve_t_for_x(x);
 
         // Strategy:
@@ -182,8 +183,37 @@ impl Crop<3> for CubicBez {
 
         merged
             .into_iter()
-            .map(|r| l2k(cbs.split_range(r)))
+            .map(|r| l2k_cubic(cbs.split_range(r)))
             .collect()
+    }
+}
+
+pub(crate) enum QuadCropResult {
+    Quad(QuadBez),
+    Cubic(Vec<CubicBez>),
+}
+
+pub(crate) fn crop_quad_bezier(
+    quad: QuadBez,
+    x_min: f64,
+    y_min: f64,
+    x_max: f64,
+    y_max: f64,
+) -> QuadCropResult {
+    // TODO: this is a massive hack, implement proper quad cropping code
+
+    let cubic = CubicBez {
+        p0: quad.p0,
+        p1: quad.p0 + 2. / 3. * (quad.p1 - quad.p0),
+        p2: quad.p2 + 2. / 3. * (quad.p1 - quad.p2),
+        p3: quad.p2,
+    };
+
+    let cropped = cubic.crop(x_min, y_min, x_max, y_max);
+    if cropped.len() == 1 && cropped[0] == cubic {
+        QuadCropResult::Quad(quad)
+    } else {
+        QuadCropResult::Cubic(cropped)
     }
 }
 
@@ -260,7 +290,7 @@ mod tests {
             Point::new(5.0, 2.0),
             Point::new(0.0, 3.0),
         );
-        let cbs = k2l(bez);
+        let cbs = k2l_cubic(bez);
 
         // far off cut
         assert_bezvec_eq(bez.crop_x(50., true).as_slice(), &[bez.subsegment(0.0..1.)]);

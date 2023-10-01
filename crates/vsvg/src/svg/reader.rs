@@ -250,7 +250,6 @@ impl Document {
 
 #[cfg(test)]
 mod tests {
-
     use crate::{test_file, Document, DocumentTrait, LayerTrait, PathDataTrait};
     use kurbo::BezPath;
 
@@ -456,6 +455,24 @@ mod tests {
             doc.try_get(1).unwrap().paths[0].data,
             // ground truth obtained with vpype
             BezPath::from_svg("M 10 45 L 5 50").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_reader_quad_beziers() {
+        let doc = Document::from_string(
+            r##"<svg height="200.00000" viewBox="200.00000 200.00000 150.00000 200.00000" width="150.00000" xmlns="http://www.w3.org/2000/svg">
+<g id="layer3">
+<path d="M200,200 L200,400 Q500,300,200,200 z" fill="none" stroke="#006400" stroke-width="3"/>
+</g>
+</svg>"##,
+            false,
+        ).unwrap();
+
+        //TODO: the crop removes the Close command, which is not ideal...
+        assert_eq!(
+            doc.try_get(3).unwrap().paths[0].data,
+            BezPath::from_svg("M 0 0 L 0 200 Q 300 100 0 0").unwrap()
         );
     }
 }

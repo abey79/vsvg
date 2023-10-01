@@ -1,14 +1,55 @@
-# *vsvg* crate
+# *vsvg*: core library for pen-plotter graphics
 
-This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
+[<img alt="github" src="https://img.shields.io/badge/github-abey79/vsvg-8da0cb?logo=github" height="20">](https://github.com/abey79/vsvg)
+[![Latest version](https://img.shields.io/crates/v/vsvg.svg)](https://crates.io/crates/vsvg)
+[![Documentation](https://docs.rs/vsvg/badge.svg)](https://docs.rs/vsvg)
+[![GitHub](https://img.shields.io/github/license/abey79/vsvg)](https://github.com/abey79/vsvg/blob/master/LICENSE)
 
-**Status**: Experimental but usable and with strong foundations. Still far from API stability.
-
-## What's this?
 
 *vsvg* is the core crate of the project. It implements the `Document`/`Layer`/`Path` data structures as SVG I/O and related algorithms.
 
-This crate offers similar functionalities as the core [*vpype*](https://github.com/abey79/vpype) package and its `Document`/`LineCollection` structures. It brings however a host of improvement listed below. In the future, a Python wrapper over *vsvg* will replace *vpype*'s core package.
+This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
+
+## Example
+
+```rust
+use vsvg::{DocumentTrait, LayerTrait, PathTrait};
+
+fn main() {
+    /* == Document == */
+    let mut doc = vsvg::Document::default();
+
+    // push a path to layer 1
+    doc.push_path(1, vec![(0., 0.), (100., 100.), (200., 0.), (0., 0.)]);
+
+    /* == Layers == */
+    let mut layer = vsvg::Layer::default();
+    layer.metadata_mut().name = "Layer 2".to_string();
+
+    // vsvg uses kurbo internally, and its API is compatible with it
+    layer.push_path(kurbo::Circle::new((50., 50.), 30.));
+    doc.layers_mut().insert(2, layer);
+
+    /* == Path == */
+    // Amongst various ways to create a path, the SVG <path> syntax is supported.
+    let mut path = vsvg::Path::from_svg("M 200 200 L 200 400 Q 500 300 200 200 Z").unwrap();
+    path.metadata_mut().color = vsvg::Color::DARK_GREEN;
+    path.metadata_mut().stroke_width = 3.0;
+    doc.push_path(3, path);
+
+    // save to SVG
+    doc.to_svg_file("basic.svg").unwrap();
+}
+```
+
+This generates the following SVG:
+
+![demo SVG](examples/basic.svg)
+
+
+## Compared to *vpype*
+
+This crate offers similar functionalities as the core [*vpype*](https://github.com/abey79/vpype) package and its `Document`/`LineCollection` structures. It brings however a host of improvements listed below. In the future, a Python wrapper over *vsvg* will replace *vpype*'s core package, leading to *vpype 2.0*.
 
 ### Fast
 

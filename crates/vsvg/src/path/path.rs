@@ -1,5 +1,5 @@
 use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
-use crate::crop::Crop;
+use crate::crop::{crop_quad_bezier, Crop, QuadCropResult};
 use crate::path::into_bezpath::{
     line_segment_to_bezpath, points_to_bezpath, IntoBezPath, IntoBezPathTolerance,
 };
@@ -220,7 +220,14 @@ impl Path {
                     .into_iter()
                     .map(kurbo::PathSeg::Cubic)
                     .collect(),
-                kurbo::PathSeg::Quad(_) => vec![], // TODO: implement for completeness?
+                kurbo::PathSeg::Quad(quad) => {
+                    match crop_quad_bezier(quad, x_min, y_min, x_max, y_max) {
+                        QuadCropResult::Quad(quad) => vec![kurbo::PathSeg::Quad(quad)],
+                        QuadCropResult::Cubic(cubic) => {
+                            cubic.into_iter().map(kurbo::PathSeg::Cubic).collect()
+                        }
+                    }
+                }
             }
         }));
 

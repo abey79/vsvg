@@ -84,4 +84,9 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
         let doc = document_to_svg_doc(self);
         svg::write(writer, &doc)
     }
+
+    fn to_svg_file(&self, file_path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+        let file = std::io::BufWriter::new(std::fs::File::create(file_path)?);
+        self.to_svg(file)
+    }
 }

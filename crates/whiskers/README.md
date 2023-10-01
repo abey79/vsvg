@@ -1,8 +1,13 @@
-# *whiskers*
+# *whiskers*: interactive sketches for plotter generative art
 
-Part of the [*vsvg* project](https://github.com/abey79/vsvg).
+[<img alt="github" src="https://img.shields.io/badge/github-abey79/vsvg-8da0cb?logo=github" height="20">](https://github.com/abey79/vsvg)
+[![Latest version](https://img.shields.io/crates/v/whiskers.svg)](https://crates.io/crates/whiskers)
+[![Documentation](https://docs.rs/whiskers/badge.svg)](https://docs.rs/whiskers)
+[![GitHub](https://img.shields.io/github/license/abey79/vsvg)](https://github.com/abey79/vsvg/blob/master/LICENSE)
 
-## What's this?
+
+_👉 Try the [**live demo**](https://bylr.info/vsvg/)!_
+
 
 *whiskers* is a [Processing](https://processing.org)-like interactive sketch environment and API built over [*vsvg*](../vsvg/README.md) and [*vsvg-viewer*](../vsvg-viewer/README.md). It's similar to *vsketch*, but faster, web-ready, and with much stronger foundations.
 
@@ -47,6 +52,8 @@ fn main() -> Result {
         .run()
 }
 ```
+
+*whiskers* is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 ## Features
 

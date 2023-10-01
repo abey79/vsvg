@@ -23,6 +23,18 @@ impl<T: IntoBezPathTolerance> IntoBezPath for T {
     }
 }
 
+impl IntoBezPathTolerance for &[(f64, f64)] {
+    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
+        points_to_bezpath(self.iter().copied())
+    }
+}
+
+impl IntoBezPathTolerance for Vec<(f64, f64)> {
+    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
+        points_to_bezpath(self)
+    }
+}
+
 impl IntoBezPathTolerance for &[Point] {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
         points_to_bezpath(self.iter().copied())
