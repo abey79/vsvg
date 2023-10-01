@@ -10,6 +10,12 @@ This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 This crate offers similar functionalities as the core [*vpype*](https://github.com/abey79/vpype) package and its `Document`/`LineCollection` structures. It brings however a host of improvement listed below. In the future, a Python wrapper over *vsvg* will replace *vpype*'s core package.
 
+## Installation
+
+```
+cargo add vsvg
+```
+
 ### Fast
 
 By "fast", I mean "much faster than *vpype*". Consider the following command:
