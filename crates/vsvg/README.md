@@ -44,7 +44,7 @@ fn main() {
 
 This generates the following SVG:
 
-![demo SVG](examples/basic.svg)
+![demo SVG](https://raw.githubusercontent.com/abey79/vsvg/master/crates/vsvg/examples/basic.svg)
 
 
 ## Compared to *vpype*
