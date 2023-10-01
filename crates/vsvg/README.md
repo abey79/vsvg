@@ -6,9 +6,13 @@
 [![GitHub](https://img.shields.io/github/license/abey79/vsvg)](https://github.com/abey79/vsvg/blob/master/LICENSE)
 
 
-*vsvg* is the core crate of the project. It implements the `Document`/`Layer`/`Path` data structures as SVG I/O and related algorithms.
+*vsvg* is the core crate of the project. It implements data structures, I/O, and algorithms to import, create, manipulate,
+and export vector graphics for pen-plotter generative art. It is similar in purpose to the core library that is part
+of [*vpype*](https://github.com/abey79/vpype), but with *many* improvements (see bellow).
 
-This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
+This crate, to ether with its companion [*vsvg-viewer*](https://crates.io/crates/vsvg-viewer), is part of the [*vsvg* project](https://github.com/abey79/vsvg) and powers the [*whiskers*](https://crates.io/crates/whiskers)
+interactive sketch environment.
+
 
 ## Example
 
@@ -88,7 +92,7 @@ Amongst other thing, this will enable hatching algorithm that correctly handle p
 
 ### Improved linearisation
 
-*vsvg* retains the ability to convert curved elements into polylines (a.k.a linearisation), as this step is still required by some operations. For example, exporting to G-code (a feature not yet implemented) typically requires fully linearised path data. Likewise, the *vsvg-viewer* crate requires linearised paths for rendering.
+*vsvg* retains the ability to convert curved elements into polylines (a.k.a. linearisation), as this step is still required by some operations. For example, exporting to G-code (a feature not yet implemented) typically requires fully linearised path data. Likewise, the *vsvg-viewer* crate requires linearised paths for rendering.
 
 The linearisation process is better than *vpype*, with an improved tolerance handling. The segment size adapts based on the curvature instead of respecting an absolute maximum segment length, which minimises the number of points needed when curves are nearly straight.
 
