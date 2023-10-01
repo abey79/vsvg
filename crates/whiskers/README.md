@@ -13,6 +13,14 @@ _👉 Try the [**live demo**](https://bylr.info/vsvg/)!_
 
 <img width="1116" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/bfecf0a1-a0a1-4d27-8a42-6ad95ac438fa">
 
+## Installation
+
+```
+cargo add whiskers
+```
+
+## Usage
+
 Here is the code for this basic sketch:
 
 ```rust
@@ -48,7 +56,7 @@ impl App for HelloWorldSketch {
 
 fn main() -> Result {
     Runner::new(HelloWorldSketch::default())
-        .with_page_size(PageSize::A5H)
+        .with_page_size_options(PageSize::A5H)
         .run()
 }
 ```
@@ -106,8 +114,8 @@ Here is how the code could look:
 use whiskers::prelude::*;
 
 fn main() -> Result {
-    Sketch::with_page_size(PageSize::A5)
-        .scale(Units::CM)
+    Sketch::with_page_size_options(PageSize::A5)
+        .scale(Units::Cm)
         .translate(7.0, 6.0)
         .circle(0.0, 0.0, 2.5)
         .translate(1.0, 4.0)

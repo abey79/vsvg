@@ -51,6 +51,12 @@ This generates the following SVG:
 
 This crate offers similar functionalities as the core [*vpype*](https://github.com/abey79/vpype) package and its `Document`/`LineCollection` structures. It brings however a host of improvements listed below. In the future, a Python wrapper over *vsvg* will replace *vpype*'s core package, leading to *vpype 2.0*.
 
+## Installation
+
+```
+cargo add vsvg
+```
+
 ### Fast
 
 By "fast", I mean "much faster than *vpype*". Consider the following command:
