@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::ops::Range;
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
@@ -18,7 +19,7 @@ impl Default for RngSketch {
 
 impl App for RngSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(Color::DARK_RED).stroke_width(3.0);
+        sketch.stroke_width(3.0);
 
         let should_generate_random_color = ctx.rng_boolean();
 
@@ -66,6 +67,21 @@ impl App for RngSketch {
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)
             .rect(0., 0., self.width, self.height);
+
+        let x_range = Range {
+            start: 0.0,
+            end: sketch.width(),
+        };
+        let y_range = Range {
+            start: 0.0,
+            end: sketch.height(),
+        };
+
+        let some_point = ctx.rng_point(x_range, y_range);
+
+        sketch.push_matrix_reset();
+        sketch.circle(some_point.x(), some_point.y(), 20.0);
+
         Ok(())
     }
 }

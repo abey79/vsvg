@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::ops::Range;
+use vsvg::Point;
 
 /// Context passed to [`crate::App::update`].
 pub struct Context {
@@ -46,5 +47,14 @@ impl Context {
         let num: f64 = self.rng.gen();
         let index = (num * options.len() as f64).floor() as usize;
         options.get(index)
+    }
+
+    /// Helper function to return a random item from a vector
+    pub fn rng_point(&mut self, x_range: Range<f64>, y_range: Range<f64>) -> Point {
+        let x = self.rng_range(x_range);
+        let y = self.rng_range(y_range);
+
+        println!("{}, {}", &x, &y);
+        Point::new(x, y)
     }
 }
