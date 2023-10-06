@@ -34,4 +34,17 @@ impl Context {
         }
         self.rng.gen_range(range)
     }
+
+    /// Helper function to generate a random boolean value
+    pub fn rng_boolean(&mut self) -> bool {
+        let num: f64 = self.rng.gen();
+        num > 0.5
+    }
+
+    /// Helper function to return a random item from a vector
+    pub fn rng_option<'a, T>(&mut self, options: &'a Vec<T>) -> Option<&'a T> {
+        let num: f64 = self.rng.gen();
+        let index = (num * options.len() as f64).floor() as usize;
+        options.get(index)
+    }
 }
