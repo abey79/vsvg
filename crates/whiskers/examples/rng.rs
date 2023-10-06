@@ -32,8 +32,6 @@ impl App for RngSketch {
             }
         );
 
-        let chosen_color;
-
         let colors: Vec<Color> = vec![
             Color::BLACK,
             Color::DARK_GRAY,
@@ -55,7 +53,7 @@ impl App for RngSketch {
             Color::LIGHT_BLUE,
             Color::GOLD,
         ];
-        chosen_color = if should_generate_random_color {
+        let chosen_color = if should_generate_random_color {
             ctx.rng_option(&colors).unwrap()
         } else {
             &Color::BLACK
@@ -63,7 +61,7 @@ impl App for RngSketch {
 
         println!("{}", chosen_color.to_rgb_string());
 
-        sketch.color(Color::from(*chosen_color));
+        sketch.color(*chosen_color);
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)
             .rect(0., 0., self.width, self.height);
