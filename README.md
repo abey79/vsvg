@@ -40,11 +40,11 @@ cd vsvg
 
 ### Running the sketch examples
 
-See *whiskers*'s [README.md](whiskers/README.md).
+See *whiskers*'s [README.md](crates/whiskers/README.md).
 
 ### Installing *vsvg-cli*
 
-See *vsvg-cli*'s [README.md](vsvg-cli/README.md).
+See *vsvg-cli*'s [README.md](crates/vsvg-cli/README.md).
 
 
 ## Design notes
