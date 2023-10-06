@@ -121,7 +121,7 @@ impl SaveUI {
                         {
                             if let Some(sketch) = sketch {
                                 if let Some(path) = self.get_output_path() {
-                                    self.last_error = Some(sketch.save(&path).map(|_| {
+                                    self.last_error = Some(sketch.save(&path).map(|()| {
                                         path.file_name().map_or("<unknown>".to_string(), |s| {
                                             s.to_string_lossy().to_string()
                                         })

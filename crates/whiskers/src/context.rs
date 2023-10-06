@@ -1,4 +1,6 @@
+use egui::emath::Numeric;
 use rand::Rng;
+use rand_distr::num_traits::ToPrimitive;
 use std::ops::Range;
 use vsvg::Point;
 
@@ -44,8 +46,13 @@ impl Context {
 
     /// Helper function to return a random item from a vector
     pub fn rng_option<'a, T>(&mut self, options: &'a Vec<T>) -> Option<&'a T> {
-        let num: usize = self.rng.gen();
-        let index = num * options.len();
+        let index = self
+            .rng_range(Range {
+                start: 0.0,
+                end: options.len().to_f64(),
+            })
+            .to_usize()?;
+
         options.get(index)
     }
 
