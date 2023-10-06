@@ -54,7 +54,6 @@ impl Context {
         let x = self.rng_range(x_range);
         let y = self.rng_range(y_range);
 
-        println!("{}, {}", &x, &y);
         Point::new(x, y)
     }
 }
