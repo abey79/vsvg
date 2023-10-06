@@ -1,6 +1,5 @@
-use egui::emath::Numeric;
+use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
-use rand_distr::num_traits::ToPrimitive;
 use std::ops::Range;
 use vsvg::Point;
 
@@ -31,7 +30,7 @@ impl Context {
 
     /// Helper function to generate a random number in a given range. This function accepts an empty
     /// range, in which case it will always return the start value.
-    pub fn rng_range(&mut self, range: Range<f64>) -> f64 {
+    pub fn rng_range<T: SampleUniform + PartialOrd>(&mut self, range: Range<T>) -> T {
         if range.is_empty() {
             return range.start;
         }
@@ -39,15 +38,22 @@ impl Context {
     }
 
     /// Helper function to generate a random boolean value
-    pub fn rng_boolean(&mut self) -> bool {
+    pub fn rng_bool(&mut self) -> bool {
         self.rng.gen_bool(0.5)
     }
 
-    /// Helper function to return a random item from a vector
-    pub fn rng_option<'a, T>(&mut self, options: &'a Vec<T>) -> Option<&'a T> {
-        let index = self.rng_index(options);
+    /// Helper function to return a random item from a slice
+    ///
+    /// # Panics
+    ///
+    /// Panics if the slice is empty.
+    pub fn rng_choice<'a, T>(&mut self, choices: &'a impl AsRef<[T]>) -> &'a T {
+        let index = self.rng_range(Range {
+            start: 0usize,
+            end: choices.as_ref().len(),
+        });
 
-        options.get(index)
+        choices.as_ref().get(index).unwrap()
     }
 
     /// Helper function to return a random vsvg Point
@@ -56,14 +62,5 @@ impl Context {
         let y = self.rng_range(y_range);
 
         Point::new(x, y)
-    }
-
-    fn rng_index<T>(&mut self, options: &Vec<T>) -> usize {
-        self.rng_range(Range {
-            start: 0.0,
-            end: options.len().to_f64(),
-        })
-        .to_usize()
-        .unwrap_or(0)
     }
 }

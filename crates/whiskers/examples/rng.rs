@@ -21,7 +21,7 @@ impl App for RngSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(3.0);
 
-        let should_generate_random_color = ctx.rng_boolean();
+        let should_generate_random_color = ctx.rng_bool();
 
         println!(
             "Was a random color generated? {}",
@@ -54,7 +54,7 @@ impl App for RngSketch {
             Color::GOLD,
         ];
         let chosen_color = if should_generate_random_color {
-            ctx.rng_option(&colors).unwrap()
+            ctx.rng_choice(&colors)
         } else {
             &Color::BLACK
         };
