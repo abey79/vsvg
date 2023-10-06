@@ -78,7 +78,7 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
 
         let doc = document_to_svg_doc(self);
         let mut svg = String::new();
-        write!(svg, "{doc}").map(|_| svg)
+        write!(svg, "{doc}").map(|()| svg)
     }
     fn to_svg(&self, writer: impl std::io::Write) -> std::io::Result<()> {
         let doc = document_to_svg_doc(self);
