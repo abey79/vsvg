@@ -44,8 +44,8 @@ impl Context {
 
     /// Helper function to return a random item from a vector
     pub fn rng_option<'a, T>(&mut self, options: &'a Vec<T>) -> Option<&'a T> {
-        let num: f64 = self.rng.gen();
-        let index = (num * options.len() as f64).floor() as usize;
+        let num: usize = self.rng.gen();
+        let index = num * options.len();
         options.get(index)
     }
 
