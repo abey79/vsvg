@@ -49,7 +49,7 @@ impl Context {
         options.get(index)
     }
 
-    /// Helper function to return a random item from a vector
+    /// Helper function to return a random vsvg Point
     pub fn rng_point(&mut self, x_range: Range<f64>, y_range: Range<f64>) -> Point {
         let x = self.rng_range(x_range);
         let y = self.rng_range(y_range);
