@@ -9,6 +9,7 @@ pub struct NumericWidget<T: Numeric> {
     max: Option<T>,
     step: Option<T>,
     slider: bool,
+    logarithmic: bool,
 }
 
 impl<T: Numeric> NumericWidget<T> {
@@ -39,6 +40,16 @@ impl<T: Numeric> NumericWidget<T> {
         self.slider = slider;
         self
     }
+
+    /// Sets the widget to logarithmic mode. Implies [`slider(true)`].
+    #[must_use]
+    pub fn logarithmic(mut self, log: bool) -> Self {
+        self.logarithmic = log;
+        if log {
+            self.slider = true;
+        }
+        self
+    }
 }
 
 impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
@@ -49,6 +60,9 @@ impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
             let mut slider = egui::Slider::new(value, range);
             if let Some(step) = self.step {
                 slider = slider.step_by(step.to_f64());
+            }
+            if self.logarithmic {
+                slider = slider.logarithmic(true);
             }
             ui.add(slider)
         } else {
