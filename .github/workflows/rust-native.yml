@@ -11,8 +11,7 @@ on:
       - release/*
 
 jobs:
-  check:
-    name: "lint, tests, clippy, docs"
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,6 +23,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: "lint"
 
       - uses: taiki-e/install-action@v2
         with:
@@ -32,4 +33,47 @@ jobs:
       - run: just fmt
       - run: just clippy
       - run: just test
+      - run: just docs
+
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: "test"
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - run: just test
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: "docs"
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - run: just docs
