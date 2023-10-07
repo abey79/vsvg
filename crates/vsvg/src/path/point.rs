@@ -1,5 +1,3 @@
-use std::ops::{Div, Mul};
-
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
     data: [f64; 2],
@@ -185,7 +183,7 @@ impl std::ops::Sub for Point {
     }
 }
 
-impl Mul<f64> for Point {
+impl std::ops::Mul<f64> for Point {
     type Output = Self;
 
     #[inline]
@@ -194,7 +192,7 @@ impl Mul<f64> for Point {
     }
 }
 
-impl Mul<Point> for f64 {
+impl std::ops::Mul<Point> for f64 {
     type Output = Point;
 
     #[inline]
@@ -203,7 +201,7 @@ impl Mul<Point> for f64 {
     }
 }
 
-impl Div<f64> for Point {
+impl std::ops::Div<f64> for Point {
     type Output = Self;
 
     #[inline]
@@ -212,7 +210,7 @@ impl Div<f64> for Point {
     }
 }
 
-impl Mul<Point> for kurbo::Affine {
+impl std::ops::Mul<Point> for kurbo::Affine {
     type Output = Point;
 
     #[inline]

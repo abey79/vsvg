@@ -52,6 +52,7 @@ impl CatmullRom {
     }
 
     /// Get the control points.
+    #[must_use]
     pub fn points(&self) -> &[Point] {
         &self.points
     }
