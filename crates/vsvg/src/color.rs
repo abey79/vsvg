@@ -98,6 +98,29 @@ impl fmt::Display for Color {
     }
 }
 
+impl From<[f32; 4]> for Color {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    fn from(value: [f32; 4]) -> Self {
+        Self {
+            r: (value[0].clamp(0., 1.) * 255.0) as u8,
+            g: (value[1].clamp(0., 1.) * 255.0) as u8,
+            b: (value[2].clamp(0., 1.) * 255.0) as u8,
+            a: (value[3].clamp(0., 1.) * 255.0) as u8,
+        }
+    }
+}
+
+impl From<Color> for [f32; 4] {
+    fn from(value: Color) -> Self {
+        [
+            f32::from(value.r) / 255.0,
+            f32::from(value.g) / 255.0,
+            f32::from(value.b) / 255.0,
+            f32::from(value.a) / 255.0,
+        ]
+    }
+}
+
 pub const COLORS: [Color; 19] = [
     Color::BLACK,
     Color::DARK_GRAY,

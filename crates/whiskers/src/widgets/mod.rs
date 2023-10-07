@@ -95,14 +95,16 @@
 //! [`true`] is assumed.
 
 mod bool;
-mod numeric_widget;
+mod color;
+mod numeric;
 mod point;
-mod string_widget;
+mod string;
 
 pub use crate::widgets::bool::*;
-pub use numeric_widget::*;
+pub use color::*;
+pub use numeric::*;
 pub use point::*;
-pub use string_widget::*;
+pub use string::*;
 
 /// This is the base trait for widgets used to display sketch parameters in the UI.
 ///
