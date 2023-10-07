@@ -65,7 +65,7 @@ impl App for WhiskersDemoSketch {
 }
 
 wasm_sketch!(Runner::new(WhiskersDemoSketch::default())
-    .with_layout_option(LayoutOptions::centered())
+    .with_layout_options(LayoutOptions::centered())
     .with_info_options(
         InfoOptions::default()
             .description(
