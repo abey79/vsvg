@@ -123,7 +123,7 @@ impl Runner<'_> {
 
     /// Sets the default layout options.
     #[must_use]
-    pub fn with_layout_option(self, options: impl Into<LayoutOptions>) -> Self {
+    pub fn with_layout_options(self, options: impl Into<LayoutOptions>) -> Self {
         Self {
             layout_options: options.into(),
             ..self
