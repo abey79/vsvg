@@ -21,39 +21,22 @@ impl App for RngSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(3.0);
 
-        let should_generate_random_color = ctx.rng_bool();
-
-        println!(
-            "Was a random color generated? {}",
-            if should_generate_random_color {
-                "Yes"
-            } else {
-                "No"
-            }
-        );
-
         let colors = COLORS.to_vec();
-        let chosen_color = if should_generate_random_color {
-            ctx.rng_choice(&colors)
-        } else {
-            &Color::BLACK
-        };
+        let chosen_color = ctx.rng_choice(&colors);
 
-        println!("{}", chosen_color.to_rgb_string());
+        let w = sketch.width();
+        let h = sketch.height();
+        let has_bold_stroke = ctx.rng_bool();
+        let stroke_width = if has_bold_stroke { 10.0 } else { 5.0 };
 
-        sketch.color(*chosen_color);
         sketch
-            .translate(sketch.width() / 2.0, sketch.height() / 2.0)
+            .color(*chosen_color)
+            .stroke_width(stroke_width)
+            .translate(w / 2.0, h / 2.0)
             .rect(0., 0., self.width, self.height);
 
-        let x_range = Range {
-            start: 0.0,
-            end: sketch.width(),
-        };
-        let y_range = Range {
-            start: 0.0,
-            end: sketch.height(),
-        };
+        let x_range = Range { start: 0.0, end: w };
+        let y_range = Range { start: 0.0, end: h };
 
         let some_point = ctx.rng_point(x_range, y_range);
 
