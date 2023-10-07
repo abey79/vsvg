@@ -56,8 +56,9 @@ features = [
 # for examples
 [dev-dependencies]
 geo = "0.26.0"
-voronoice = "0.2.0"
 itertools.workspace = true
+noise = "0.8.2"
+voronoice = "0.2.0"
 
 [features]
 default = ["viewer"]
