@@ -7,7 +7,7 @@ impl super::Widget<bool> for BoolWidget {
         // empty first column
         ui.horizontal(|_| {});
 
-        ui.checkbox(value, label)
+        ui.checkbox(value, label.trim_end_matches(':'))
     }
 }
 
