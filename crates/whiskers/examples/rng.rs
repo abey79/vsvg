@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::ops::Range;
+use vsvg::COLORS;
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
@@ -32,27 +33,7 @@ impl App for RngSketch {
             }
         );
 
-        let colors: Vec<Color> = vec![
-            Color::BLACK,
-            Color::DARK_GRAY,
-            Color::GRAY,
-            Color::LIGHT_GRAY,
-            Color::WHITE,
-            Color::BROWN,
-            Color::DARK_RED,
-            Color::RED,
-            Color::LIGHT_RED,
-            Color::YELLOW,
-            Color::LIGHT_YELLOW,
-            Color::KHAKI,
-            Color::DARK_GREEN,
-            Color::GREEN,
-            Color::LIGHT_GREEN,
-            Color::DARK_BLUE,
-            Color::BLUE,
-            Color::LIGHT_BLUE,
-            Color::GOLD,
-        ];
+        let colors = COLORS.to_vec();
         let chosen_color = if should_generate_random_color {
             ctx.rng_choice(&colors)
         } else {
