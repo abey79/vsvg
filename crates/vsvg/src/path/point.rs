@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
     data: [f64; 2],
@@ -167,7 +165,52 @@ impl From<glam::Vec2> for Point {
     }
 }
 
-impl Mul<Point> for kurbo::Affine {
+impl std::ops::Add for Point {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, other: Self) -> Self {
+        Self::new(self.x() + other.x(), self.y() + other.y())
+    }
+}
+
+impl std::ops::Sub for Point {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, other: Self) -> Self {
+        Self::new(self.x() - other.x(), self.y() - other.y())
+    }
+}
+
+impl std::ops::Mul<f64> for Point {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, other: f64) -> Self {
+        Self::new(self.x() * other, self.y() * other)
+    }
+}
+
+impl std::ops::Mul<Point> for f64 {
+    type Output = Point;
+
+    #[inline]
+    fn mul(self, other: Point) -> Point {
+        other * self
+    }
+}
+
+impl std::ops::Div<f64> for Point {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, other: f64) -> Self {
+        Self::new(self.x() / other, self.y() / other)
+    }
+}
+
+impl std::ops::Mul<Point> for kurbo::Affine {
     type Output = Point;
 
     #[inline]

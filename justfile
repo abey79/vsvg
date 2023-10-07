@@ -7,6 +7,9 @@ clippy $RUSTFLAGS="-Dwarnings":
 clippy-wasm $RUSTFLAGS="-Dwarnings":
     cargo clippy --workspace --all-features --exclude msvg --exclude vsvg-cli --bins --target wasm32-unknown-unknown
 
+docs $RUSTDOCFLAGS="-Dwarnings":
+    cargo doc --all-features --no-deps --bins --examples -p whiskers -p vsvg
+
 fmt:
     cargo fmt --all -- --check
 
@@ -21,6 +24,6 @@ web-serve:
     basic-http-server crates/whiskers-web-demo/web
 
 test:
-    cargo test
+    cargo test --workspace --all-features --bins --examples
 
 lint: clippy clippy-wasm fmt test

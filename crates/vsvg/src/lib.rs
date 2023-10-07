@@ -6,6 +6,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
+mod catmull_rom;
 mod color;
 mod crop;
 mod document;
@@ -23,6 +24,7 @@ mod unit;
 pub use crate::svg::*;
 pub use color::*;
 
+pub use catmull_rom::*;
 pub use crop::*;
 pub use document::*;
 pub use layer::*;

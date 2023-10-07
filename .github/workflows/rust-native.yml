@@ -12,7 +12,7 @@ on:
 
 jobs:
   check:
-    name: "lint, tests, clippy"
+    name: "lint, tests, clippy, docs"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -32,3 +32,4 @@ jobs:
       - run: just fmt
       - run: just clippy
       - run: just test
+      - run: just docs
