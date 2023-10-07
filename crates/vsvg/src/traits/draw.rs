@@ -121,6 +121,18 @@ pub trait Draw {
         ))
     }
 
+    /// Draw a Catmull-Rom spline from a sequence of points and a tension parameter.
+    ///
+    /// See [`CatmullRom`] for more information.
+    fn catmull_rom(
+        &mut self,
+        points: impl IntoIterator<Item = impl Into<Point>>,
+        tension: f64,
+    ) -> &mut Self {
+        self.add_path(crate::CatmullRom::from_points(points).tension(tension));
+        self
+    }
+
     /// Draw from an SVG path representation.
     fn svg_path(&mut self, path: &str) -> Result<&mut Self, kurbo::SvgParseError> {
         self.add_path(kurbo::BezPath::from_svg(path)?);

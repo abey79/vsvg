@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Div, Mul};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
@@ -164,6 +164,51 @@ impl From<&Point> for egui::Pos2 {
 impl From<glam::Vec2> for Point {
     fn from(p: glam::Vec2) -> Self {
         Self::new(f64::from(p.x), f64::from(p.y))
+    }
+}
+
+impl std::ops::Add for Point {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, other: Self) -> Self {
+        Self::new(self.x() + other.x(), self.y() + other.y())
+    }
+}
+
+impl std::ops::Sub for Point {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, other: Self) -> Self {
+        Self::new(self.x() - other.x(), self.y() - other.y())
+    }
+}
+
+impl Mul<f64> for Point {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, other: f64) -> Self {
+        Self::new(self.x() * other, self.y() * other)
+    }
+}
+
+impl Mul<Point> for f64 {
+    type Output = Point;
+
+    #[inline]
+    fn mul(self, other: Point) -> Point {
+        other * self
+    }
+}
+
+impl Div<f64> for Point {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, other: f64) -> Self {
+        Self::new(self.x() / other, self.y() / other)
     }
 }
 
