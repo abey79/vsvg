@@ -97,3 +97,25 @@ impl fmt::Display for Color {
         )
     }
 }
+
+pub const COLORS: [Color; 19] = [
+    Color::BLACK,
+    Color::DARK_GRAY,
+    Color::GRAY,
+    Color::LIGHT_GRAY,
+    Color::WHITE,
+    Color::BROWN,
+    Color::DARK_RED,
+    Color::RED,
+    Color::LIGHT_RED,
+    Color::YELLOW,
+    Color::LIGHT_YELLOW,
+    Color::KHAKI,
+    Color::DARK_GREEN,
+    Color::GREEN,
+    Color::LIGHT_GREEN,
+    Color::DARK_BLUE,
+    Color::BLUE,
+    Color::LIGHT_BLUE,
+    Color::GOLD,
+];
