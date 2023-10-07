@@ -5,7 +5,7 @@ struct CatmullRomSketch {
     #[param(slider, min = 3, max = 60)]
     num_points: usize,
 
-    #[param(slider, min = 0.01, max = 10.0)]
+    #[param(logarithmic, min = 0.01, max = 100.0)]
     tension: f64,
 
     negative_tension: bool,
@@ -33,7 +33,10 @@ impl App for CatmullRomSketch {
             sketch.circle(pts.x(), pts.y(), 1.);
         }
 
-        sketch.catmull_rom(points, self.tension);
+        sketch.catmull_rom(
+            points,
+            self.tension * if self.negative_tension { -1. } else { 1. },
+        );
 
         Ok(())
     }
