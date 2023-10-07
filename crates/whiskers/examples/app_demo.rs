@@ -7,6 +7,8 @@ struct MySketch {
     num_circle: usize,
     unused_text: String,
 
+    color: Color,
+
     // we can tell [`Sketch`] to ignore some fields
     #[skip]
     #[allow(dead_code)]
@@ -19,6 +21,7 @@ impl Default for MySketch {
             rate: 3.0,
             num_circle: 10,
             unused_text: "Hello".to_string(),
+            color: Color::DARK_GREEN,
             irrelevant: String::new(),
         }
     }
@@ -26,6 +29,7 @@ impl Default for MySketch {
 
 impl App for MySketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
+        sketch.color(self.color);
         for i in 0..self.num_circle {
             sketch.circle(
                 100.0,
