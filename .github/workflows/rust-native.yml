@@ -32,9 +32,6 @@ jobs:
 
       - run: just fmt
       - run: just clippy
-      - run: just test
-      - run: just docs
-
 
   test:
     runs-on: ubuntu-latest
