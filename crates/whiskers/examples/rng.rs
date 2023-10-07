@@ -1,4 +1,3 @@
-use rand::Rng;
 use std::ops::Range;
 use vsvg::COLORS;
 use whiskers::prelude::*;
@@ -66,10 +65,8 @@ impl App for RngSketch {
 }
 
 fn main() -> Result {
-    let mut rng = rand::thread_rng();
-    let num: u32 = rng.gen();
     Runner::new(RngSketch::default())
-        .with_seed(num)
+        .with_random_seed()
         .with_page_size_options(PageSize::A5H)
         .run()
 }
