@@ -123,7 +123,7 @@ pub trait Draw {
 
     /// Draw a Catmull-Rom spline from a sequence of points and a tension parameter.
     ///
-    /// See [`CatmullRom`] for more information.
+    /// See [`crate::CatmullRom`] for more information.
     fn catmull_rom(
         &mut self,
         points: impl IntoIterator<Item = impl Into<Point>>,

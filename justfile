@@ -7,6 +7,9 @@ clippy $RUSTFLAGS="-Dwarnings":
 clippy-wasm $RUSTFLAGS="-Dwarnings":
     cargo clippy --workspace --all-features --exclude msvg --exclude vsvg-cli --bins --target wasm32-unknown-unknown
 
+docs $RUSTDOCFLAGS="-Dwarnings":
+    cargo doc --all-features --no-deps --bins --examples -p whiskers -p vsvg
+
 fmt:
     cargo fmt --all -- --check
 

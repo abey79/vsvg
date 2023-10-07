@@ -1,4 +1,5 @@
-//! This example demonstrates how to directly use [`Sketch`] without using the [`run`]/[`App`] API.
+//! This example demonstrates how to directly use [`whiskers::Sketch`] without using the [`Runner`]
+//! API.
 use whiskers::prelude::*;
 
 fn main() -> Result {
