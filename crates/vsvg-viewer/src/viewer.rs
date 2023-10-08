@@ -11,6 +11,7 @@ const VSVG_VIEWER_STORAGE_KEY: &str = "vsvg-viewer-state";
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[allow(clippy::struct_excessive_bools)]
 struct ViewerState {
     /// Show settings window.
     show_settings: bool,
@@ -20,6 +21,10 @@ struct ViewerState {
 
     /// Show memory window.
     show_memory: bool,
+
+    #[cfg(feature = "puffin")]
+    /// Show profiler window.
+    show_profile: bool,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -89,6 +94,12 @@ impl Viewer {
                 ui.close_menu();
             }
 
+            #[cfg(feature = "puffin")]
+            if ui.button("Show profiler window").clicked() {
+                self.state.show_profile = true;
+                ui.close_menu();
+            }
+
             ui.separator();
             Self::egui_debug_options_ui(ui);
         });
@@ -135,6 +146,11 @@ impl Viewer {
 
 impl eframe::App for Viewer {
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
+        vsvg::trace_function!();
+
+        #[cfg(feature = "puffin")]
+        puffin::set_scopes_on(self.state.show_profile);
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
@@ -186,6 +202,14 @@ impl eframe::App for Viewer {
 
         self.frame_history
             .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
+
+        #[cfg(feature = "puffin")]
+        {
+            if self.state.show_profile {
+                self.state.show_profile = puffin_egui::profiler_window(ctx);
+            }
+            puffin::GlobalProfiler::lock().new_frame();
+        }
     }
 
     /// Called by the framework to save state before shutdown.

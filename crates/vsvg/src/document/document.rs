@@ -50,6 +50,8 @@ impl Document {
 
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedDocument {
+        crate::trace_function!();
+
         FlattenedDocument::new(
             self.layers
                 .iter()
@@ -61,6 +63,8 @@ impl Document {
 
     #[must_use]
     pub fn control_points(&self) -> FlattenedDocument {
+        crate::trace_function!();
+
         FlattenedDocument::new(
             self.layers
                 .iter()

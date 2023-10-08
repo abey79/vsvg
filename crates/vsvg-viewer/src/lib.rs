@@ -92,6 +92,8 @@ pub trait ViewerApp {
 /// For native use only.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Result<()> {
+    vsvg::trace_function!();
+
     let viewer_app = Box::new(viewer_app);
     let document_data = std::sync::Arc::new(DocumentData::default());
 

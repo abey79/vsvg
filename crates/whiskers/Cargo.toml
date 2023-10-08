@@ -63,3 +63,4 @@ voronoice = "0.2.0"
 [features]
 default = ["viewer"]
 viewer = ["dep:vsvg-viewer"]
+puffin = ["vsvg/puffin", "vsvg-viewer/puffin"]

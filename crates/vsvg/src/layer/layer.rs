@@ -1,5 +1,6 @@
 use super::{FlattenedLayer, LayerMetadata, LayerTrait, Transforms};
-use crate::{FlattenedPath, Path, Point};
+use crate::{Path, Point};
+use rayon::prelude::*;
 
 #[derive(Default, Clone, Debug)]
 pub struct Layer {
@@ -18,7 +19,7 @@ impl Layer {
 
 impl Transforms for Layer {
     fn transform(&mut self, affine: &kurbo::Affine) -> &mut Self {
-        self.paths.iter_mut().for_each(|path| {
+        self.paths.par_iter_mut().for_each(|path| {
             path.transform(affine);
         });
         self
@@ -46,27 +47,34 @@ impl LayerTrait<Path, kurbo::BezPath> for Layer {
 impl Layer {
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedLayer {
-        let flattened_paths =
-            self.paths
-                .iter()
-                .fold(Vec::<FlattenedPath>::new(), |mut polylines, path| {
-                    polylines.append(&mut path.flatten(tolerance));
-                    polylines
-                });
+        crate::trace_function!();
+
+        let flattened_paths = self
+            .paths
+            .par_iter()
+            .flat_map(|path| path.flatten(tolerance))
+            .collect();
 
         FlattenedLayer::new(flattened_paths, self.metadata.clone())
     }
 
     #[must_use]
     pub fn control_points(&self) -> FlattenedLayer {
+        crate::trace_function!();
+
         FlattenedLayer::new(
-            self.paths.iter().flat_map(Path::control_points).collect(),
+            self.paths
+                .par_iter()
+                .flat_map(Path::control_points)
+                .collect(),
             self.metadata.clone(),
         )
     }
 
     #[must_use]
     pub fn display_vertices(&self) -> Vec<Point> {
+        crate::trace_function!();
+
         self.paths
             .iter()
             .flat_map(|path| {
@@ -82,7 +90,7 @@ impl Layer {
     }
 
     pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {
-        self.paths.iter_mut().for_each(|path| {
+        self.paths.par_iter_mut().for_each(|path| {
             path.crop(x_min, y_min, x_max, y_max);
         });
 
