@@ -1,5 +1,7 @@
-use whiskers::grid::cell::GridCell;
-use whiskers::{grid::Grid, prelude::*};
+use whiskers::{
+    grid::{cell::GridCell, *},
+    prelude::*,
+};
 
 #[derive(Sketch)]
 struct GridSketch {
