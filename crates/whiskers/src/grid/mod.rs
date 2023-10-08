@@ -167,7 +167,7 @@ impl<'a, T> Grid<'a, T> {
         }
     }
 
-    /// Draw grid instance
+    /// Draw grid's instance as rectangles, with current sketch settings
     pub fn draw(&mut self) {
         self.data.iter().for_each(|cell| {
             self.sketch.rect(
