@@ -25,6 +25,8 @@ impl BasicPainterData {
         vertices: impl IntoIterator<Item = [f32; 2]>,
         color: u32,
     ) -> Self {
+        vsvg::trace_function!();
+
         let vertices = vertices
             .into_iter()
             .map(|v| ColorVertex { position: v, color })

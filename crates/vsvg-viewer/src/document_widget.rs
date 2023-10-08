@@ -125,9 +125,16 @@ impl DocumentWidget {
         let scale = self.scale;
         let origin = cgmath::Point2::new(self.offset.x, self.offset.y);
 
-        let new_doc_data = self.new_document_data.take();
-        if let Some(new_doc_data) = new_doc_data.clone() {
-            self.document_data = new_doc_data;
+        let new_doc_data;
+        {
+            vsvg::trace_scope!("move DocumentData");
+
+            //TODO: this can become slow with lots of vertices (memory copy?)
+
+            new_doc_data = self.new_document_data.take();
+            if let Some(new_doc_data) = new_doc_data.clone() {
+                self.document_data = new_doc_data;
+            }
         }
 
         let cb = egui_wgpu::CallbackFn::new()
@@ -226,6 +233,8 @@ impl DocumentWidget {
     }
 
     fn fit_to_view(&mut self, viewport: &Rect) {
+        vsvg::trace_function!();
+
         let bounds =
             if let Some(page_size) = self.document_data.flattened_document.metadata().page_size {
                 if page_size.w() != 0.0 && page_size.h() != 0.0 {

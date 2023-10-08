@@ -24,7 +24,7 @@ eframe = { version = "0.22.0", default-features = false, features = [
 egui = "0.22.0"
 getrandom = { version = "0", features = ["js"] } # wasm support
 itertools = "0.11.0"
-kurbo = "0.9.1"
+kurbo = "0.10.3"
 log = "0.4.20"
 puffin = "0.16.0"  # sync with egui
 puffin_egui = "0.22.0"  # sync with egui

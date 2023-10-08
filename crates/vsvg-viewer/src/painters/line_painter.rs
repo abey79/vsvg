@@ -35,6 +35,8 @@ impl LinePainterData {
     where
         I: IntoIterator<Item = &'b FlattenedPath>,
     {
+        vsvg::trace_function!();
+
         let (vertices, attribs) = Self::build_buffers(paths);
 
         // prepare point buffer
