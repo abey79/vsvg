@@ -36,6 +36,7 @@ impl App for GridSketch {
         sketch.stroke_width(3.0);
 
         let mut grid = Grid::<f64>::new(
+            sketch,
             self.columns,
             self.rows,
             if self.is_canvas_sizing {
@@ -47,14 +48,7 @@ impl App for GridSketch {
             Point::new(0.0, 0.0),
         );
         grid.init(None);
-        grid.data.iter().for_each(|cell| {
-            sketch.rect(
-                cell.canvas_position.x() + (cell.size[0] / 2.0),
-                cell.canvas_position.y() + (cell.size[1] / 2.0),
-                cell.size[0],
-                cell.size[1],
-            );
-        });
+        grid.draw();
 
         Ok(())
     }

@@ -1,5 +1,7 @@
 //!
-use vsvg::Point;
+use vsvg::{Draw, Point};
+
+use crate::Sketch;
 
 use self::cell::GridCell;
 
@@ -32,7 +34,8 @@ pub enum GridSize {
 /// );
 /// grid.init(None);
 /// ```
-pub struct Grid<T> {
+pub struct Grid<'a, T> {
+    sketch: &'a mut Sketch,
     columns: usize,
     rows: usize,
     size: GridSize,
@@ -45,10 +48,11 @@ pub struct Grid<T> {
 /// Function to populate the grid with data of given type
 pub type GridInitFn<T> = fn(column: usize, row: usize, data: &Vec<GridCell<T>>) -> Option<T>;
 
-impl<T> Grid<T> {
+impl<'a, T> Grid<'a, T> {
     /// Creates new instance of the grid with empty data vector
     #[allow(clippy::too_many_arguments)]
     pub fn new(
+        sketch: &'a mut Sketch,
         columns: usize,
         rows: usize,
         size: GridSize,
@@ -56,6 +60,7 @@ impl<T> Grid<T> {
         position: Point,
     ) -> Self {
         Self {
+            sketch,
             columns,
             rows,
             size,
@@ -160,5 +165,17 @@ impl<T> Grid<T> {
             }
             GridSize::CellBased(s) => s,
         }
+    }
+
+    /// Draw grid instance
+    pub fn draw(&mut self) {
+        self.data.iter().for_each(|cell| {
+            self.sketch.rect(
+                cell.canvas_position.x() + (cell.size[0] / 2.0),
+                cell.canvas_position.y() + (cell.size[1] / 2.0),
+                cell.size[0],
+                cell.size[1],
+            );
+        });
     }
 }
