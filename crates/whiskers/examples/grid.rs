@@ -38,7 +38,7 @@ impl App for GridSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(5.0);
 
-        fn fill_grid<'a>(column: usize, row: usize, _: &'a Vec<GridCell<Color>>) -> Option<Color> {
+        fn fill_grid(column: usize, row: usize, _: &Vec<GridCell<Color>>) -> Option<Color> {
             let grey = ((row as f64) * (column as f64)).cos() * 100.0;
             Some(Color::rgb(80, grey as u8, 120))
         }
