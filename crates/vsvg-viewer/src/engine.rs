@@ -112,8 +112,10 @@ pub struct DocumentData {
 impl DocumentData {
     #[must_use]
     pub fn new(document: &Document) -> Self {
+        vsvg::trace_function!();
+
         Self {
-            flattened_document: document.flatten(0.01), //TODO: magic number
+            flattened_document: document.flatten(0.1), //TODO: magic number
             control_points: document.control_points(),
             display_vertices: document
                 .layers
@@ -354,6 +356,8 @@ impl Engine {
         scale: f32,
         origin: cgmath::Point2<f32>,
     ) {
+        vsvg::trace_function!();
+
         // Update our uniform buffer with the angle from the UI
         let mut camera_uniform = CameraUniform::default();
         camera_uniform.update(
@@ -371,6 +375,8 @@ impl Engine {
     }
 
     pub(super) fn paint<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
+        vsvg::trace_function!();
+
         if let Some(page_size_painter_data) = &self.page_size_painter_data {
             self.page_size_painter.draw(
                 render_pass,

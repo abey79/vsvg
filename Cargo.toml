@@ -26,9 +26,12 @@ getrandom = { version = "0", features = ["js"] } # wasm support
 itertools = "0.11.0"
 kurbo = "0.9.1"
 log = "0.4.20"
+puffin = "0.16.0"  # sync with egui
+puffin_egui = "0.22.0"  # sync with egui
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
+rayon = "1.8.0"
 serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1.0.107"
 thiserror = "1.0.49"

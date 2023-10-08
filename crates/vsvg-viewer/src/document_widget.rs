@@ -69,11 +69,14 @@ impl DocumentWidget {
     }
 
     pub fn set_document_data(&mut self, doc_data: DocumentData) {
+        vsvg::trace_function!();
         self.new_document_data = Some(Arc::new(doc_data));
     }
 
     #[allow(clippy::missing_panics_doc)]
     pub fn ui(&mut self, ui: &mut Ui) {
+        vsvg::trace_function!();
+
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), Sense::click_and_drag());
 
         // fit to view on request
@@ -129,6 +132,7 @@ impl DocumentWidget {
 
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, _encoder, paint_callback_resources| {
+                vsvg::trace_scope!("wgpu prepare callback");
                 let engine: &mut Engine = paint_callback_resources.get_mut().unwrap();
 
                 if let Some(new_doc_data) = new_doc_data.clone() {
@@ -138,6 +142,7 @@ impl DocumentWidget {
                 Vec::new()
             })
             .paint(move |_info, render_pass, paint_callback_resources| {
+                vsvg::trace_scope!("wgpu paint callback");
                 let engine: &Engine = paint_callback_resources.get().unwrap();
                 engine.paint(render_pass);
             });

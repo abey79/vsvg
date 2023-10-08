@@ -21,7 +21,9 @@ kurbo.workspace = true
 lazy_static = "1.4.0"
 log.workspace = true
 lyon_geom = "1.0.4"
+puffin = { workspace = true, optional = true }
 quick-xml = "0.30.0"
+rayon.workspace = true
 regex = "1.7.1"
 serde.workspace = true
 serde_json.workspace = true
@@ -46,6 +48,7 @@ criterion = "0.5.1"
 
 [features]
 default = ["geo"]
+puffin = ["dep:puffin"]
 
 [[bench]]
 name = "bench_path_index"

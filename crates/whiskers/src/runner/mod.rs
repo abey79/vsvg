@@ -144,6 +144,8 @@ impl Runner<'_> {
 impl Runner<'static> {
     /// Execute the sketch app.
     pub fn run(self) -> anyhow::Result<()> {
+        vsvg::trace_function!();
+
         vsvg_viewer::show_with_viewer_app(self)
     }
 }
@@ -220,6 +222,8 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         ctx: &egui::Context,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
+        vsvg::trace_function!();
+
         if self.animation_options.update_time() {
             self.dirty();
         }
@@ -280,8 +284,14 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
             let mut sketch = Sketch::new();
             sketch.page_size(self.page_size_options.page_size);
-            self.app.update(&mut sketch, &mut context)?;
-            self.layout_options.apply(&mut sketch);
+            {
+                vsvg::trace_scope!("sketch: update");
+                self.app.update(&mut sketch, &mut context)?;
+            }
+            {
+                vsvg::trace_scope!("sketch: layout");
+                self.layout_options.apply(&mut sketch);
+            }
             document_widget.set_document_data(vsvg_viewer::DocumentData::new(sketch.document()));
             self.last_sketch = Some(sketch);
 
