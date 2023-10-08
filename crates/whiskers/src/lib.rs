@@ -97,6 +97,7 @@
 
 mod context;
 
+pub mod grid;
 /// This module re-export all the types, traits, macros, and dependencies needed to run a sketch.
 pub mod prelude;
 mod runner;
