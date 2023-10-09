@@ -165,4 +165,22 @@ impl Grid {
         let rows = self.dimensions[0].to_f64();
         rows * self.module_size()[1] + rows * self.gutter[1]
     }
+
+    /// Returns optional reference to a grid cell at specific column and row index
+    pub fn at(&mut self, column: usize, row: usize) -> Option<&mut GridCell> {
+        self.data
+            .iter_mut()
+            .find(|cell| cell.column == column && cell.row == row)
+    }
+
+    /// Aligns grid cells to specific dimensions
+    pub fn align_to(&mut self, rect_dimensions: [f64; 2]) {
+        let [width, height] = self.module_size();
+        let diff_x = rect_dimensions[0] / width;
+        let diff_y = rect_dimensions[1] / height;
+
+        self.data.iter_mut().for_each(|cell| {
+            cell.position = Point::new(cell.position.x() + diff_x, cell.position.y() + diff_y);
+        });
+    }
 }
