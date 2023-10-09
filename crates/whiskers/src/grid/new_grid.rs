@@ -1,5 +1,6 @@
-use egui::emath::Numeric;
 use vsvg::Point;
+
+use crate::Sketch;
 
 /// Grid's size can be set either by passing
 /// the cell's or grid's dimensions. Pass one of the enum members
@@ -11,11 +12,11 @@ enum GridSize {
     GridBased([f64; 2]),
 }
 
+/// Stores basic grid's cell data, like column, row and canvas position
 pub struct GridCell {
     column: usize,
     row: usize,
     position: Point,
-    size: [f64; 2],
 }
 
 /// 2-dimensional square grid module
@@ -113,7 +114,10 @@ impl Grid {
     /// Computes grid's cell data such as coordinates (column and row),
     /// size and canvas position.
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    pub fn build(&mut self) {
+    pub fn build<F>(&mut self, sketch: &mut Sketch, callback_fn: F)
+    where
+        F: FnOnce(&mut Sketch, &GridCell) + Copy,
+    {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
         let [columns, rows] = self.dimensions;
@@ -126,12 +130,13 @@ impl Grid {
                 let pos_y =
                     self.position.y() + (row as f64 * module_height + row as f64 * gutter_height);
 
-                cells.push(GridCell {
+                let cell = GridCell {
                     column,
                     row,
                     position: Point::new(pos_x, pos_y),
-                    size: self.module_size(),
-                });
+                };
+                callback_fn(sketch, &cell);
+                cells.push(cell);
             }
         }
         self.data = cells;
