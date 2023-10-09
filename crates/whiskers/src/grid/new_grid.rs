@@ -112,6 +112,7 @@ impl Grid {
 
     /// Computes grid's cell data such as coordinates (column and row),
     /// size and canvas position.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     pub fn build(&mut self) {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
@@ -155,14 +156,16 @@ impl Grid {
     }
 
     /// Returns width of the grid
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     pub fn width(&self) -> f64 {
-        let columns = self.dimensions[0].to_f64();
+        let columns = self.dimensions[0] as f64;
         columns * self.module_size()[0] + columns * self.gutter[0]
     }
 
     /// Returns height of the grid
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     pub fn height(&self) -> f64 {
-        let rows = self.dimensions[0].to_f64();
+        let rows = self.dimensions[0] as f64;
         rows * self.module_size()[1] + rows * self.gutter[1]
     }
 
