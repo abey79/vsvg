@@ -6,6 +6,7 @@ use crate::Sketch;
 use self::cell::GridCell;
 
 pub mod cell;
+pub mod new_grid;
 
 /// Grid's size can be set either by passing
 /// the cell's or grid's dimensions. Pass one of the enum members
