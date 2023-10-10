@@ -135,10 +135,11 @@ impl Grid {
     /// Computes grid's cell data such as coordinates (column and row),
     /// size and canvas position.
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    pub fn build<F>(&mut self, sketch: &mut Sketch, callback_fn: F)
-    where
-        F: FnOnce(&mut Sketch, &GridCell) + Copy,
-    {
+    pub fn build(
+        &mut self,
+        sketch: &mut Sketch,
+        callback_fn: impl FnOnce(&mut Sketch, &GridCell) + Copy,
+    ) {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
         let [columns, rows] = self.dimensions;
