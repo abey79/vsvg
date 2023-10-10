@@ -49,7 +49,7 @@ impl IntoBezPathTolerance for GridCell {
 /// Grid::from_total_size([600.0, 800.0])
 ///     .columns(5)
 ///     .rows(10)
-///     .translate(Point::new(20.0, 100.0))
+///     .position(Point::new(20.0, 100.0))
 ///     .spacing([10.0, 10.0])
 ///     .build(sketch, |sketch, cell| {
 ///         sketch.add_path(cell);
