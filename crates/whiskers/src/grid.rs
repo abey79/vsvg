@@ -1,22 +1,41 @@
-use vsvg::Point;
+//!
+use vsvg::{IntoBezPathTolerance, Point};
 
 use crate::Sketch;
 
-/// Grid's size can be set either by passing
-/// the cell's or grid's dimensions. Pass one of the enum members
-/// to choose
+use kurbo::PathEl;
+
 enum GridSize {
-    /// Set cell size, grid's size will be computed
     CellBased([f64; 2]),
-    /// Set fixed grid size
     GridBased([f64; 2]),
 }
 
 /// Stores basic grid's cell data, like column, row and canvas position
+#[derive(Clone)]
 pub struct GridCell {
     column: usize,
     row: usize,
     position: Point,
+    size: [f64; 2],
+}
+
+impl IntoBezPathTolerance for GridCell {
+    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> kurbo::BezPath {
+        let [width, height] = self.size;
+        let p1: kurbo::Point = self.position.into();
+        let p2: kurbo::Point = Point::new(self.position.x() + width, self.position.y()).into();
+        let p3: kurbo::Point =
+            Point::new(self.position.x() + width, self.position.y() + height).into();
+        let p4: kurbo::Point = Point::new(self.position.x(), self.position.y() + height).into();
+
+        kurbo::BezPath::from_vec(vec![
+            PathEl::MoveTo(p1),
+            PathEl::LineTo(p2),
+            PathEl::LineTo(p3),
+            PathEl::LineTo(p4),
+            PathEl::ClosePath,
+        ])
+    }
 }
 
 /// 2-dimensional square grid module
@@ -32,13 +51,15 @@ pub struct GridCell {
 ///     .rows(10)
 ///     .translate(Point::new(20.0, 100.0))
 ///     .spacing([10.0, 10.0])
-///     .build();
+///     .build(sketch, |sketch, cell| {
+///         sketch.add_path(cell);
+///     });
 /// ```
 pub struct Grid {
     dimensions: [usize; 2],
     size: GridSize,
     gutter: [f64; 2],
-    position: Point,
+    x_y: Point,
     data: Vec<GridCell>,
 }
 
@@ -54,7 +75,7 @@ impl Grid {
             dimensions: Grid::DEFAULT_DIMENSIONS,
             size: GridSize::GridBased(size),
             gutter: Grid::DEFAULT_GUTTER,
-            position: Point::from(Grid::DEFAULT_POSITION),
+            x_y: Point::from(Grid::DEFAULT_POSITION),
             data: vec![],
         }
     }
@@ -66,7 +87,7 @@ impl Grid {
             dimensions: Grid::DEFAULT_DIMENSIONS,
             size: GridSize::CellBased(size),
             gutter: Grid::DEFAULT_GUTTER,
-            position: Point::from(Grid::DEFAULT_POSITION),
+            x_y: Point::from(Grid::DEFAULT_POSITION),
             data: vec![],
         }
     }
@@ -106,8 +127,8 @@ impl Grid {
 
     /// Overrides grid's current position. Default value is
     /// a Point instance with 0.0 value for both axes.
-    pub fn translate(&mut self, value: Point) -> &mut Self {
-        self.position = value;
+    pub fn position(&mut self, value: Point) -> &mut Self {
+        self.x_y = value;
         self
     }
 
@@ -125,15 +146,16 @@ impl Grid {
 
         for row in 0..rows {
             for column in 0..columns {
-                let pos_x = self.position.x()
-                    + (column as f64 * module_width + column as f64 * gutter_width);
+                let pos_x =
+                    self.x_y.x() + (column as f64 * module_width + column as f64 * gutter_width);
                 let pos_y =
-                    self.position.y() + (row as f64 * module_height + row as f64 * gutter_height);
+                    self.x_y.y() + (row as f64 * module_height + row as f64 * gutter_height);
 
                 let cell = GridCell {
                     column,
                     row,
                     position: Point::new(pos_x, pos_y),
+                    size: self.module_size(),
                 };
                 callback_fn(sketch, &cell);
                 cells.push(cell);
@@ -175,9 +197,9 @@ impl Grid {
     }
 
     /// Returns optional reference to a grid cell at specific column and row index
-    pub fn at(&mut self, column: usize, row: usize) -> Option<&mut GridCell> {
+    pub fn at(&mut self, column: usize, row: usize) -> Option<&GridCell> {
         self.data
-            .iter_mut()
+            .iter()
             .find(|cell| cell.column == column && cell.row == row)
     }
 
