@@ -53,3 +53,7 @@ puffin = ["dep:puffin"]
 [[bench]]
 name = "bench_path_index"
 harness = false
+
+[[bench]]
+name = "bench_flatten"
+harness = false

@@ -2,8 +2,8 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use rand::Rng;
 use std::time::Duration;
 use vsvg::{
-    path_index::{IndexBuilder, ReindexStrategy},
-    test_file, Document, DocumentTrait, FlattenedLayer, LayerTrait, Point,
+    test_file, Document, DocumentTrait, FlattenedLayer, IndexBuilder, LayerTrait, Point,
+    ReindexStrategy,
 };
 
 pub fn bench_path_index(c: &mut Criterion) {

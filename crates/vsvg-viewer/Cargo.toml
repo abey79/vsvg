@@ -21,6 +21,7 @@ kurbo.workspace = true
 log.workspace = true
 puffin = { workspace = true, optional = true }
 puffin_egui = { workspace = true, optional = true }
+rayon.workspace = true
 serde.workspace = true
 vsvg.workspace = true
 wgpu.workspace = true

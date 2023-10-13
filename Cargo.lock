@@ -2061,6 +2061,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "kurbo"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4e6eb607c22d8418210a48f385a6c414e690d2ffcfe670083df0f5417c3deb6"
+dependencies = [
+ "arrayvec",
+ "smallvec",
+]
+
+[[package]]
 name = "kv-log-macro"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3378,7 +3388,7 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed4b0611e7f3277f68c0fa18e385d9e2d26923691379690039548f867cef02a7"
 dependencies = [
- "kurbo",
+ "kurbo 0.9.4",
  "siphasher",
 ]
 
@@ -3794,7 +3804,7 @@ dependencies = [
  "data-url",
  "flate2",
  "imagesize",
- "kurbo",
+ "kurbo 0.9.4",
  "log",
  "roxmltree",
  "simplecss",
@@ -3810,7 +3820,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "035044604e89652c0a2959b8b356946997a52649ba6cade45928c2842376feb4"
 dependencies = [
  "fontdb",
- "kurbo",
+ "kurbo 0.9.4",
  "log",
  "rustybuzz",
  "unicode-bidi",
@@ -3892,7 +3902,7 @@ dependencies = [
  "glam",
  "indexmap 2.0.2",
  "kdtree",
- "kurbo",
+ "kurbo 0.10.3",
  "lazy_static",
  "log",
  "lyon_geom",
@@ -3918,7 +3928,7 @@ dependencies = [
  "dhat",
  "eframe",
  "egui",
- "kurbo",
+ "kurbo 0.10.3",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "serde",
@@ -3939,13 +3949,14 @@ dependencies = [
  "egui",
  "env_logger",
  "js-sys",
- "kurbo",
+ "kurbo 0.10.3",
  "log",
  "pollster",
  "puffin",
  "puffin_egui",
  "rand 0.8.5",
  "raw-window-handle",
+ "rayon",
  "serde",
  "tracing-subscriber",
  "vsvg",
@@ -4272,13 +4283,14 @@ dependencies = [
  "getrandom 0.2.9",
  "itertools 0.11.0",
  "js-sys",
- "kurbo",
+ "kurbo 0.10.3",
  "log",
  "noise",
  "open",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rand_distr",
+ "rayon",
  "rfd",
  "serde",
  "voronoice",

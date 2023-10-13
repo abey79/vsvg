@@ -6,6 +6,7 @@ use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+use rayon::prelude::*;
 use vsvg::{
     Color, Document, DocumentTrait, FlattenedDocument, LayerID, LayerTrait, PageSize, PathTrait,
     Point,
@@ -115,7 +116,7 @@ impl DocumentData {
         vsvg::trace_function!();
 
         Self {
-            flattened_document: document.flatten(0.1), //TODO: magic number
+            flattened_document: document.flatten(0.01), //TODO: magic number
             control_points: document.control_points(),
             display_vertices: document
                 .layers
@@ -171,6 +172,8 @@ impl LayerPainterData {
         render_objects: &EngineRenderObjects,
         document_data: &DocumentData,
     ) -> HashMap<LayerID, LayerPainterData> {
+        vsvg::trace_function!();
+
         let mut layers = HashMap::new();
 
         for (lid, flattened_layer) in &document_data.flattened_document.layers {
@@ -181,18 +184,26 @@ impl LayerPainterData {
                 .iter()
                 .map(Into::into);
 
-            let pen_up_trajectories = flattened_layer
-                .pen_up_trajectories()
-                .iter()
-                .flat_map(|(start, end)| [start.into(), end.into()])
-                .collect::<Vec<[f32; 2]>>();
+            let pen_up_trajectories;
+            {
+                vsvg::trace_scope!("pen_up_trajectories");
+                pen_up_trajectories = flattened_layer
+                    .pen_up_trajectories()
+                    .par_iter()
+                    .flat_map(|(start, end)| [start.into(), end.into()])
+                    .collect::<Vec<[f32; 2]>>();
+            }
 
-            let control_points: Vec<_> = document_data.control_points.layers[lid]
-                .paths
-                .iter()
-                .flat_map(|p| p.data().points())
-                .map(Into::into)
-                .collect();
+            let control_points: Vec<_>;
+            {
+                vsvg::trace_scope!("control_points");
+                control_points = document_data.control_points.layers[lid]
+                    .paths
+                    .par_iter()
+                    .flat_map(|p| p.data().points())
+                    .map(Into::into)
+                    .collect();
+            }
 
             let layer_data = LayerPainterData {
                 line_painter_data: LinePainterData::new(render_objects, &flattened_layer.paths),
@@ -336,6 +347,8 @@ impl Engine {
     }
 
     pub fn set_document_data(&mut self, document_data: &DocumentData) {
+        vsvg::trace_function!();
+
         // in most cases the page size won't change from a frame to the next, so we only rebuild
         // if needed
         let new_page_size = document_data.flattened_document.metadata().page_size;

@@ -35,6 +35,8 @@ impl LinePainterData {
     where
         I: IntoIterator<Item = &'b FlattenedPath>,
     {
+        vsvg::trace_function!();
+
         let (vertices, attribs) = Self::build_buffers(paths);
 
         // prepare point buffer
@@ -74,6 +76,8 @@ impl LinePainterData {
             vertices: &mut Vec<Vertex>,
             attribs: &mut Vec<Attribute>,
         ) {
+            vsvg::trace_function!();
+
             let points = path.data().points();
             if points.len() > 1 {
                 if points.len() > 2 && points.first() == points.last() {
@@ -97,6 +101,8 @@ impl LinePainterData {
                 }
             }
         }
+
+        vsvg::trace_function!();
 
         let mut iter = paths.into_iter();
         let min_size = 1000.min(iter.size_hint().0 * 4);

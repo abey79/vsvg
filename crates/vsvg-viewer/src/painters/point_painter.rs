@@ -27,6 +27,8 @@ impl PointPainterData {
         color: u32,
         size: f32,
     ) -> Self {
+        vsvg::trace_function!();
+
         let instances = vertices
             .into_iter()
             .map(|v| PointVertex {
