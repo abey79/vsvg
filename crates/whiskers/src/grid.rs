@@ -1,4 +1,3 @@
-//!
 use vsvg::{IntoBezPathTolerance, Point};
 
 use crate::Sketch;
@@ -11,15 +10,21 @@ enum GridSize {
 }
 
 /// Stores basic grid's cell data, like column, row and canvas position
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GridCell {
-    column: usize,
-    row: usize,
-    position: Point,
-    size: [f64; 2],
+    /// Cell's grid column index
+    pub column: usize,
+    /// Cell's grid row index
+    pub row: usize,
+    /// Cell's position within grid coordinate system
+    pub position: Point,
+    /// Cell's width and height
+    pub size: [f64; 2],
+    /// Grid's width and height
+    pub grid_size: [f64; 2],
 }
 
-impl IntoBezPathTolerance for GridCell {
+impl IntoBezPathTolerance for &GridCell {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> kurbo::BezPath {
         let [width, height] = self.size;
         let p1: kurbo::Point = self.position.into();
@@ -59,8 +64,7 @@ pub struct Grid {
     dimensions: [usize; 2],
     size: GridSize,
     gutter: [f64; 2],
-    x_y: Point,
-    data: Vec<GridCell>,
+    top_left_corner: Point,
 }
 
 impl Grid {
@@ -75,8 +79,7 @@ impl Grid {
             dimensions: Grid::DEFAULT_DIMENSIONS,
             size: GridSize::GridBased(size),
             gutter: Grid::DEFAULT_GUTTER,
-            x_y: Point::from(Grid::DEFAULT_POSITION),
-            data: vec![],
+            top_left_corner: Point::from(Grid::DEFAULT_POSITION),
         }
     }
 
@@ -87,48 +90,47 @@ impl Grid {
             dimensions: Grid::DEFAULT_DIMENSIONS,
             size: GridSize::CellBased(size),
             gutter: Grid::DEFAULT_GUTTER,
-            x_y: Point::from(Grid::DEFAULT_POSITION),
-            data: vec![],
+            top_left_corner: Point::from(Grid::DEFAULT_POSITION),
         }
     }
 
     /// Overrides grid's current number of rows.
     /// By default, grid instance will have 4 rows.
-    pub fn rows(&mut self, value: usize) -> &mut Self {
+    pub fn rows(mut self, value: usize) -> Self {
         self.dimensions[1] = value;
         self
     }
 
     /// Overrides grid's current number of columns.
     /// By default, grid instance will have 4 columns.
-    pub fn columns(&mut self, value: usize) -> &mut Self {
+    pub fn columns(mut self, value: usize) -> Self {
         self.dimensions[0] = value;
         self
     }
 
     /// Overrides grid's current horizontal and vertical spacing values.
     /// By default, grid instance will have zero spacing on both axes.
-    pub fn spacing(&mut self, value: [f64; 2]) -> &mut Self {
+    pub fn spacing(mut self, value: [f64; 2]) -> Self {
         self.gutter = value;
         self
     }
 
     /// Overrides grid's current horizontal spacing value.
-    pub fn horizontal_spacing(&mut self, value: f64) -> &mut Self {
+    pub fn horizontal_spacing(mut self, value: f64) -> Self {
         self.gutter[0] = value;
         self
     }
 
     /// Overrides grid's current vertical spacing value.
-    pub fn vertical_spacing(&mut self, value: f64) -> &mut Self {
+    pub fn vertical_spacing(mut self, value: f64) -> Self {
         self.gutter[1] = value;
         self
     }
 
     /// Overrides grid's current position. Default value is
     /// a Point instance with 0.0 value for both axes.
-    pub fn position(&mut self, value: Point) -> &mut Self {
-        self.x_y = value;
+    pub fn position(mut self, value: Point) -> Self {
+        self.top_left_corner = value;
         self
     }
 
@@ -136,38 +138,37 @@ impl Grid {
     /// size and canvas position.
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     pub fn build(
-        &mut self,
+        self,
         sketch: &mut Sketch,
         callback_fn: impl FnOnce(&mut Sketch, &GridCell) + Copy,
     ) {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
         let [columns, rows] = self.dimensions;
-        let mut cells: Vec<GridCell> = vec![];
+        let cell_size = self.module_size();
+        let grid_size = self.size();
 
         for row in 0..rows {
             for column in 0..columns {
-                let pos_x =
-                    self.x_y.x() + (column as f64 * module_width + column as f64 * gutter_width);
-                let pos_y =
-                    self.x_y.y() + (row as f64 * module_height + row as f64 * gutter_height);
+                let pos_x = self.top_left_corner.x()
+                    + (column as f64 * module_width + column as f64 * gutter_width);
+                let pos_y = self.top_left_corner.y()
+                    + (row as f64 * module_height + row as f64 * gutter_height);
 
                 let cell = GridCell {
                     column,
                     row,
                     position: Point::new(pos_x, pos_y),
-                    size: self.module_size(),
+                    size: cell_size,
+                    grid_size,
                 };
                 callback_fn(sketch, &cell);
-                cells.push(cell);
             }
         }
-        self.data = cells;
     }
 
-    /// Returns grid module's size
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    pub fn module_size(&self) -> [f64; 2] {
+    fn module_size(&self) -> [f64; 2] {
         match self.size {
             GridSize::GridBased([width, height]) => {
                 let cols = self.dimensions[0] as f64;
@@ -183,35 +184,16 @@ impl Grid {
         }
     }
 
-    /// Returns width of the grid
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    pub fn width(&self) -> f64 {
+    fn size(&self) -> [f64; 2] {
         let columns = self.dimensions[0] as f64;
-        columns * self.module_size()[0] + columns * self.gutter[0]
-    }
+        let rows = self.dimensions[1] as f64;
+        let [gutter_x, gutter_y] = self.gutter;
+        let [module_width, module_height] = self.module_size();
 
-    /// Returns height of the grid
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    pub fn height(&self) -> f64 {
-        let rows = self.dimensions[0] as f64;
-        rows * self.module_size()[1] + rows * self.gutter[1]
-    }
-
-    /// Returns optional reference to a grid cell at specific column and row index
-    pub fn at(&mut self, column: usize, row: usize) -> Option<&GridCell> {
-        self.data
-            .iter()
-            .find(|cell| cell.column == column && cell.row == row)
-    }
-
-    /// Aligns grid cells to specific dimensions
-    pub fn align_to(&mut self, rect_dimensions: [f64; 2]) {
-        let [width, height] = self.module_size();
-        let diff_x = rect_dimensions[0] / width;
-        let diff_y = rect_dimensions[1] / height;
-
-        self.data.iter_mut().for_each(|cell| {
-            cell.position = Point::new(cell.position.x() + diff_x, cell.position.y() + diff_y);
-        });
+        [
+            columns * module_width + columns * gutter_x,
+            rows * module_height + rows * gutter_y,
+        ]
     }
 }

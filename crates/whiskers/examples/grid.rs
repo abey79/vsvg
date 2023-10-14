@@ -1,4 +1,4 @@
-use whiskers::{grid::Grid, prelude::*};
+use whiskers::prelude::*;
 
 #[derive(Sketch)]
 struct GridSketch {
@@ -39,7 +39,7 @@ impl App for GridSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(5.0);
 
-        let mut grid = if self.is_canvas_sizing {
+        let grid = if self.is_canvas_sizing {
             Grid::from_total_size([sketch.width(), sketch.height()])
         } else {
             Grid::from_cell_size([self.width, self.height])
@@ -49,15 +49,15 @@ impl App for GridSketch {
             .rows(self.rows)
             .spacing([self.gutter_width, self.gutter_height])
             .build(sketch, |sketch, cell| {
-                let c = cell.clone();
-                sketch.color(Color::RED);
-                sketch.add_path(c);
+                sketch.color(
+                    if cell.row == self.marked_cell_row && cell.column == self.marked_cell_col {
+                        Color::GREEN
+                    } else {
+                        Color::RED
+                    },
+                );
+                sketch.add_path(cell);
             });
-
-        if let Some(marked_cell) = grid.at(self.marked_cell_col, self.marked_cell_row) {
-            sketch.color(Color::GREEN);
-            sketch.add_path(marked_cell.clone());
-        }
 
         Ok(())
     }
