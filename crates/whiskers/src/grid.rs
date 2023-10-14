@@ -2,8 +2,6 @@ use vsvg::{IntoBezPathTolerance, Point};
 
 use crate::Sketch;
 
-use kurbo::PathEl;
-
 enum GridSize {
     CellBased([f64; 2]),
     GridBased([f64; 2]),
@@ -16,7 +14,7 @@ pub struct GridCell {
     pub column: usize,
     /// Cell's grid row index
     pub row: usize,
-    /// Cell's position within grid coordinate system
+    /// Cell's position within the grid coordinate system
     pub position: Point,
     /// Cell's width and height
     pub size: [f64; 2],
@@ -25,21 +23,12 @@ pub struct GridCell {
 }
 
 impl IntoBezPathTolerance for &GridCell {
-    fn into_bezpath_with_tolerance(self, _tolerance: f64) -> kurbo::BezPath {
+    fn into_bezpath_with_tolerance(self, tolerance: f64) -> kurbo::BezPath {
         let [width, height] = self.size;
-        let p1: kurbo::Point = self.position.into();
-        let p2: kurbo::Point = Point::new(self.position.x() + width, self.position.y()).into();
-        let p3: kurbo::Point =
-            Point::new(self.position.x() + width, self.position.y() + height).into();
-        let p4: kurbo::Point = Point::new(self.position.x(), self.position.y() + height).into();
+        let position: kurbo::Point = self.position.into();
 
-        kurbo::BezPath::from_vec(vec![
-            PathEl::MoveTo(p1),
-            PathEl::LineTo(p2),
-            PathEl::LineTo(p3),
-            PathEl::LineTo(p4),
-            PathEl::ClosePath,
-        ])
+        kurbo::Rect::from_origin_size(position, kurbo::Size { width, height })
+            .into_bezpath_with_tolerance(tolerance)
     }
 }
 
@@ -96,6 +85,7 @@ impl Grid {
 
     /// Overrides grid's current number of rows.
     /// By default, grid instance will have 4 rows.
+    #[must_use]
     pub fn rows(mut self, value: usize) -> Self {
         self.dimensions[1] = value;
         self
@@ -103,6 +93,7 @@ impl Grid {
 
     /// Overrides grid's current number of columns.
     /// By default, grid instance will have 4 columns.
+    #[must_use]
     pub fn columns(mut self, value: usize) -> Self {
         self.dimensions[0] = value;
         self
@@ -110,18 +101,21 @@ impl Grid {
 
     /// Overrides grid's current horizontal and vertical spacing values.
     /// By default, grid instance will have zero spacing on both axes.
+    #[must_use]
     pub fn spacing(mut self, value: [f64; 2]) -> Self {
         self.gutter = value;
         self
     }
 
     /// Overrides grid's current horizontal spacing value.
+    #[must_use]
     pub fn horizontal_spacing(mut self, value: f64) -> Self {
         self.gutter[0] = value;
         self
     }
 
     /// Overrides grid's current vertical spacing value.
+    #[must_use]
     pub fn vertical_spacing(mut self, value: f64) -> Self {
         self.gutter[1] = value;
         self
@@ -129,6 +123,7 @@ impl Grid {
 
     /// Overrides grid's current position. Default value is
     /// a Point instance with 0.0 value for both axes.
+    #[must_use]
     pub fn position(mut self, value: Point) -> Self {
         self.top_left_corner = value;
         self
