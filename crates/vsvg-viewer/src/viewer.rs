@@ -143,10 +143,17 @@ impl Viewer {
 
 impl eframe::App for Viewer {
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
-        vsvg::trace_function!();
-
         #[cfg(feature = "puffin")]
-        puffin::set_scopes_on(self.state.show_profile);
+        {
+            if self.state.show_profile {
+                self.state.show_profile = puffin_egui::profiler_window(ctx);
+            }
+            puffin::GlobalProfiler::lock().new_frame();
+
+            puffin::set_scopes_on(self.state.show_profile);
+        }
+
+        vsvg::trace_function!();
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -203,14 +210,6 @@ impl eframe::App for Viewer {
 
         self.frame_history
             .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
-
-        #[cfg(feature = "puffin")]
-        {
-            if self.state.show_profile {
-                self.state.show_profile = puffin_egui::profiler_window(ctx);
-            }
-            puffin::GlobalProfiler::lock().new_frame();
-        }
     }
 
     /// Called by the framework to save state before shutdown.
