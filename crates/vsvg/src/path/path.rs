@@ -190,7 +190,7 @@ impl Path {
     }
 
     #[must_use]
-    pub fn control_points(&self) -> Vec<FlattenedPath> {
+    pub fn bezier_handles(&self) -> Vec<FlattenedPath> {
         crate::trace_function!();
 
         self.data

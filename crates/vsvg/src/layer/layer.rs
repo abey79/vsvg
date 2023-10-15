@@ -59,13 +59,13 @@ impl Layer {
     }
 
     #[must_use]
-    pub fn control_points(&self) -> FlattenedLayer {
+    pub fn bezier_handles(&self) -> FlattenedLayer {
         crate::trace_function!();
 
         FlattenedLayer::new(
             self.paths
                 .par_iter()
-                .flat_map(Path::control_points)
+                .flat_map(Path::bezier_handles)
                 .collect(),
             self.metadata.clone(),
         )

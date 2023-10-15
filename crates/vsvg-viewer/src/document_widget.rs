@@ -1,10 +1,10 @@
-use crate::engine::{DisplayMode, DocumentData, Engine, ViewerOptions};
+use crate::engine::{DisplayMode, Engine, ViewerOptions};
 use eframe::egui_wgpu;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
-use vsvg::{DocumentTrait, LayerTrait};
+use vsvg::{Document, DocumentTrait, LayerTrait};
 
-/// Widget to display a [`vsvg::Document`] in an egui application.
+/// Widget to display a [`Document`] in an egui application.
 ///
 /// The widget is an egui wrapper around the internal `Engine` instance. It holds the state needed
 /// for rendering, such as the scale and pan offset.
@@ -12,16 +12,13 @@ use vsvg::{DocumentTrait, LayerTrait};
 /// It supports multiple UI features:
 ///  - GPU-accelerated rendering of the document, typically in the central panel
 ///  - helper UI functions to act on the widget state (e.g. viewing options and layer visibility)
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct DocumentWidget {
-    /// polylines derived from the document
-    document_data: Arc<DocumentData>,
+    /// document to display
+    document: Option<Arc<Document>>,
 
     /// viewer options
     viewer_options: Arc<Mutex<ViewerOptions>>,
-
-    /// if provided by user code, this new document will be fed to the renderer on the next frame
-    new_document_data: Option<Arc<DocumentData>>,
 
     /// pan offset
     ///
@@ -37,11 +34,12 @@ pub struct DocumentWidget {
 }
 
 impl DocumentWidget {
+    /// Create a document widget.
+    ///
+    /// Initially, the document widget is empty. Use [`DocumentWidget::set_document()`] to set its
+    /// content.
     #[must_use]
-    pub fn new<'a>(
-        cc: &'a eframe::CreationContext<'a>,
-        document_data: Arc<DocumentData>,
-    ) -> Option<Self> {
+    pub(crate) fn new<'a>(cc: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewer_options = Arc::new(Mutex::new(ViewerOptions::default()));
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -49,8 +47,7 @@ impl DocumentWidget {
         let wgpu_render_state = cc.wgpu_render_state.as_ref()?;
 
         // prepare engine
-        let mut engine = Engine::new(wgpu_render_state, viewer_options.clone());
-        engine.set_document_data(&document_data);
+        let engine = Engine::new(wgpu_render_state, viewer_options.clone());
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
@@ -59,18 +56,24 @@ impl DocumentWidget {
         callback_resources.insert(engine);
 
         Some(Self {
-            document_data,
+            document: None,
             viewer_options,
-            new_document_data: None,
             offset: Pos2::ZERO,
             scale: 1.0,
             must_fit_to_view: true,
         })
     }
 
-    pub fn set_document_data(&mut self, doc_data: DocumentData) {
-        vsvg::trace_function!();
-        self.new_document_data = Some(Arc::new(doc_data));
+    pub fn set_document(&mut self, doc: Arc<Document>) {
+        self.document = Some(doc);
+    }
+
+    pub fn set_tolerance(&mut self, tolerance: f64) {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .tolerance = tolerance;
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -125,31 +128,24 @@ impl DocumentWidget {
         let scale = self.scale;
         let origin = cgmath::Point2::new(self.offset.x, self.offset.y);
 
-        let new_doc_data;
-        {
-            vsvg::trace_scope!("move DocumentData");
-
-            //TODO: this can become slow with lots of vertices (memory copy?)
-
-            new_doc_data = self.new_document_data.take();
-            if let Some(new_doc_data) = new_doc_data.clone() {
-                self.document_data = new_doc_data;
-            }
-        }
+        let document = self.document.clone();
 
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, _encoder, paint_callback_resources| {
                 vsvg::trace_scope!("wgpu prepare callback");
                 let engine: &mut Engine = paint_callback_resources.get_mut().unwrap();
 
-                if let Some(new_doc_data) = new_doc_data.clone() {
-                    engine.set_document_data(&new_doc_data);
+                if let Some(document) = document.clone() {
+                    engine.set_document(document);
                 }
+
                 engine.prepare(device, queue, rect, scale, origin);
+
                 Vec::new()
             })
             .paint(move |_info, render_pass, paint_callback_resources| {
                 vsvg::trace_scope!("wgpu paint callback");
+
                 let engine: &Engine = paint_callback_resources.get().unwrap();
                 engine.paint(render_pass);
             });
@@ -188,15 +184,30 @@ impl DocumentWidget {
             });
             ui.separator();
             ui.checkbox(
-                &mut self.viewer_options.lock().unwrap().show_point,
+                &mut self
+                    .viewer_options
+                    .lock()
+                    .unwrap()
+                    .display_options
+                    .show_display_vertices,
                 "Show points",
             );
             ui.checkbox(
-                &mut self.viewer_options.lock().unwrap().show_pen_up,
+                &mut self
+                    .viewer_options
+                    .lock()
+                    .unwrap()
+                    .display_options
+                    .show_pen_up,
                 "Show pen-up trajectories",
             );
             ui.checkbox(
-                &mut self.viewer_options.lock().unwrap().show_control_points,
+                &mut self
+                    .viewer_options
+                    .lock()
+                    .unwrap()
+                    .display_options
+                    .show_bezier_handles,
                 "Show control points",
             );
             ui.separator();
@@ -219,7 +230,11 @@ impl DocumentWidget {
     #[allow(clippy::missing_panics_doc)]
     pub fn layer_menu_ui(&mut self, ui: &mut Ui) {
         ui.menu_button("Layer", |ui| {
-            for (lid, layer) in &self.document_data.flattened_document.layers {
+            let Some(document) = self.document.clone() else {
+                return;
+            };
+
+            for (lid, layer) in &document.layers {
                 let mut viewer_options = self.viewer_options.lock().unwrap();
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
                 let mut label = format!("Layer {lid}");
@@ -235,19 +250,22 @@ impl DocumentWidget {
     fn fit_to_view(&mut self, viewport: &Rect) {
         vsvg::trace_function!();
 
-        let bounds =
-            if let Some(page_size) = self.document_data.flattened_document.metadata().page_size {
-                if page_size.w() != 0.0 && page_size.h() != 0.0 {
-                    Some(kurbo::Rect::from_points(
-                        (0., 0.),
-                        (page_size.w(), page_size.h()),
-                    ))
-                } else {
-                    self.document_data.flattened_document.bounds()
-                }
+        let Some(document) = self.document.clone() else {
+            return;
+        };
+
+        let bounds = if let Some(page_size) = document.metadata().page_size {
+            if page_size.w() != 0.0 && page_size.h() != 0.0 {
+                Some(kurbo::Rect::from_points(
+                    (0., 0.),
+                    (page_size.w(), page_size.h()),
+                ))
             } else {
-                self.document_data.flattened_document.bounds()
-            };
+                document.bounds()
+            }
+        } else {
+            document.bounds()
+        };
 
         if bounds.is_none() {
             return;

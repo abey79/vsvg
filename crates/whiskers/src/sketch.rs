@@ -8,7 +8,7 @@ use vsvg::{
 /// Primary interface for drawing.
 ///
 /// The [`Sketch`] type is the primary interface for drawing. To that effect, it implements the key
-/// traits [`vsvg::Draw`] and [`vsvg::Transforms`].
+/// traits [`vsvg::Draw`] and [`Transforms`].
 ///
 /// # Drawing
 ///
@@ -241,13 +241,29 @@ impl Sketch {
         &mut self.document
     }
 
+    /// Consume the [`Sketch`] and return the underlying [`Document`].
+    pub fn into_document(self) -> Document {
+        self.document
+    }
+
     /// Opens the `vsvg` viewer with the sketch content.
     ///
     /// Requires the `viewer` feature to be enabled.
     #[cfg(feature = "viewer")]
     #[cfg(not(target_arch = "wasm32"))]
+    #[allow(clippy::missing_panics_doc)]
     pub fn show(&mut self) -> anyhow::Result<&mut Self> {
-        vsvg_viewer::show(self.document())?;
+        use std::mem::{replace, take};
+        use std::sync::Arc;
+
+        let document = Arc::new(take(&mut self.document));
+        vsvg_viewer::show(document.clone())?;
+
+        let _ = replace(
+            &mut self.document,
+            Arc::into_inner(document)
+                .expect("vsvg_viewer::show does not keep references to the document"),
+        );
         Ok(self)
     }
 

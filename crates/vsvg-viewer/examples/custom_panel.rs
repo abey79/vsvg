@@ -3,6 +3,7 @@
 
 use eframe::CreationContext;
 use rand::Rng;
+use std::sync::Arc;
 use vsvg::{Document, DocumentTrait};
 use vsvg_viewer::{show_with_viewer_app, DocumentWidget, ViewerApp};
 
@@ -24,7 +25,7 @@ impl ViewerApp for SidePanelViewerApp {
         _cc: &CreationContext,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
-        document_widget.set_document_data(vsvg_viewer::DocumentData::new(&self.document));
+        document_widget.set_document(Arc::new(self.document.clone()));
 
         Ok(())
     }
@@ -55,8 +56,7 @@ impl ViewerApp for SidePanelViewerApp {
                         ),
                     );
 
-                    document_widget
-                        .set_document_data(vsvg_viewer::DocumentData::new(&self.document));
+                    document_widget.set_document(Arc::new(self.document.clone()));
                 }
             });
 

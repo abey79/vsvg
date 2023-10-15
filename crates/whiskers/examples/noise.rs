@@ -72,6 +72,7 @@ impl App for NoiseSketch {
             noise = (0..self.line_count)
                 .into_par_iter()
                 .map(|j| {
+                    vsvg::trace_scope!("noise_inner");
                     (0..self.points_per_line)
                         .map(|i| {
                             fbm.get([

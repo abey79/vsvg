@@ -1,5 +1,5 @@
 use crate::runner::collapsing_header;
-use crate::Sketch;
+use std::sync::Arc;
 use vsvg::DocumentTrait;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{Blob, BlobPropertyBag, Url};
@@ -26,7 +26,7 @@ impl Default for SaveUI {
 }
 
 impl SaveUI {
-    pub(super) fn ui(&mut self, ui: &mut egui::Ui, sketch: Option<&Sketch>) {
+    pub(super) fn ui(&mut self, ui: &mut egui::Ui, document: Option<Arc<vsvg::Document>>) {
         collapsing_header(ui, "Save", "", true, |ui| {
             ui.spacing_mut().text_edit_width = 250.0;
 
@@ -41,11 +41,11 @@ impl SaveUI {
                     ui.horizontal(|_| {});
                     ui.horizontal(|ui| {
                         if ui
-                            .add_enabled(sketch.is_some(), egui::Button::new("download"))
+                            .add_enabled(document.is_some(), egui::Button::new("download"))
                             .clicked()
                         {
-                            if let Some(sketch) = sketch {
-                                let res = save_and_download(&self.base_name, sketch.document());
+                            if let Some(document) = document {
+                                let res = save_and_download(&self.base_name, document.as_ref());
                                 self.last_error = Some(res);
                             }
                         }
