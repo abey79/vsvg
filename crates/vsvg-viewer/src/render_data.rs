@@ -27,6 +27,9 @@ pub(crate) struct LayerRenderData {
     document: Arc<Document>,
     layer_id: LayerID,
 
+    /// number of vertices after flattening
+    vertex_count: u64,
+
     // BASE DATA
     tolerance: f64,
     flattened_layer: Option<FlattenedLayer>,
@@ -56,6 +59,7 @@ impl LayerRenderData {
         Self {
             document,
             layer_id,
+            vertex_count: 0,
             tolerance: DEFAULT_RENDERER_TOLERANCE,
             flattened_layer: None,
             line_painter_data: None,
@@ -65,6 +69,10 @@ impl LayerRenderData {
             display_vertices_painter_data: None,
             pen_up_painter_data: None,
         }
+    }
+
+    pub fn vertex_count(&self) -> u64 {
+        self.vertex_count
     }
 
     pub fn line_painter_data(&self) -> Option<&LinePainterData> {
@@ -119,6 +127,8 @@ impl LayerRenderData {
         let flattened_layer = self
             .flattened_layer
             .get_or_insert_with(|| self.document.layers[&self.layer_id].flatten(self.tolerance));
+
+        self.vertex_count = flattened_layer.vertex_count();
 
         if self.line_painter_data.is_none() {
             self.line_painter_data =

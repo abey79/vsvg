@@ -76,6 +76,11 @@ impl DocumentWidget {
             .tolerance = tolerance;
     }
 
+    #[must_use]
+    pub fn vertex_count(&self) -> u64 {
+        self.viewer_options.lock().unwrap().vertex_count
+    }
+
     #[allow(clippy::missing_panics_doc)]
     pub fn ui(&mut self, ui: &mut Ui) {
         vsvg::trace_function!();
@@ -217,13 +222,32 @@ impl DocumentWidget {
             }
 
             ui.separator();
+
             ui.horizontal(|ui| {
                 ui.label("AA:");
                 ui.add(egui::Slider::new(
                     &mut self.viewer_options.lock().unwrap().anti_alias,
                     0.0..=2.0,
-                ));
-            })
+                ))
+                .on_hover_text("Renderer anti-aliasing (default: 0.5)");
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Tol:");
+                ui.add(
+                    egui::Slider::new(
+                        &mut self
+                            .viewer_options
+                            .lock()
+                            .unwrap()
+                            .display_options
+                            .tolerance,
+                        0.001..=10.0,
+                    )
+                    .logarithmic(true),
+                )
+                .on_hover_text("Tolerance for rendering curves (default: 0.01)");
+            });
         });
     }
 
