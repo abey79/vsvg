@@ -12,6 +12,7 @@ mod ui;
 use save_ui_native::SaveUI;
 #[cfg(target_arch = "wasm32")]
 use save_ui_wasm::SaveUI;
+use std::sync::Arc;
 
 use crate::Sketch;
 pub use animation::AnimationOptions;
@@ -22,6 +23,7 @@ pub use layout::LayoutOptions;
 pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
 pub use ui::*;
+use vsvg::Document;
 
 use vsvg_viewer::DocumentWidget;
 
@@ -36,8 +38,8 @@ pub struct Runner<'a> {
     /// User-provided sketch app to run.
     app: Box<dyn crate::SketchApp>,
 
-    /// Last produced sketch, for saving purposes.
-    last_sketch: Option<Sketch>,
+    /// Last produced document, for saving purposes.
+    last_document: Option<Arc<Document>>,
 
     /// Should the sketch be updated?
     dirty: bool,
@@ -77,7 +79,7 @@ impl Runner<'_> {
 
         Self {
             app: Box::new(app),
-            last_sketch: None,
+            last_document: None,
             dirty: true,
             info_options: InfoOptions::default(),
             page_size_options: PageSizeOptions::default(),
@@ -144,6 +146,8 @@ impl Runner<'_> {
 impl Runner<'static> {
     /// Execute the sketch app.
     pub fn run(self) -> anyhow::Result<()> {
+        vsvg::trace_function!();
+
         vsvg_viewer::show_with_viewer_app(self)
     }
 }
@@ -220,6 +224,8 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
         ctx: &egui::Context,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
+        vsvg::trace_function!();
+
         if self.animation_options.update_time() {
             self.dirty();
         }
@@ -254,7 +260,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
                             self.seed_ui(ui);
 
-                            self.save_ui.ui(ui, self.last_sketch.as_ref());
+                            self.save_ui.ui(ui, self.last_document.clone());
 
                             collapsing_header(ui, "Sketch Parameters", "", true, |ui| {
                                 let changed = egui::Grid::new("sketch_param_grid")
@@ -280,10 +286,17 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
 
             let mut sketch = Sketch::new();
             sketch.page_size(self.page_size_options.page_size);
-            self.app.update(&mut sketch, &mut context)?;
-            self.layout_options.apply(&mut sketch);
-            document_widget.set_document_data(vsvg_viewer::DocumentData::new(sketch.document()));
-            self.last_sketch = Some(sketch);
+            {
+                vsvg::trace_scope!("sketch: update");
+                self.app.update(&mut sketch, &mut context)?;
+            }
+            {
+                vsvg::trace_scope!("sketch: layout");
+                self.layout_options.apply(&mut sketch);
+            }
+            let document = Arc::new(sketch.into_document());
+            document_widget.set_document(document.clone());
+            self.last_document = Some(document);
 
             // this removes the save result status, indicating that the sketch has changed since
             // last save

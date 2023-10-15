@@ -50,6 +50,8 @@ impl Document {
 
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> FlattenedDocument {
+        crate::trace_function!();
+
         FlattenedDocument::new(
             self.layers
                 .iter()
@@ -60,11 +62,13 @@ impl Document {
     }
 
     #[must_use]
-    pub fn control_points(&self) -> FlattenedDocument {
+    pub fn bezier_handles(&self) -> FlattenedDocument {
+        crate::trace_function!();
+
         FlattenedDocument::new(
             self.layers
                 .iter()
-                .map(|(id, layer)| (*id, layer.control_points()))
+                .map(|(id, layer)| (*id, layer.bezier_handles()))
                 .collect(),
             self.metadata.with_source_suffix(" (control points)"),
         )

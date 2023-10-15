@@ -1,4 +1,3 @@
-use crate::DocumentData;
 use eframe::wasm_bindgen::prelude::*;
 
 /// The handle JavaScript uses to load, run and interact with the app.
@@ -14,15 +13,13 @@ impl WebHandle {
         canvas_id: &str,
         app: impl crate::ViewerApp + 'static,
     ) -> Result<(), JsValue> {
-        let document_data = std::sync::Arc::new(DocumentData::new(&vsvg::Document::default()));
-
         self.runner
             .start(
                 canvas_id,
                 eframe::WebOptions::default(),
                 Box::new(|cc| {
                     Box::new(
-                        crate::viewer::Viewer::new(cc, document_data, Box::new(app))
+                        crate::viewer::Viewer::new(cc, Box::new(app))
                             .expect("what could possibly go wrong?"),
                     )
                 }),

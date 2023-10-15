@@ -9,7 +9,6 @@ use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
 use std::f64::consts::PI;
-use vsvg::Color;
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
@@ -48,6 +47,8 @@ impl Default for AsteroidSketch {
 
 impl App for AsteroidSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
+        vsvg::trace_function!();
+
         sketch
             .translate(sketch.width() / 2., sketch.height() / 2.)
             .scale(4.0 * Unit::Cm)
@@ -125,6 +126,8 @@ fn generate_polygon(
     num_vertices: usize,
     rng: &mut impl Rng,
 ) -> geo::Polygon<f64> {
+    vsvg::trace_function!();
+
     irregularity *= 2.0 * PI / num_vertices as f64;
     spikiness *= avg_radius;
     let normal = Normal::new(avg_radius, spikiness).unwrap();
@@ -144,6 +147,8 @@ fn generate_polygon(
 }
 
 fn random_angle_steps(steps: usize, irregularity: f64, rng: &mut impl Rng) -> Vec<f64> {
+    vsvg::trace_function!();
+
     let mut angles = vec![0.0; steps];
     let lower = (2.0 * PI / (steps as f64)) - irregularity;
     let upper = (2.0 * PI / (steps as f64)) + irregularity;
@@ -165,6 +170,8 @@ fn generate_points_in_poly(
     cnt: usize,
     rng: &mut impl Rng,
 ) -> geo::MultiPoint<f64> {
+    vsvg::trace_function!();
+
     let Some(bbox) = poly.bounding_rect() else {
         return geo::MultiPoint::<f64>::new(vec![]);
     };
@@ -188,6 +195,8 @@ fn voronoi(
     bbox: Option<geo::Rect<f64>>,
     points: &geo::MultiPoint<f64>,
 ) -> (geo::MultiPolygon<f64>, geo::MultiLineString<f64>) {
+    vsvg::trace_function!();
+
     let bbox = bbox.map(|r| {
         voronoice::BoundingBox::new(
             voronoice::Point {

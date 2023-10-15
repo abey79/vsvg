@@ -154,6 +154,8 @@ impl Path {
 
     #[must_use]
     pub fn flatten(&self, tolerance: f64) -> Vec<FlattenedPath> {
+        crate::trace_function!();
+
         let mut lines: Vec<FlattenedPath> = vec![];
         let current_line: RefCell<Polyline> = RefCell::new(Polyline::default());
 
@@ -188,7 +190,9 @@ impl Path {
     }
 
     #[must_use]
-    pub fn control_points(&self) -> Vec<FlattenedPath> {
+    pub fn bezier_handles(&self) -> Vec<FlattenedPath> {
+        crate::trace_function!();
+
         self.data
             .segments()
             .filter_map(|segment| match segment {
@@ -208,6 +212,8 @@ impl Path {
     }
 
     pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) -> &Self {
+        crate::trace_function!();
+
         let new_bezpath = BezPath::from_path_segments(self.data.segments().flat_map(|segment| {
             match segment {
                 kurbo::PathSeg::Line(line) => line

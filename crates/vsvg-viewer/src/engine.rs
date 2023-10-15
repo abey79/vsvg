@@ -1,15 +1,12 @@
 use crate::painters::{
-    BasicPainter, BasicPainterData, LinePainter, LinePainterData, PageSizePainter,
-    PageSizePainterData, Painter, PointPainter, PointPainterData,
+    BasicPainter, LinePainter, PageSizePainter, PageSizePainterData, Painter, PointPainter,
 };
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use vsvg::{
-    Color, Document, DocumentTrait, FlattenedDocument, LayerID, LayerTrait, PageSize, PathTrait,
-    Point,
-};
+use crate::render_data::{LayerRenderData, RenderData};
+use vsvg::{Color, Document, DocumentTrait, LayerID, PageSize};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, Device, PrimitiveTopology, TextureFormat};
 
@@ -30,19 +27,40 @@ pub(crate) enum DisplayMode {
     Outline,
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub(crate) struct ViewerOptions {
-    /// display mode
-    pub display_mode: DisplayMode,
-
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct DisplayOptions {
     /// show points
-    pub show_point: bool,
+    pub show_display_vertices: bool,
 
     /// show pen-up trajectories
     pub show_pen_up: bool,
 
     /// show control points
-    pub show_control_points: bool,
+    pub show_bezier_handles: bool,
+
+    /// tolerance parameter used for flattening curves by the renderer
+    pub tolerance: f64,
+}
+
+impl Default for DisplayOptions {
+    fn default() -> Self {
+        Self {
+            show_display_vertices: false,
+            show_pen_up: false,
+            show_bezier_handles: false,
+            tolerance: crate::DEFAULT_RENDERER_TOLERANCE,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct ViewerOptions {
+    //TODO: implement that
+    /// display mode
+    pub display_mode: DisplayMode,
+
+    /// display options
+    pub display_options: DisplayOptions,
 
     /// override width
     pub override_width: Option<f32>,
@@ -63,9 +81,7 @@ impl Default for ViewerOptions {
     fn default() -> Self {
         Self {
             display_mode: DisplayMode::default(),
-            show_point: false,
-            show_pen_up: false,
-            show_control_points: false,
+            display_options: DisplayOptions::default(),
             override_width: None,
             override_opacity: None,
             layer_visibility: HashMap::default(),
@@ -102,126 +118,92 @@ impl CameraUniform {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct DocumentData {
-    pub(crate) flattened_document: FlattenedDocument,
-    pub(crate) control_points: FlattenedDocument,
-    pub(crate) display_vertices: HashMap<LayerID, Vec<Point>>,
-}
-
-impl DocumentData {
-    #[must_use]
-    pub fn new(document: &Document) -> Self {
-        Self {
-            flattened_document: document.flatten(0.01), //TODO: magic number
-            control_points: document.control_points(),
-            display_vertices: document
-                .layers
-                .iter()
-                .map(|(&lid, layer)| (lid, layer.display_vertices()))
-                .collect(),
-        }
-    }
-}
-
 /// Painters contains shaders and render pipelines needed for drawing, but not any actually
 /// vertex data.
 struct LayerPainters {
     /// lines are always displayed
     line_painter: LinePainter,
 
-    /// painter for points
-    point_painter: PointPainter,
+    /// painter for display vertices
+    display_vertices_painter: PointPainter,
 
     /// painter for pen-up trajectories
     pen_up_painter: BasicPainter,
 
-    /// painter for control points
-    control_points_painter: PointPainter,
+    /// painter for the bezier handles' points
+    bezier_handles_point_painter: PointPainter,
 
-    /// painters for control lines
-    control_lines_painter: BasicPainter,
+    /// painter for the bezier handles' lines
+    bezier_handles_line_painter: BasicPainter,
 }
 
 impl LayerPainters {
     fn new(render_objects: &EngineRenderObjects) -> Self {
         Self {
             line_painter: LinePainter::new(render_objects),
-            point_painter: PointPainter::new(render_objects),
+            display_vertices_painter: PointPainter::new(render_objects),
             pen_up_painter: BasicPainter::new(render_objects, PrimitiveTopology::LineList),
-            control_points_painter: PointPainter::new(render_objects),
-            control_lines_painter: BasicPainter::new(render_objects, PrimitiveTopology::LineList),
+            bezier_handles_point_painter: PointPainter::new(render_objects),
+            bezier_handles_line_painter: BasicPainter::new(
+                render_objects,
+                PrimitiveTopology::LineList,
+            ),
         }
     }
-}
 
-/// Data needed for drawing a single layer, to be provided to the layer painters.
-struct LayerPainterData {
-    line_painter_data: LinePainterData,
-    point_painter_data: PointPainterData,
-    pen_up_painter_data: BasicPainterData,
-    control_points_painter_data: PointPainterData,
-    control_lines_painter_data: BasicPainterData,
-}
+    fn paint<'rp>(
+        &'rp self,
+        layer_data: &'rp LayerRenderData,
+        display_options: DisplayOptions,
+        render_objects: &'rp EngineRenderObjects,
+        render_pass: &mut wgpu::RenderPass<'rp>,
+    ) {
+        vsvg::trace_function!();
 
-impl LayerPainterData {
-    fn build(
-        render_objects: &EngineRenderObjects,
-        document_data: &DocumentData,
-    ) -> HashMap<LayerID, LayerPainterData> {
-        let mut layers = HashMap::new();
-
-        for (lid, flattened_layer) in &document_data.flattened_document.layers {
-            let points = document_data
-                .display_vertices
-                .get(lid)
-                .unwrap()
-                .iter()
-                .map(Into::into);
-
-            let pen_up_trajectories = flattened_layer
-                .pen_up_trajectories()
-                .iter()
-                .flat_map(|(start, end)| [start.into(), end.into()])
-                .collect::<Vec<[f32; 2]>>();
-
-            let control_points: Vec<_> = document_data.control_points.layers[lid]
-                .paths
-                .iter()
-                .flat_map(|p| p.data().points())
-                .map(Into::into)
-                .collect();
-
-            let layer_data = LayerPainterData {
-                line_painter_data: LinePainterData::new(render_objects, &flattened_layer.paths),
-                point_painter_data: PointPainterData::new(
-                    render_objects,
-                    points,
-                    POINTS_COLOR,
-                    POINTS_SIZE,
-                ),
-                pen_up_painter_data: BasicPainterData::new(
-                    render_objects,
-                    pen_up_trajectories,
-                    PEN_UP_TRAJECTORY_COLOR,
-                ),
-                control_points_painter_data: PointPainterData::new(
-                    render_objects,
-                    control_points.clone(),
-                    CONTROL_POINTS_COLOR,
-                    CONTROL_POINTS_SIZE,
-                ),
-                control_lines_painter_data: BasicPainterData::new(
-                    render_objects,
-                    control_points,
-                    CONTROL_POINTS_COLOR,
-                ),
-            };
-
-            layers.insert(*lid, layer_data);
+        if let Some(line_painter_data) = layer_data.line_painter_data() {
+            self.line_painter.draw(
+                render_pass,
+                &render_objects.camera_bind_group,
+                line_painter_data,
+            );
         }
 
-        layers
+        if display_options.show_bezier_handles {
+            if let Some(bezier_handles_painter_data) = layer_data.bezier_handles_painter_data() {
+                self.bezier_handles_point_painter.draw(
+                    render_pass,
+                    &render_objects.camera_bind_group,
+                    &bezier_handles_painter_data.point_painter_data,
+                );
+
+                self.bezier_handles_line_painter.draw(
+                    render_pass,
+                    &render_objects.camera_bind_group,
+                    &bezier_handles_painter_data.line_painter_data,
+                );
+            }
+        }
+
+        if display_options.show_display_vertices {
+            if let Some(display_vertices_painter_data) = layer_data.display_vertices_painter_data()
+            {
+                self.display_vertices_painter.draw(
+                    render_pass,
+                    &render_objects.camera_bind_group,
+                    display_vertices_painter_data,
+                );
+            }
+        }
+
+        if display_options.show_pen_up {
+            if let Some(pen_up_painter_data) = layer_data.pen_up_painter_data() {
+                self.pen_up_painter.draw(
+                    render_pass,
+                    &render_objects.camera_bind_group,
+                    pen_up_painter_data,
+                );
+            }
+        }
     }
 }
 
@@ -238,9 +220,11 @@ pub(crate) struct EngineRenderObjects {
 }
 
 pub(super) struct Engine {
-    render_objects: EngineRenderObjects,
+    pub(super) render_objects: EngineRenderObjects,
 
     viewer_options: Arc<Mutex<ViewerOptions>>,
+
+    render_data: Option<RenderData>,
 
     last_page_size: Option<PageSize>,
 
@@ -248,8 +232,7 @@ pub(super) struct Engine {
     layer_painters: LayerPainters,
 
     /// per-layer painter data
-    layer_painter_data: HashMap<LayerID, LayerPainterData>,
-
+    //layer_painter_data: HashMap<LayerID, LayerPainterData>,
     page_size_painter: PageSizePainter,
     page_size_painter_data: Option<PageSizePainterData>,
 }
@@ -324,26 +307,34 @@ impl Engine {
             render_objects,
 
             viewer_options,
+            render_data: None,
             last_page_size: None,
 
             layer_painters,
-            layer_painter_data: HashMap::default(),
             page_size_painter,
             page_size_painter_data: None,
         }
     }
 
-    pub fn set_document_data(&mut self, document_data: &DocumentData) {
+    pub fn set_document(&mut self, document: Arc<Document>) {
+        vsvg::trace_function!();
+
         // in most cases the page size won't change from a frame to the next, so we only rebuild
         // if needed
-        let new_page_size = document_data.flattened_document.metadata().page_size;
+        let new_page_size = document.metadata().page_size;
         if self.last_page_size != new_page_size {
             self.page_size_painter_data = new_page_size
                 .map(|page_size| PageSizePainterData::new(&self.render_objects, page_size));
             self.last_page_size = new_page_size;
         }
 
-        self.layer_painter_data = LayerPainterData::build(&self.render_objects, document_data);
+        // rebuild the document data only if the new document is different from the previous one
+        if let Some(render_data) = self.render_data.as_ref() {
+            if Arc::ptr_eq(&document, render_data.document()) {
+                return;
+            }
+        }
+        self.render_data = Some(RenderData::new(document));
     }
 
     pub(super) fn prepare(
@@ -354,6 +345,8 @@ impl Engine {
         scale: f32,
         origin: cgmath::Point2<f32>,
     ) {
+        vsvg::trace_function!();
+
         // Update our uniform buffer with the angle from the UI
         let mut camera_uniform = CameraUniform::default();
         camera_uniform.update(
@@ -368,9 +361,18 @@ impl Engine {
             0,
             bytemuck::cast_slice(&[camera_uniform]),
         );
+
+        if let Some(render_data) = &mut self.render_data {
+            render_data.prepare(
+                &self.render_objects,
+                self.viewer_options.lock().unwrap().display_options,
+            );
+        }
     }
 
     pub(super) fn paint<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
+        vsvg::trace_function!();
+
         if let Some(page_size_painter_data) = &self.page_size_painter_data {
             self.page_size_painter.draw(
                 render_pass,
@@ -380,42 +382,15 @@ impl Engine {
         }
 
         let viewer_options = self.viewer_options.lock().unwrap();
-        for (lid, layer_painter_data) in &self.layer_painter_data {
-            if *viewer_options.layer_visibility.get(lid).unwrap_or(&true) {
-                //TODO: move that to LayerPainters
-                self.layer_painters.line_painter.draw(
-                    render_pass,
-                    &self.render_objects.camera_bind_group,
-                    &layer_painter_data.line_painter_data,
-                );
 
-                if viewer_options.show_control_points {
-                    self.layer_painters.control_points_painter.draw(
+        if let Some(render_data) = &self.render_data {
+            for (lid, layer_data) in render_data.layers() {
+                if *viewer_options.layer_visibility.get(lid).unwrap_or(&true) {
+                    self.layer_painters.paint(
+                        layer_data,
+                        viewer_options.display_options,
+                        &self.render_objects,
                         render_pass,
-                        &self.render_objects.camera_bind_group,
-                        &layer_painter_data.control_points_painter_data,
-                    );
-
-                    self.layer_painters.control_lines_painter.draw(
-                        render_pass,
-                        &self.render_objects.camera_bind_group,
-                        &layer_painter_data.control_lines_painter_data,
-                    );
-                }
-
-                if viewer_options.show_point {
-                    self.layer_painters.point_painter.draw(
-                        render_pass,
-                        &self.render_objects.camera_bind_group,
-                        &layer_painter_data.point_painter_data,
-                    );
-                }
-
-                if viewer_options.show_pen_up {
-                    self.layer_painters.pen_up_painter.draw(
-                        render_pass,
-                        &self.render_objects.camera_bind_group,
-                        &layer_painter_data.pen_up_painter_data,
                     );
                 }
             }

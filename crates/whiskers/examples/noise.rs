@@ -1,7 +1,7 @@
 //! Example sketch to demonstrate the use of the `noise-rs` crate.
 
-use noise::utils::{NoiseMap, NoiseMapBuilder, PlaneMapBuilder};
-use noise::{Fbm, Perlin};
+use noise::{Fbm, NoiseFn, Perlin};
+use rayon::prelude::*;
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
@@ -56,19 +56,40 @@ impl App for NoiseSketch {
 
         sketch.translate(self.margin, self.margin);
 
-        let fbm = Fbm::<Perlin>::default();
+        let noise;
+        {
+            // explicit tracing scope to measure the time spent generating the noise
+            vsvg::trace_scope!("noise");
 
-        let noise_map: NoiseMap = PlaneMapBuilder::<_, 4>::new(fbm)
-            .set_size(self.points_per_line, self.line_count)
-            .set_x_bounds(ctx.time - self.x_noise_range, ctx.time + self.x_noise_range)
-            .set_y_bounds(-self.y_noise_range, self.y_noise_range)
-            .build();
+            // Note:
+            // The noise-rs crate includes a `PlaneMapBuilder` object that can be used to generate
+            // a 2D noise map. However, it is not yet parallelized, so we roll our own
+            // implementation using Rayon. See https://github.com/Razaekel/noise-rs/pull/213D
 
-        for j in 0..self.line_count {
+            let fbm = &Fbm::<Perlin>::default();
+            let delta_x = 2.0 * self.x_noise_range / self.points_per_line as f64;
+            let delta_y = 2.0 * self.y_noise_range / self.line_count as f64;
+            noise = (0..self.line_count)
+                .into_par_iter()
+                .map(|j| {
+                    vsvg::trace_scope!("noise_inner");
+                    (0..self.points_per_line)
+                        .map(|i| {
+                            fbm.get([
+                                ctx.time + -self.x_noise_range + i as f64 * delta_x,
+                                -self.y_noise_range + j as f64 * delta_y,
+                            ])
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+        }
+
+        for noise_line in noise {
             sketch.translate(0.0, dy);
 
-            let points = (0..self.points_per_line)
-                .map(|i| (i as f64 * dx, self.gain * dy * noise_map.get_value(i, j)));
+            let points =
+                (0..self.points_per_line).map(|i| (i as f64 * dx, self.gain * dy * noise_line[i]));
 
             if self.use_catmull_rom {
                 sketch.catmull_rom(points, self.tension);

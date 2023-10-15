@@ -36,5 +36,6 @@ dhat = { version = "0.3.2", optional = true } # for heap profiling
 #debug = 1
 
 [features]
+puffin = ["vsvg/puffin", "vsvg-viewer/puffin"]
 dhat-heap = ["dhat"]    # if you are doing heap profiling
 dhat-ad-hoc = []  # if you are doing ad hoc profiling
