@@ -1,3 +1,5 @@
+//! This example demonstrates the use of the [`Grid`] helper.
+
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
@@ -15,7 +17,10 @@ struct GridSketch {
     #[param(slider, min = 0.0, max = 200.0)]
     gutter_height: f64,
     is_canvas_sizing: bool,
+
+    #[param(min = 0, max = self.columns - 1)]
     marked_cell_col: usize,
+    #[param(min = 0, max = self.rows - 1)]
     marked_cell_row: usize,
 }
 
@@ -56,6 +61,8 @@ impl App for GridSketch {
                         Color::RED
                     },
                 );
+
+                // when added to a sketch, a [`GridCell`] draws a rectangle at its location
                 sketch.add_path(cell);
             });
 
@@ -66,5 +73,6 @@ impl App for GridSketch {
 fn main() -> Result {
     Runner::new(GridSketch::default())
         .with_page_size_options(PageSize::A5H)
+        .with_layout_options(LayoutOptions::Center)
         .run()
 }

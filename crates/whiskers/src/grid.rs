@@ -38,14 +38,15 @@ impl IntoBezPathTolerance for &GridCell {
 /// helps to work with 2-dimensional grids more efficiently.
 ///
 /// ```rust
-/// use whiskers::grid::{Grid};
+/// use whiskers::prelude::*;
 ///
+/// let mut sketch = Sketch::new();
 /// Grid::from_total_size([600.0, 800.0])
 ///     .columns(5)
 ///     .rows(10)
 ///     .position(Point::new(20.0, 100.0))
 ///     .spacing([10.0, 10.0])
-///     .build(sketch, |sketch, cell| {
+///     .build(&mut sketch, |sketch, cell| {
 ///         sketch.add_path(cell);
 ///     });
 /// ```
