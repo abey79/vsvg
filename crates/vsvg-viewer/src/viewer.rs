@@ -158,6 +158,10 @@ impl eframe::App for Viewer {
                 self.document_widget.layer_menu_ui(ui);
                 self.menu_debug(ui);
                 self.frame_history.ui(ui);
+                ui.add_enabled(
+                    false,
+                    egui::Label::new(format!("Vertices: {}", self.document_widget.vertex_count())),
+                );
                 egui::warn_if_debug_build(ui);
             });
         });

@@ -75,6 +75,9 @@ pub(crate) struct ViewerOptions {
     /// anti alias parameter
     #[serde(skip)]
     pub anti_alias: f32,
+
+    /// vertex count (updated by [`Engine::paint`] for display purposes)
+    pub vertex_count: u64,
 }
 
 impl Default for ViewerOptions {
@@ -86,6 +89,7 @@ impl Default for ViewerOptions {
             override_opacity: None,
             layer_visibility: HashMap::default(),
             anti_alias: 0.5,
+            vertex_count: 0,
         }
     }
 }
@@ -381,8 +385,9 @@ impl Engine {
             );
         }
 
-        let viewer_options = self.viewer_options.lock().unwrap();
+        let mut viewer_options = self.viewer_options.lock().unwrap();
 
+        let mut vertex_count = 0;
         if let Some(render_data) = &self.render_data {
             for (lid, layer_data) in render_data.layers() {
                 if *viewer_options.layer_visibility.get(lid).unwrap_or(&true) {
@@ -392,8 +397,11 @@ impl Engine {
                         &self.render_objects,
                         render_pass,
                     );
+
+                    vertex_count += layer_data.vertex_count();
                 }
             }
         }
+        viewer_options.vertex_count = vertex_count;
     }
 }
