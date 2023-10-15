@@ -1,11 +1,9 @@
-use crate::engine::DocumentData;
 use crate::frame_history::FrameHistory;
 use eframe::Frame;
 use egui::{Color32, Ui};
 
 use crate::document_widget::DocumentWidget;
 use crate::ViewerApp;
-use std::sync::Arc;
 
 const VSVG_VIEWER_STORAGE_KEY: &str = "vsvg-viewer-state";
 
@@ -42,9 +40,8 @@ pub struct Viewer {
 
 impl Viewer {
     #[must_use]
-    pub fn new<'a>(
+    pub(crate) fn new<'a>(
         cc: &'a eframe::CreationContext<'a>,
-        document_data: Arc<DocumentData>,
         mut viewer_app: Box<dyn ViewerApp>,
     ) -> Option<Self> {
         let state = if let Some(storage) = cc.storage {
@@ -54,7 +51,7 @@ impl Viewer {
             ViewerState::default()
         };
 
-        let mut document_widget = DocumentWidget::new(cc, document_data)?;
+        let mut document_widget = DocumentWidget::new(cc)?;
 
         //TODO: better error handling
         viewer_app

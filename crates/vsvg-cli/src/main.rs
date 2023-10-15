@@ -7,6 +7,7 @@ use crate::commands::command_list;
 use std::error::Error;
 use std::io::Read;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::cli::State;
 use vsvg::Document;
@@ -54,7 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // display gui
     if !no_show {
-        vsvg_viewer::show(&state.document)?;
+        vsvg_viewer::show(Arc::new(state.document))?;
     }
 
     Ok(())

@@ -1,7 +1,8 @@
 use crate::runner::collapsing_header;
-use crate::Sketch;
 use std::fs::canonicalize;
 use std::path::PathBuf;
+use std::sync::Arc;
+use vsvg::{Document, DocumentTrait};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(super) struct SaveUI {
@@ -19,7 +20,7 @@ pub(super) struct SaveUI {
     ///
     /// Used to display status.
     #[serde(skip)]
-    last_error: Option<anyhow::Result<String>>,
+    last_error: Option<Result<String, std::io::Error>>,
 }
 
 impl Default for SaveUI {
@@ -45,7 +46,7 @@ impl SaveUI {
             .filter(|p| p.is_dir());
     }
 
-    pub(super) fn ui(&mut self, ui: &mut egui::Ui, sketch: Option<&Sketch>) {
+    pub(super) fn ui(&mut self, ui: &mut egui::Ui, document: Option<Arc<Document>>) {
         collapsing_header(ui, "Save", "", true, |ui| {
             ui.spacing_mut().text_edit_width = 250.0;
 
@@ -114,14 +115,14 @@ impl SaveUI {
                     ui.horizontal(|ui| {
                         if ui
                             .add_enabled(
-                                sketch.is_some() && self.destination_dir.is_some(),
+                                document.is_some() && self.destination_dir.is_some(),
                                 egui::Button::new("save"),
                             )
                             .clicked()
                         {
-                            if let Some(sketch) = sketch {
+                            if let Some(document) = document {
                                 if let Some(path) = self.get_output_path() {
-                                    self.last_error = Some(sketch.save(&path).map(|()| {
+                                    self.last_error = Some(document.to_svg_file(&path).map(|()| {
                                         path.file_name().map_or("<unknown>".to_string(), |s| {
                                             s.to_string_lossy().to_string()
                                         })
