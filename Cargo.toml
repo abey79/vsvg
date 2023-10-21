@@ -36,5 +36,5 @@ serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1.0.107"
 thiserror = "1.0.49"
 web-time = "0.2.0"
-winit = "0.28.7"
-wgpu = {version = "0.17.1", default-features = false, features = ["webgl"] } # same a egui
+winit = { version = "0.28.7", features = ["backend-winit"] }
+wgpu = { version = "0.17.1", default-features = false, features = ["webgl"] } # same a egui
