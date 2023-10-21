@@ -11,7 +11,7 @@ pub(crate) use line_painter::{LinePainter, LinePainterData};
 pub(crate) use page_size_painter::{PageSizePainter, PageSizePainterData};
 pub(crate) use point_painter::{PointPainter, PointPainterData};
 
-pub(crate) trait Painter: Send + Sync {
+pub(crate) trait Painter {
     type Data;
 
     fn draw<'a>(

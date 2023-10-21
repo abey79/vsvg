@@ -15,19 +15,19 @@ whiskers-derive = { path = "crates/whiskers-derive", version = "0.1.0" }
 # dependencies
 anyhow = "1"
 convert_case = "0.6.0"
-eframe = { version = "0.22.0", default-features = false, features = [
+eframe = { version = "0.23.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "persistence",
     "wgpu",
 ] }
-egui = "0.22.0"
+egui = "0.23.0"
 getrandom = { version = "0", features = ["js"] } # wasm support
 itertools = "0.11.0"
 kurbo = "0.10.3"
 log = "0.4.20"
-puffin = "0.16.0"  # sync with egui
-puffin_egui = "0.22.0"  # sync with egui
+puffin = "0.17.0"  # sync with egui
+puffin_egui = "0.23.0"  # sync with egui
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
@@ -36,5 +36,5 @@ serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1.0.107"
 thiserror = "1.0.49"
 web-time = "0.2.0"
-winit = "0.28.7"
-wgpu = {version = "0.16.3", default-features = false, features = ["webgl"] } # same a egui
+winit = "0.28.7" # same as egui
+wgpu = { version = "0.17.1", default-features = false, features = ["webgl"] } # same as egui
