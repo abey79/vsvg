@@ -97,11 +97,15 @@ impl Viewer {
                 ui.close_menu();
             }
 
-            ui.separator();
-            Self::egui_debug_options_ui(ui);
+            #[cfg(debug_assertions)]
+            {
+                ui.separator();
+                Self::egui_debug_options_ui(ui);
+            }
         });
     }
 
+    #[cfg(debug_assertions)]
     fn egui_debug_options_ui(ui: &mut Ui) {
         // copied from rerun!
 

@@ -1,8 +1,11 @@
 use crate::engine::{DisplayMode, Engine, ViewerOptions};
 use eframe::egui_wgpu;
+use eframe::egui_wgpu::CallbackResources;
+use eframe::epaint::PaintCallbackInfo;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
 use vsvg::{Document, DocumentTrait, LayerTrait};
+use wgpu::{CommandBuffer, CommandEncoder, Device, Queue, RenderPass};
 
 /// Widget to display a [`Document`] in an egui application.
 ///
@@ -52,8 +55,11 @@ impl DocumentWidget {
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
         // `paint_callback_resources` type map, which is stored alongside the render pass.
-        let callback_resources = &mut wgpu_render_state.renderer.write().paint_callback_resources;
-        callback_resources.insert(engine);
+        wgpu_render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(engine);
 
         Some(Self {
             document: None,
@@ -116,51 +122,16 @@ impl DocumentWidget {
             self.must_fit_to_view = false;
         }
 
-        // The callback function for WGPU is in two stages: prepare, and paint.
-        //
-        // The prepare callback is called every frame before paint and is given access to the wgpu
-        // Device and Queue, which can be used, for instance, to update buffers and uniforms before
-        // rendering.
-        //
-        // You can use the main `CommandEncoder` that is passed-in, return an arbitrary number
-        // of user-defined `CommandBuffer`s, or both.
-        // The main command buffer, as well as all user-defined ones, will be submitted together
-        // to the GPU in a single call.
-        //
-        // The paint callback is called after prepare and is given access to the render pass, which
-        // can be used to issue draw commands.
-
-        let scale = self.scale;
-        let origin = cgmath::Point2::new(self.offset.x, self.offset.y);
-
-        let document = self.document.clone();
-
-        let cb = egui_wgpu::CallbackFn::new()
-            .prepare(move |device, queue, _encoder, paint_callback_resources| {
-                vsvg::trace_scope!("wgpu prepare callback");
-                let engine: &mut Engine = paint_callback_resources.get_mut().unwrap();
-
-                if let Some(document) = document.clone() {
-                    engine.set_document(document);
-                }
-
-                engine.prepare(device, queue, rect, scale, origin);
-
-                Vec::new()
-            })
-            .paint(move |_info, render_pass, paint_callback_resources| {
-                vsvg::trace_scope!("wgpu paint callback");
-
-                let engine: &Engine = paint_callback_resources.get().unwrap();
-                engine.paint(render_pass);
-            });
-
-        let callback = egui::PaintCallback {
+        // add the paint callback
+        ui.painter().add(egui_wgpu::Callback::new_paint_callback(
             rect,
-            callback: Arc::new(cb),
-        };
-
-        ui.painter().add(callback);
+            DocumentWidgetCallback {
+                document: self.document.clone(),
+                origin: cgmath::Point2::new(self.offset.x, self.offset.y),
+                scale: self.scale,
+                rect,
+            },
+        ));
     }
 
     pub fn view_menu_ui(&mut self, ui: &mut Ui) {
@@ -308,5 +279,45 @@ impl DocumentWidget {
                 bounds.y0 as f32 - (view_h / self.scale - h) / 2.0,
             );
         }
+    }
+}
+
+struct DocumentWidgetCallback {
+    document: Option<Arc<Document>>,
+    origin: cgmath::Point2<f32>,
+    scale: f32,
+    rect: Rect,
+}
+
+impl egui_wgpu::CallbackTrait for DocumentWidgetCallback {
+    fn prepare(
+        &self,
+        device: &Device,
+        queue: &Queue,
+        _egui_encoder: &mut CommandEncoder,
+        callback_resources: &mut CallbackResources,
+    ) -> Vec<CommandBuffer> {
+        vsvg::trace_scope!("wgpu prepare callback");
+        let engine: &mut Engine = callback_resources.get_mut().unwrap();
+
+        if let Some(document) = self.document.clone() {
+            engine.set_document(document);
+        }
+
+        engine.prepare(device, queue, self.rect, self.scale, self.origin);
+
+        Vec::new()
+    }
+
+    fn paint<'a>(
+        &'a self,
+        _info: PaintCallbackInfo,
+        render_pass: &mut RenderPass<'a>,
+        callback_resources: &'a CallbackResources,
+    ) {
+        vsvg::trace_scope!("wgpu paint callback");
+
+        let engine: &Engine = callback_resources.get().unwrap();
+        engine.paint(render_pass);
     }
 }
