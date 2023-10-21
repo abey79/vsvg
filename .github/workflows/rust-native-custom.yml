@@ -1,4 +1,4 @@
-name: Native CI
+name: Native CI (self-hosted)
 
 on:
   push:
@@ -16,9 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: "lint"
 
       - run: just fmt
       - run: just clippy
@@ -28,9 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: "test"
+
 
       - run: just test
 
@@ -39,8 +34,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: "docs"
 
       - run: just docs
