@@ -74,5 +74,3 @@ jobs:
           tool: just
 
       - run: just docs
-        env:
-          WINIT_UNIX_BACKEND: x11
