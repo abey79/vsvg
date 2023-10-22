@@ -7,7 +7,7 @@ edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
 repository = "https://github.com/abey79/vsvg"
-license-file = "../../LICENSE"
+license = "MIT"
 categories = ["graphics", "visualization"]
 
 

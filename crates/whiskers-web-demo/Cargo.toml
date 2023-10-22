@@ -6,7 +6,7 @@ edition = "2021"
 readme = "README.md"
 homepage = "https//bylr.info/vsvg/"
 repository = "https://github.com/abey79/vsvg"
-license-file = "../../LICENSE"
+license = "MIT"
 publish = false
 
 [lib]
