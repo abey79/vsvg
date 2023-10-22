@@ -141,7 +141,6 @@ impl Grid {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
         let [columns, rows] = self.dimensions;
-        let cell_size = self.module_size();
         let grid_size = self.size();
 
         for row in 0..rows {
@@ -155,7 +154,7 @@ impl Grid {
                     column,
                     row,
                     position: Point::new(pos_x, pos_y),
-                    size: cell_size,
+                    size: [module_width, module_height],
                     grid_size,
                 };
                 callback_fn(sketch, &cell);

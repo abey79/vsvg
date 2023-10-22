@@ -66,6 +66,12 @@ impl App for GridSketch {
                 sketch.add_path(cell);
             });
 
+        let cell = HexGridCell::with_flat_orientation()
+            .center(Point::new(4.0, 10.0))
+            .size(40.0);
+
+        sketch.add_path(&cell);
+
         Ok(())
     }
 }
