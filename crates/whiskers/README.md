@@ -11,9 +11,11 @@ _👉 Try the [**live demo**](https://bylr.info/vsvg/)!_
 
 *whiskers* is a [Processing](https://processing.org)-like interactive sketch environment and API built over [*vsvg*](../vsvg/README.md) and [*vsvg-viewer*](../vsvg-viewer/README.md). It's similar to *vsketch*, but faster, web-ready, and with much stronger foundations.
 
-<img width="1116" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/bfecf0a1-a0a1-4d27-8a42-6ad95ac438fa">
+<img width="1062" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/57ea7a5e-1c46-4a86-8155-2b0a217e6817">
 
 ## Installation
+
+Simply add *whiskers* as a dependency to your project:
 
 ```
 cargo add whiskers
@@ -21,7 +23,7 @@ cargo add whiskers
 
 ## Usage
 
-Here is the code for this basic sketch:
+Here is the code for a basic sketch:
 
 ```rust
 use whiskers::prelude::*;
@@ -61,6 +63,11 @@ fn main() -> Result {
 }
 ```
 
+This is the result:
+
+<img width="985" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/2a7f8cac-0206-44c6-b471-296f1487fc26">
+
+
 *whiskers* is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 ## Features
@@ -69,10 +76,13 @@ fn main() -> Result {
 - [x] Sketch parameter UI highly customisable using `#[param(...)]` attributes (see e.g. `asteroid` example).
 - [x] Sketch parameter UI easily extendable for custom data types (see e.g. `custom_ui` example).
 - [x] Page size management UI.
-- [x] Export to SVG
+- [x] Export to SVG.
+- [x] Support for curves (including quadratic Béziers, cubic Bézier, Catmull-Rom splines—circles, ellipses and arcs are supported but internally converted to cubic Bézier).
 - [x] Time parameter management UI (for animated sketches).
 - [x] Random Number Generator UI with seed control (see e.g. `asteroid` example).
-- [ ] Configuration handling (save/restore config, etc.)
+- [x] Integrated profiler (based on [puffin](https://github.com/EmbarkStudios/puffin)).
+- [x] `Grid` helper for grid-based sketches.
+- [ ] Configuration handling (save/restore config, etc.).
 - [ ] Compiled sketches are *also* a flexible CLI utility with the capability to batch generate sketch outputs with parameter ranges.
 - [ ] Export to other format through templating (HPGL, g-code, etc. — for now, please use [*vpype*](https://github.com/abey79/vpype)).
 - [ ] ... (*please complete this list*)

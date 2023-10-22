@@ -2,12 +2,12 @@
 name = "whiskers"
 authors = ["Antoine Beyeler"]
 description = "Processing-like, interactive sketching environment for plotter generative art."
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
 repository = "https://github.com/abey79/vsvg"
-license-file = "../../LICENSE"
+license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
 [dependencies]

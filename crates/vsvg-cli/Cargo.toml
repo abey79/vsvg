@@ -2,12 +2,12 @@
 name = "vsvg-cli"
 description = "An experimental CLI SVG manipulation and viewer tool for plotter users."
 authors = ["Antoine Beyeler"]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
 repository = "https://github.com/abey79/vsvg"
-license-file = "../../LICENSE"
+license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
 [[bin]]
