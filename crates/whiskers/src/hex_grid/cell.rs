@@ -5,16 +5,22 @@ pub enum Orientation {
     Pointy,
 }
 
+/// Stores basic hex grid's cell data, like size, orientation, or canvas position
 pub struct HexGridCell {
+    /// Center point of the grid cell
     pub center: Point,
+    /// Size of the grid cell, meaning the distance from
+    /// the cell's center point to each corner
     pub size: f64,
     orientation: Orientation,
 }
 
 impl HexGridCell {
-    pub const DEFAULT_CENTER: [f64; 2] = [0.0, 0.0];
-    pub const DEFAULT_SIZE: f64 = 10.0;
+    const DEFAULT_CENTER: [f64; 2] = [0.0, 0.0];
+    const DEFAULT_SIZE: f64 = 10.0;
 
+    /// Creates cell with flat orientation and default center point and size
+    #[must_use]
     pub fn with_flat_orientation() -> Self {
         Self {
             center: HexGridCell::DEFAULT_CENTER.into(),
@@ -23,6 +29,8 @@ impl HexGridCell {
         }
     }
 
+    /// Creates cell with pointy orientation and default center point and size
+    #[must_use]
     pub fn with_pointy_orientation() -> Self {
         Self {
             center: HexGridCell::DEFAULT_CENTER.into(),
@@ -31,24 +39,29 @@ impl HexGridCell {
         }
     }
 
+    /// Overrides cell's current size value
+    #[must_use]
     pub fn size(mut self, value: f64) -> Self {
         self.size = value;
         self
     }
 
+    /// Overrides cell's current position value
+    #[must_use]
     pub fn center(mut self, value: Point) -> Self {
         self.center = value;
         self
     }
 
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn corner(&self, index: usize) -> Point {
         match self.orientation {
-            Orientation::Flat => self.get_corner_point(60.0 * index as f64),
-            Orientation::Pointy => self.get_corner_point(60.0 * index as f64 - 30.0),
+            Orientation::Flat => self.corner_from_angle(60.0 * index as f64),
+            Orientation::Pointy => self.corner_from_angle(60.0 * index as f64 - 30.0),
         }
     }
 
-    fn get_corner_point(&self, angle_deg: f64) -> Point {
+    fn corner_from_angle(&self, angle_deg: f64) -> Point {
         let angle_rad = angle_deg.to_radians();
         Point::new(
             self.center.x() + self.size * angle_rad.cos(),
