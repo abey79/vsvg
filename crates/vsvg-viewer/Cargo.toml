@@ -2,7 +2,7 @@
 name = "vsvg-viewer"
 description = "Portable, hardware-accelerated, extensible viewer for the vsvg crate."
 authors = ["Antoine Beyeler"]
-version = "0.1.0"
+version = "0.2.0-rc.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
@@ -29,12 +29,12 @@ wgpu.workspace = true
 [dev-dependencies]  # mostly for examples
 env_logger = "0.10.0"
 pollster = "0.3.0"
-rand = "0.8.5"
+rand.workspace = true
 raw-window-handle = "0.5.2"
 tracing-subscriber = "0.3.16"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion = "0.4.0"
+criterion.workspace = true
 winit.workspace = true
 
 

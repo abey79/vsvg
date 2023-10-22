@@ -2,7 +2,7 @@
 name = "vsvg"
 description = "Core library for pen-plotter graphics."
 authors = ["Antoine Beyeler"]
-version = "0.1.0"
+version = "0.2.0-rc.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
@@ -44,7 +44,7 @@ rand_chacha.workspace = true
 getrandom.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion = "0.5.1"
+criterion.workspace = true
 
 [features]
 default = ["geo"]
