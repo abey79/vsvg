@@ -7,10 +7,10 @@ resolver = "2"
 [workspace.dependencies]
 # When using alpha-release, always use exact version, e.g. `version = "=0.x.y-alpha.z"
 # This is because we treat alpha-releases as incompatible, but semver doesn't.
-vsvg = { path = "crates/vsvg", version = "=0.2.0-rc.0" }
-vsvg-viewer = { path = "crates/vsvg-viewer", version = "=0.2.0-rc.0" }
-whiskers = { path = "crates/whiskers", version = "=0.2.0-rc.0" }
-whiskers-derive = { path = "crates/whiskers-derive", version = "=0.2.0-rc.0" }
+vsvg = { path = "crates/vsvg", version = "=0.2.0" }
+vsvg-viewer = { path = "crates/vsvg-viewer", version = "=0.2.0" }
+whiskers = { path = "crates/whiskers", version = "=0.2.0" }
+whiskers-derive = { path = "crates/whiskers-derive", version = "=0.2.0" }
 
 # dependencies
 anyhow = "1"
