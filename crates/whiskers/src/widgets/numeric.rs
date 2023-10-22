@@ -28,6 +28,9 @@ impl<T: Numeric> NumericWidget<T> {
     }
 
     /// Sets the step value for the widget.
+    ///
+    /// This parameter is passed to [`egui::DragValue::speed`] in normal mode, and
+    /// [`egui::Slider::step_by`] in slider mode.
     #[must_use]
     pub fn step(mut self, step: T) -> Self {
         self.step = Some(step);
@@ -66,7 +69,11 @@ impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
             }
             ui.add(slider)
         } else {
-            ui.add(egui::DragValue::new(value).clamp_range(range))
+            let mut drag_value = egui::DragValue::new(value).clamp_range(range);
+            if let Some(step) = self.step {
+                drag_value = drag_value.speed(step.to_f64());
+            }
+            ui.add(drag_value)
         }
     }
 }
