@@ -8,7 +8,11 @@ use whiskers::prelude::*;
 struct NoiseSketch {
     #[param(slider, min = 0.0, max = 500.0)]
     margin: f64,
+
+    #[param(step = 10)]
     line_count: usize,
+
+    #[param(step = 10)]
     points_per_line: usize,
 
     gain: f64,
