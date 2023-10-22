@@ -6,6 +6,18 @@ pub enum Orientation {
 }
 
 /// Stores basic hex grid's cell data, like size, orientation, or canvas position
+///
+/// Normally, you will not need to create it manually, as each cell in hexagonal
+/// grid module is generated in the `build` method and passed to the callback function
+/// as a reference.
+///
+/// But, you can, like this.
+///
+/// ```rust
+/// let cell = HexGridCell::with_flat_orientation()
+///     .center(Point::new(21.0, 37.0))
+///     .size(129.0);
+/// ```
 pub struct HexGridCell {
     /// Center point of the grid cell
     pub center: Point,
