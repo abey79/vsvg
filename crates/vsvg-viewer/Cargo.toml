@@ -17,7 +17,6 @@ bytemuck = {version = "1.13.1",  features = [ "derive" ]}
 cgmath = "0.18.0"
 eframe.workspace = true
 egui.workspace = true
-egui-winit.workspace = true
 kurbo.workspace = true
 log.workspace = true
 puffin = { workspace = true, optional = true }
@@ -36,6 +35,7 @@ tracing-subscriber = "0.3.16"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion.workspace = true
+egui-winit.workspace = true
 winit.workspace = true
 
 
