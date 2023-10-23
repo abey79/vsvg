@@ -17,6 +17,7 @@ bytemuck = {version = "1.13.1",  features = [ "derive" ]}
 cgmath = "0.18.0"
 eframe.workspace = true
 egui.workspace = true
+egui-winit.workspace = true
 kurbo.workspace = true
 log.workspace = true
 puffin = { workspace = true, optional = true }

@@ -3997,6 +3997,7 @@ dependencies = [
  "criterion",
  "eframe",
  "egui",
+ "egui-winit",
  "env_logger",
  "js-sys",
  "kurbo 0.10.4",

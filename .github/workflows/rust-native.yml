@@ -73,4 +73,4 @@ jobs:
         with:
           tool: just
 
-      - run: cargo doc --all-features --no-deps --bins --examples -p whiskers -p vsvg --features winit/x11
+      - run: just docs
