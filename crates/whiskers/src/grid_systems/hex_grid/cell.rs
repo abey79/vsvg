@@ -85,9 +85,8 @@ impl HexGridCell {
 impl IntoBezPathTolerance for &HexGridCell {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> kurbo::BezPath {
         let mut bez_path = (0..6)
-            .map(|index| self.corner(index))
-            .enumerate()
-            .map(|(index, point)| {
+            .map(|index| {
+                let point = self.corner(index);
                 if index == 0 {
                     kurbo::PathEl::MoveTo(point.into())
                 } else {
