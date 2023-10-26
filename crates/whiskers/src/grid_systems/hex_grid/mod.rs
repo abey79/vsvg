@@ -138,8 +138,6 @@ impl GridBuild<HexGridCell> for HexGrid {
                         cell = HexGridCell::with_flat_orientation()
                             .size(self.cell_size)
                             .center(Point::new(x, y));
-
-                        callback_fn(sketch, &cell);
                     }
                     Orientation::Pointy => {
                         horiz = self.cell_size * sqrt_three;
@@ -155,10 +153,9 @@ impl GridBuild<HexGridCell> for HexGrid {
                         cell = HexGridCell::with_pointy_orientation()
                             .size(self.cell_size)
                             .center(Point::new(x, y));
-
-                        callback_fn(sketch, &cell);
                     }
                 }
+                callback_fn(sketch, &cell);
             }
         }
     }
