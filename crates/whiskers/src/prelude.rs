@@ -1,6 +1,7 @@
 pub use crate::{
     register_widget_ui, wasm_sketch, widgets::Widget, AnimationOptions, App, Context, Grid,
-    GridCell, HexGridCell, InfoOptions, LayoutOptions, PageSizeOptions, Result, Runner, Sketch,
+    GridCell, HexGrid, HexGridCell, InfoOptions, LayoutOptions, PageSizeOptions, Result, Runner,
+    Sketch,
 };
 pub use vsvg::{Color, Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Point, Transforms, Unit};
 pub use whiskers_derive::Sketch;

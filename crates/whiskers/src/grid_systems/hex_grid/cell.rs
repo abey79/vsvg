@@ -98,7 +98,7 @@ impl IntoBezPathTolerance for &HexGridCell {
                 path.push(cmd);
                 path
             });
-        bez_path.push(kurbo::PathEl::ClosePath);
+        bez_path.close_path();
         bez_path
     }
 }
