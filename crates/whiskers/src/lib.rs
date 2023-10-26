@@ -109,6 +109,7 @@ pub use context::Context;
 pub use grid_systems::{
     grid::{Grid, GridCell},
     hex_grid::{cell::HexGridCell, HexGrid},
+    traits::GridBuild,
 };
 pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
 pub use sketch::Sketch;
