@@ -2,7 +2,7 @@ use vsvg::Point;
 
 use crate::Sketch;
 
-use self::cell::*;
+use self::cell::{HexGridCell, Orientation};
 
 use super::traits::GridBuild;
 
@@ -70,24 +70,29 @@ impl HexGrid {
         self
     }
 
+    /// Overrides grid's current horizontal and vertical spacing values.
+    /// By default, grid instance will have zero spacing on both axes.
     #[must_use]
     pub fn spacing(mut self, value: [f64; 2]) -> Self {
         self.gutter = value;
         self
     }
 
+    /// Overrides grid's current horizontal spacing value.
     #[must_use]
     pub fn horizontal_spacing(mut self, value: f64) -> Self {
         self.gutter[0] = value;
         self
     }
 
+    /// Overrides grid's current vertical spacing value.
     #[must_use]
     pub fn vertical_spacing(mut self, value: f64) -> Self {
         self.gutter[1] = value;
         self
     }
 
+    /// Overrides grid's current cell size (the radius of hexagon's outer circle)
     #[must_use]
     pub fn cell_size(mut self, value: f64) -> Self {
         self.cell_size = value;
@@ -96,12 +101,15 @@ impl HexGrid {
 }
 
 impl GridBuild<HexGridCell> for HexGrid {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn build(
         self,
         sketch: &mut Sketch,
         callback_fn: impl FnOnce(&mut Sketch, &HexGridCell) + Copy,
     ) {
         let [columns, rows] = self.dimensions;
+        let cell_size_one_half = 1.5 * self.cell_size;
+        let sqrt_three = (3.0 as f64).sqrt();
 
         for row in 0..rows {
             for column in 0..columns {
@@ -114,10 +122,11 @@ impl GridBuild<HexGridCell> for HexGrid {
                 let y: f64;
                 let gutter_x = self.gutter[0] * column as f64;
                 let gutter_y = self.gutter[1] * row as f64;
+
                 match self.orientation {
                     Orientation::Flat => {
-                        horiz = 1.5 * self.cell_size;
-                        vert = (3.0 as f64).sqrt() * self.cell_size;
+                        horiz = cell_size_one_half;
+                        vert = sqrt_three * self.cell_size;
 
                         x = horiz * column as f64 + gutter_x;
                         y = if is_even_col {
@@ -133,8 +142,8 @@ impl GridBuild<HexGridCell> for HexGrid {
                         callback_fn(sketch, &cell);
                     }
                     Orientation::Pointy => {
-                        horiz = self.cell_size * (3.0 as f64).sqrt();
-                        vert = 1.5 * self.cell_size;
+                        horiz = self.cell_size * sqrt_three;
+                        vert = cell_size_one_half;
 
                         x = if is_even_row {
                             horiz * column as f64

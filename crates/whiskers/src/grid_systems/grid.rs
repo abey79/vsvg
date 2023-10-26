@@ -162,6 +162,7 @@ impl Grid {
 }
 
 impl GridBuild<GridCell> for Grid {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn build(self, sketch: &mut Sketch, callback_fn: impl FnOnce(&mut Sketch, &GridCell) + Copy) {
         let [module_width, module_height] = self.module_size();
         let [gutter_width, gutter_height] = self.gutter;
