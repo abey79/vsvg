@@ -115,9 +115,9 @@ impl HexGrid {
             for column in 0..columns {
                 let horiz: f64;
                 let vert: f64;
+                let mut cell: HexGridCell;
                 let is_even_col = column % 2 == 0;
                 let is_even_row = row % 2 == 0;
-                let cell: HexGridCell;
                 let x: f64;
                 let y: f64;
                 let gutter_x = self.gutter[0] * column as f64;
@@ -135,11 +135,7 @@ impl HexGrid {
                             vert * row as f64 + (vert / 2.0)
                         } + gutter_y;
 
-                        cell = HexGridCell::with_flat_orientation()
-                            .size(self.cell_size)
-                            .center(Point::new(x, y))
-                            .column(column)
-                            .row(row);
+                        cell = HexGridCell::with_flat_orientation();
                     }
                     Orientation::Pointy => {
                         horiz = self.cell_size * sqrt_three;
@@ -152,13 +148,16 @@ impl HexGrid {
                         } + gutter_x;
                         y = (vert * row as f64 + vert) + gutter_y;
 
-                        cell = HexGridCell::with_pointy_orientation()
-                            .size(self.cell_size)
-                            .center(Point::new(x, y))
-                            .column(column)
-                            .row(row);
+                        cell = HexGridCell::with_pointy_orientation();
                     }
                 }
+
+                cell = cell
+                    .size(self.cell_size)
+                    .center(Point::new(x, y))
+                    .column(column)
+                    .row(row);
+
                 callback_fn(sketch, &cell);
             }
         }
