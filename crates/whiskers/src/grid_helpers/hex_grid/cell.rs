@@ -88,6 +88,24 @@ impl HexGridCell {
         self
     }
 
+    /// Returns cell's width
+    #[must_use]
+    pub fn width(&self) -> f64 {
+        match self.orientation {
+            Orientation::Flat => self.size * 2.0,
+            Orientation::Pointy => self.size * 3.0_f64.sqrt(),
+        }
+    }
+
+    /// Returns cell's height
+    #[must_use]
+    pub fn height(&self) -> f64 {
+        match self.orientation {
+            Orientation::Flat => self.size * 3.0_f64.sqrt(),
+            Orientation::Pointy => self.size * 2.0,
+        }
+    }
+
     /// Returns a list of points consisting a hexagon
     #[must_use]
     pub fn points(&self) -> Vec<Point> {
