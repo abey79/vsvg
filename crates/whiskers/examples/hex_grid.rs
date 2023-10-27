@@ -2,7 +2,7 @@
 use whiskers::prelude::*;
 
 #[derive(Sketch)]
-struct GridSketch {
+struct HexGridSketch {
     is_pointy_orientation: bool,
     #[param(slider, min = 2, max = 20)]
     columns: usize,
@@ -14,7 +14,7 @@ struct GridSketch {
     cell_size: f64,
 }
 
-impl Default for GridSketch {
+impl Default for HexGridSketch {
     fn default() -> Self {
         Self {
             columns: 5,
@@ -26,7 +26,7 @@ impl Default for GridSketch {
     }
 }
 
-impl App for GridSketch {
+impl App for HexGridSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(5.0);
 
@@ -49,7 +49,7 @@ impl App for GridSketch {
 }
 
 fn main() -> Result {
-    Runner::new(GridSketch::default())
+    Runner::new(HexGridSketch::default())
         .with_page_size_options(PageSize::A5H)
         .with_layout_options(LayoutOptions::Center)
         .run()
