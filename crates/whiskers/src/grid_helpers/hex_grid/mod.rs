@@ -105,7 +105,7 @@ impl HexGrid {
     pub fn build(
         self,
         sketch: &mut Sketch,
-        callback_fn: impl FnOnce(&mut Sketch, &HexGridCell) + Copy,
+        mut callback_fn: impl FnMut(&mut Sketch, &HexGridCell),
     ) {
         let [columns, rows] = self.dimensions;
         let cell_size_one_half = 1.5 * self.cell_size;
