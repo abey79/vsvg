@@ -97,7 +97,7 @@
 
 mod context;
 
-mod grid_systems;
+mod grid_helpers;
 
 /// This module re-export all the types, traits, macros, and dependencies needed to run a sketch.
 pub mod prelude;
@@ -106,7 +106,7 @@ mod sketch;
 pub mod widgets;
 
 pub use context::Context;
-pub use grid_systems::{
+pub use grid_helpers::{
     grid::{Grid, GridCell},
     hex_grid::{cell::HexGridCell, HexGrid},
 };
