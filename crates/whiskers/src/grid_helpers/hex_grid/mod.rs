@@ -109,7 +109,7 @@ impl HexGrid {
     ) {
         let [columns, rows] = self.dimensions;
         let cell_size_one_half = 1.5 * self.cell_size;
-        let sqrt_three = (3.0 as f64).sqrt();
+        let sqrt_three = 3.0_f64.sqrt();
 
         for row in 0..rows {
             for column in 0..columns {
