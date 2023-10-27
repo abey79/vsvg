@@ -1,6 +1,6 @@
 use vsvg::{IntoBezPathTolerance, Point};
 
-use crate::{GridBuild, Sketch};
+use crate::Sketch;
 
 enum GridSize {
     CellBased([f64; 2]),
@@ -130,6 +130,38 @@ impl Grid {
         self
     }
 
+    /// Computes grid's cell data such as coordinates (column and row),
+    /// size and canvas position.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+    pub fn build(
+        self,
+        sketch: &mut Sketch,
+        callback_fn: impl FnOnce(&mut Sketch, &GridCell) + Copy,
+    ) {
+        let [module_width, module_height] = self.module_size();
+        let [gutter_width, gutter_height] = self.gutter;
+        let [columns, rows] = self.dimensions;
+        let grid_size = self.size();
+
+        for row in 0..rows {
+            for column in 0..columns {
+                let pos_x = self.top_left_corner.x()
+                    + (column as f64 * module_width + column as f64 * gutter_width);
+                let pos_y = self.top_left_corner.y()
+                    + (row as f64 * module_height + row as f64 * gutter_height);
+
+                let cell = GridCell {
+                    column,
+                    row,
+                    position: Point::new(pos_x, pos_y),
+                    size: [module_width, module_height],
+                    grid_size,
+                };
+                callback_fn(sketch, &cell);
+            }
+        }
+    }
+
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn module_size(&self) -> [f64; 2] {
         match self.size {
@@ -158,33 +190,5 @@ impl Grid {
             columns * module_width + columns * gutter_x,
             rows * module_height + rows * gutter_y,
         ]
-    }
-}
-
-impl GridBuild<GridCell> for Grid {
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    fn build(self, sketch: &mut Sketch, callback_fn: impl FnOnce(&mut Sketch, &GridCell) + Copy) {
-        let [module_width, module_height] = self.module_size();
-        let [gutter_width, gutter_height] = self.gutter;
-        let [columns, rows] = self.dimensions;
-        let grid_size = self.size();
-
-        for row in 0..rows {
-            for column in 0..columns {
-                let pos_x = self.top_left_corner.x()
-                    + (column as f64 * module_width + column as f64 * gutter_width);
-                let pos_y = self.top_left_corner.y()
-                    + (row as f64 * module_height + row as f64 * gutter_height);
-
-                let cell = GridCell {
-                    column,
-                    row,
-                    position: Point::new(pos_x, pos_y),
-                    size: [module_width, module_height],
-                    grid_size,
-                };
-                callback_fn(sketch, &cell);
-            }
-        }
     }
 }

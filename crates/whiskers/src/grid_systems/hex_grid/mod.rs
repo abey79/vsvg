@@ -4,8 +4,6 @@ use crate::Sketch;
 
 use self::cell::{HexGridCell, Orientation};
 
-use super::traits::GridBuild;
-
 pub mod cell;
 
 /// Hexagonal grid module
@@ -98,11 +96,11 @@ impl HexGrid {
         self.cell_size = value;
         self
     }
-}
 
-impl GridBuild<HexGridCell> for HexGrid {
+    /// Computes grid's cell data such as coordinates (column and row),
+    /// size and canvas position.
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
-    fn build(
+    pub fn build(
         self,
         sketch: &mut Sketch,
         callback_fn: impl FnOnce(&mut Sketch, &HexGridCell) + Copy,
