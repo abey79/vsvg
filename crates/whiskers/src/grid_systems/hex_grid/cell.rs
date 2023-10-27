@@ -65,6 +65,12 @@ impl HexGridCell {
         self
     }
 
+    /// Returns a list of points consisting a hexagon
+    #[must_use]
+    pub fn points(&self) -> Vec<Point> {
+        (0..6).map(|index| self.corner(index)).collect()
+    }
+
     #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn corner(&self, index: usize) -> Point {
         match self.orientation {
@@ -84,9 +90,11 @@ impl HexGridCell {
 
 impl IntoBezPathTolerance for &HexGridCell {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> kurbo::BezPath {
-        let mut bez_path = (0..6)
-            .map(|index| {
-                let point = self.corner(index);
+        let mut bez_path = self
+            .points()
+            .iter()
+            .enumerate()
+            .map(|(index, point)| {
                 if index == 0 {
                     kurbo::PathEl::MoveTo(point.into())
                 } else {
