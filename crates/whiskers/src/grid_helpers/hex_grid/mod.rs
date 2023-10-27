@@ -20,6 +20,8 @@ pub mod cell;
 ///         sketch.add_path(hex_grid_cell);
 ///     })
 /// ```
+///
+/// This grid helper uses [doubled coordinates system](https://www.redblobgames.com/grids/hexagons/#coordinates-doubled).
 pub struct HexGrid {
     orientation: Orientation,
     dimensions: [usize; 2],
@@ -135,7 +137,9 @@ impl HexGrid {
 
                         cell = HexGridCell::with_flat_orientation()
                             .size(self.cell_size)
-                            .center(Point::new(x, y));
+                            .center(Point::new(x, y))
+                            .column(column)
+                            .row(row);
                     }
                     Orientation::Pointy => {
                         horiz = self.cell_size * sqrt_three;
@@ -150,7 +154,9 @@ impl HexGrid {
 
                         cell = HexGridCell::with_pointy_orientation()
                             .size(self.cell_size)
-                            .center(Point::new(x, y));
+                            .center(Point::new(x, y))
+                            .column(column)
+                            .row(row);
                     }
                 }
                 callback_fn(sketch, &cell);

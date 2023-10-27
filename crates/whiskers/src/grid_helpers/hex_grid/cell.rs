@@ -24,12 +24,17 @@ pub struct HexGridCell {
     /// Size of the grid cell, meaning the distance from
     /// the cell's center point to each corner
     pub size: f64,
+    /// Cell's column index in [doubled coordinates system](https://www.redblobgames.com/grids/hexagons/#coordinates-doubled)
+    pub column: usize,
+    /// Cell's row index in [doubled coordinates system](https://www.redblobgames.com/grids/hexagons/#coordinates-doubled)
+    pub row: usize,
     orientation: Orientation,
 }
 
 impl HexGridCell {
     const DEFAULT_CENTER: [f64; 2] = [0.0, 0.0];
     const DEFAULT_SIZE: f64 = 10.0;
+    const DEFAULT_POSITION: [usize; 2] = [0, 0];
 
     /// Creates cell with flat orientation and default center point and size
     #[must_use]
@@ -38,6 +43,8 @@ impl HexGridCell {
             center: HexGridCell::DEFAULT_CENTER.into(),
             size: HexGridCell::DEFAULT_SIZE,
             orientation: Orientation::Flat,
+            column: HexGridCell::DEFAULT_POSITION[0],
+            row: HexGridCell::DEFAULT_POSITION[1],
         }
     }
 
@@ -48,6 +55,8 @@ impl HexGridCell {
             center: HexGridCell::DEFAULT_CENTER.into(),
             size: HexGridCell::DEFAULT_SIZE,
             orientation: Orientation::Pointy,
+            column: HexGridCell::DEFAULT_POSITION[0],
+            row: HexGridCell::DEFAULT_POSITION[1],
         }
     }
 
@@ -62,6 +71,20 @@ impl HexGridCell {
     #[must_use]
     pub fn center(mut self, value: Point) -> Self {
         self.center = value;
+        self
+    }
+
+    /// Overrides cell's column index
+    #[must_use]
+    pub fn column(mut self, value: usize) -> Self {
+        self.column = value;
+        self
+    }
+
+    /// Overrides cell's row index
+    #[must_use]
+    pub fn row(mut self, value: usize) -> Self {
+        self.row = value;
         self
     }
 
