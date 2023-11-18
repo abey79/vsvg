@@ -9,7 +9,7 @@ fn main() {
 
     /* == Layers == */
     let mut layer = vsvg::Layer::default();
-    layer.metadata_mut().name = "Layer 2".to_string();
+    layer.metadata_mut().name = Some("Layer 2".to_string());
 
     // vsvg uses kurbo internally, and its API is compatible with it
     layer.push_path(kurbo::Circle::new((50., 50.), 30.));

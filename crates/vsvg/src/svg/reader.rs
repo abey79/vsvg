@@ -232,10 +232,7 @@ impl Document {
                     let layer = self.get_mut(layer_id.unwrap_or(top_level_index));
                     parse_group(&child, &transform, layer);
 
-                    // set layer name
-                    if let Some(name) = layer_name {
-                        layer.metadata_mut().name = name.clone();
-                    }
+                    layer.metadata_mut().name = layer_name;
                 }
                 usvg::NodeKind::Path(ref path) => {
                     self.get_mut(0)
@@ -315,11 +312,26 @@ mod tests {
         .unwrap();
 
         assert_eq!(doc.layers.len(), 5);
-        assert_eq!(doc.try_get(10).unwrap().metadata().name, "Layer 10");
-        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().metadata().name, "Hello");
-        assert_eq!(doc.try_get(4).unwrap().metadata().name, "world");
-        assert_eq!(doc.try_get(5).unwrap().metadata().name, "layer_name");
+        assert_eq!(
+            doc.try_get(10).unwrap().metadata().name,
+            Some("Layer 10".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(11).unwrap().metadata().name,
+            Some("layer11".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(3).unwrap().metadata().name,
+            Some("Hello".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(4).unwrap().metadata().name,
+            Some("world".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(5).unwrap().metadata().name,
+            Some("layer_name".to_owned())
+        );
     }
 
     #[test]
@@ -347,9 +359,18 @@ mod tests {
 
         assert_eq!(doc.layers.len(), 4);
         assert_eq!(doc.try_get(0).unwrap().paths.len(), 1);
-        assert_eq!(doc.try_get(1).unwrap().metadata().name, "layer_one");
-        assert_eq!(doc.try_get(11).unwrap().metadata().name, "layer11");
-        assert_eq!(doc.try_get(3).unwrap().metadata().name, "layer_three");
+        assert_eq!(
+            doc.try_get(1).unwrap().metadata().name,
+            Some("layer_one".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(11).unwrap().metadata().name,
+            Some("layer11".to_owned())
+        );
+        assert_eq!(
+            doc.try_get(3).unwrap().metadata().name,
+            Some("layer_three".to_owned())
+        );
     }
 
     #[test]

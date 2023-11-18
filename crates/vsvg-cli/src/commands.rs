@@ -1,7 +1,7 @@
 use crate::cli::{CommandDesc, CommandValue};
 use clap::{arg, value_parser, Arg, Id};
 use std::collections::HashMap;
-use vsvg::{DocumentTrait, Draw, IndexBuilder, Transforms};
+use vsvg::{DocumentTrait, Draw, Transforms};
 
 // https://stackoverflow.com/a/38361018/229511
 macro_rules! count_items {
@@ -137,14 +137,9 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             |state, b| state.document.for_each(|layer| layer.sort(*b))
         ),
         command_decl!(
-            arg!(--linesortnoflip <THRES> "Reorder paths to minimize pen-up distance"),
-            LayerID, // hack
-            |state, b| state.document.for_each(|layer| layer.sort_with_builder(IndexBuilder::new().flip(false)))
-        ),
-        command_decl!(
-            arg!(--linesortflip <THRES> "Reorder paths to minimize pen-up distance"),
-            LayerID, // hack
-            |state, b| state.document.for_each(|layer| layer.sort_with_builder(IndexBuilder::new().flip(true)))
+            arg!(--layermerge "Merge all layers into layer 1"),
+            bool,
+            |state, b| state.document.merge_layers()
             ),
         command_decl!(
             arg!(--dlayer [X] "Set target layer for draw operations"),

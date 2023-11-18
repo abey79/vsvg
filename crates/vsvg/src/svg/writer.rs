@@ -79,9 +79,11 @@ fn path_to_svg_path<P: PathTrait<D>, D: PathDataTrait>(path: &P) -> svg::node::e
 fn layer_to_svg_group<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait + SvgPathWriter>(
     layer: &L,
 ) -> svg::node::element::Group {
-    let mut group = svg::node::element::Group::new()
-        .set("inkscape:groupmode", "layer")
-        .set("inkscape:label", layer.metadata().name.as_str());
+    let mut group = svg::node::element::Group::new().set("inkscape:groupmode", "layer");
+
+    if let Some(name) = &layer.metadata().name {
+        group = group.set("inkscape:label", name.as_str());
+    }
 
     for path in layer.paths() {
         group = group.add(path_to_svg_path(path));

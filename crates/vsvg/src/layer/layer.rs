@@ -8,15 +8,6 @@ pub struct Layer {
     metadata: LayerMetadata,
 }
 
-impl Layer {
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-}
-
 impl Transforms for Layer {
     fn transform(&mut self, affine: &kurbo::Affine) -> &mut Self {
         self.paths.par_iter_mut().for_each(|path| {
@@ -27,6 +18,10 @@ impl Transforms for Layer {
 }
 
 impl LayerTrait<Path, kurbo::BezPath> for Layer {
+    fn from_paths_and_metadata(paths: Vec<Path>, metadata: LayerMetadata) -> Self {
+        Self { paths, metadata }
+    }
+
     fn paths(&self) -> &[Path] {
         &self.paths
     }
@@ -55,14 +50,14 @@ impl Layer {
             .flat_map(|path| path.flatten(tolerance))
             .collect();
 
-        FlattenedLayer::new(flattened_paths, self.metadata.clone())
+        FlattenedLayer::from_paths_and_metadata(flattened_paths, self.metadata.clone())
     }
 
     #[must_use]
     pub fn bezier_handles(&self) -> FlattenedLayer {
         crate::trace_function!();
 
-        FlattenedLayer::new(
+        FlattenedLayer::from_paths_and_metadata(
             self.paths
                 .par_iter()
                 .flat_map(Path::bezier_handles)
