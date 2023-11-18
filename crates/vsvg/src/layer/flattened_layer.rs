@@ -4,7 +4,7 @@ use crate::{FlattenedPath, Polyline, Transforms};
 #[derive(Default, Clone, Debug)]
 pub struct FlattenedLayer {
     pub paths: Vec<FlattenedPath>,
-    metadata: LayerMetadata,
+    pub(crate) metadata: LayerMetadata,
 }
 
 impl FlattenedLayer {
