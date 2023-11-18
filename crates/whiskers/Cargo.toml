@@ -34,8 +34,8 @@ rfd = { version = "0.12.0", default_features = false, features = [
 open = "5.0.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4.37"
-wasm-bindgen = "0.2.87"
+wasm-bindgen-futures.workspace = true
+wasm-bindgen.workspace = true
 js-sys = "0.3.64"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
