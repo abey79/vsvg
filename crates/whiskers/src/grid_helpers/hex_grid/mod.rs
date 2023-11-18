@@ -11,6 +11,10 @@ pub mod cell;
 /// Implementation based on Amit Patel's [hex grid reference](https://www.redblobgames.com/grids/hexagons)
 ///
 /// ```rust
+/// # use vsvg::Draw;
+/// # use whiskers::HexGrid;
+/// # let mut sketch_obj = whiskers::Sketch::new();
+/// # let sketch = &mut sketch_obj;
 /// HexGrid::with_flat_orientation()
 ///     .cell_size(30.0)
 ///     .columns(20)
@@ -101,7 +105,7 @@ impl HexGrid {
 
     /// Computes grid's cell data such as coordinates (column and row),
     /// size and canvas position.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+    #[allow(clippy::cast_precision_loss)]
     pub fn build(
         self,
         sketch: &mut Sketch,

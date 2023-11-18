@@ -1,6 +1,6 @@
 use vsvg::{IntoBezPathTolerance, Point};
 
-pub enum Orientation {
+pub(crate) enum Orientation {
     Flat,
     Pointy,
 }
@@ -14,6 +14,8 @@ pub enum Orientation {
 /// But, you can, like this.
 ///
 /// ```rust
+/// # use vsvg::Point;
+/// # use whiskers::HexGridCell;
 /// let cell = HexGridCell::with_flat_orientation()
 ///     .center(Point::new(21.0, 37.0))
 ///     .size(129.0);
@@ -112,7 +114,7 @@ impl HexGridCell {
         (0..6).map(|index| self.corner(index)).collect()
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+    #[allow(clippy::cast_precision_loss)]
     fn corner(&self, index: usize) -> Point {
         match self.orientation {
             Orientation::Flat => self.corner_from_angle(60.0 * index as f64),
