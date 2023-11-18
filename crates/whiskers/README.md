@@ -82,6 +82,7 @@ This is the result:
 - [x] Random Number Generator UI with seed control (see e.g. `asteroid` example).
 - [x] Integrated profiler (based on [puffin](https://github.com/EmbarkStudios/puffin)).
 - [x] `Grid` helper for grid-based sketches.
+- [x] `HexGrid` helper for hexagonal-grid-based sketches 
 - [ ] Configuration handling (save/restore config, etc.).
 - [ ] Compiled sketches are *also* a flexible CLI utility with the capability to batch generate sketch outputs with parameter ranges.
 - [ ] Export to other format through templating (HPGL, g-code, etc. — for now, please use [*vpype*](https://github.com/abey79/vpype)).
