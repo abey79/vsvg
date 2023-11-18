@@ -233,8 +233,8 @@ impl DocumentWidget {
                 let mut viewer_options = self.viewer_options.lock().unwrap();
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
                 let mut label = format!("Layer {lid}");
-                if !layer.metadata().name.is_empty() {
-                    label.push_str(&format!(": {}", layer.metadata().name));
+                if let Some(name) = &layer.metadata().name {
+                    label.push_str(&format!(": {name}"));
                 }
 
                 ui.checkbox(visibility, label);

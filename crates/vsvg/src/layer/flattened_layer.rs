@@ -9,11 +9,6 @@ pub struct FlattenedLayer {
 
 impl FlattenedLayer {
     #[must_use]
-    pub fn new(paths: Vec<FlattenedPath>, metadata: LayerMetadata) -> Self {
-        Self { paths, metadata }
-    }
-
-    #[must_use]
     pub fn vertex_count(&self) -> u64 {
         self.paths
             .iter()
@@ -31,6 +26,10 @@ impl Transforms for FlattenedLayer {
     }
 }
 impl LayerTrait<FlattenedPath, Polyline> for FlattenedLayer {
+    fn from_paths_and_metadata(paths: Vec<FlattenedPath>, metadata: LayerMetadata) -> Self {
+        Self { paths, metadata }
+    }
+
     fn paths(&self) -> &[FlattenedPath] {
         &self.paths
     }

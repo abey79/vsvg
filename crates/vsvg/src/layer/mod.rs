@@ -11,6 +11,14 @@ pub use layer::Layer;
 pub use metadata::LayerMetadata;
 
 pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
+    #[must_use]
+    fn new() -> Self {
+        Self::default()
+    }
+
+    #[must_use]
+    fn from_paths_and_metadata(paths: Vec<P>, metadata: LayerMetadata) -> Self;
+
     fn paths(&self) -> &[P];
 
     fn paths_mut(&mut self) -> &mut Vec<P>;
@@ -35,6 +43,15 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
 
     fn push_path(&mut self, path: impl Into<P>) {
         self.paths_mut().push(path.into());
+    }
+
+    /// Merge another layer into this one.
+    ///
+    /// Also merges the metadata, see [`LayerMetadata::merge`].
+    fn merge(&mut self, other: &Self) {
+        self.paths_mut().extend_from_slice(other.paths());
+        self.metadata_mut().merge(other.metadata());
+        //TODO(#4): merge default path metadata and cascade difference to paths
     }
 
     fn sort(&mut self, flip: bool) {
