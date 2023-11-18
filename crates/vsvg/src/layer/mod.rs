@@ -23,6 +23,13 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
 
     fn paths_mut(&mut self) -> &mut Vec<P>;
 
+    fn for_each<F>(&mut self, f: F)
+    where
+        F: Fn(&mut P),
+    {
+        self.paths_mut().iter_mut().for_each(f);
+    }
+
     fn metadata(&self) -> &LayerMetadata;
 
     fn metadata_mut(&mut self) -> &mut LayerMetadata;
