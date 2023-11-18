@@ -151,6 +151,11 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             )
         ),
         command_decl!(
+            arg!(--flatten <TOL> "Flatten all curves to line segments with the provided tolerance"),
+            f64,
+            |state, tol| state.document = state.document.flatten(*tol).into()
+        ),
+        command_decl!(
             arg!(--dlayer [X] "Set target layer for draw operations"),
             LayerID,
             |state, lid| state.draw_layer = *lid
@@ -271,7 +276,8 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             arg!(--stats "Print stats"),
             bool,
             |state, b| {
-                println!("{:?}", state.document.stats());
+                println!("Stats: {:?}", state.document.stats());
+                println!("Bounds: {:?}", state.document.bounds());
             }
         ),
     ]

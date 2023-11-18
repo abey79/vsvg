@@ -251,6 +251,15 @@ impl<T: IntoBezPath> From<T> for Path {
     }
 }
 
+impl From<FlattenedPath> for Path {
+    fn from(path: FlattenedPath) -> Self {
+        Self {
+            data: path.data.into_bezpath(),
+            metadata: path.metadata,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

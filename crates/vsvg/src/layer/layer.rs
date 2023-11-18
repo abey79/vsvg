@@ -93,6 +93,15 @@ impl Layer {
     }
 }
 
+impl From<FlattenedLayer> for Layer {
+    fn from(flattened_layer: FlattenedLayer) -> Self {
+        Self {
+            paths: flattened_layer.paths.into_iter().map(Path::from).collect(),
+            metadata: flattened_layer.metadata,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 #[derive(Default, Clone, Debug)]
 pub struct FlattenedDocument {
     pub layers: BTreeMap<LayerID, FlattenedLayer>,
-    metadata: DocumentMetadata,
+    pub(crate) metadata: DocumentMetadata,
 }
 
 impl FlattenedDocument {

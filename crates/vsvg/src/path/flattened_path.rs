@@ -97,7 +97,7 @@ impl PathDataTrait for Polyline {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FlattenedPath {
     pub data: Polyline,
-    metadata: PathMetadata,
+    pub(crate) metadata: PathMetadata,
 }
 
 impl Transforms for FlattenedPath {

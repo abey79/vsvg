@@ -107,6 +107,20 @@ impl Document {
     }
 }
 
+impl From<FlattenedDocument> for Document {
+    fn from(flattened_document: FlattenedDocument) -> Self {
+        Self {
+            layers: flattened_document
+                .layers
+                .into_iter()
+                .map(|(k, v)| (k, v.into()))
+                .collect(),
+
+            metadata: flattened_document.metadata,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
