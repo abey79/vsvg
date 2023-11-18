@@ -49,14 +49,14 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
         self.layers_mut().values_mut().for_each(f);
     }
 
-    /// Merge all existing layers into layer 1, if any.
+    /// Merge all existing layers into layer 0, if any.
     fn merge_layers(&mut self) {
         if let Some((_, mut layer)) = self.layers_mut().pop_first() {
             while let Some((_, other)) = self.layers_mut().pop_first() {
                 layer.merge(&other);
             }
 
-            self.layers_mut().insert(1, layer);
+            self.layers_mut().insert(0, layer);
         }
     }
 
