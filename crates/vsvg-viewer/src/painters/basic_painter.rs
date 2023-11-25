@@ -41,9 +41,9 @@ impl BasicPainterData {
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 
+        #[allow(clippy::cast_possible_truncation)]
         Self {
             vertex_buffer,
-            #[allow(clippy::cast_possible_truncation)]
             vertex_count: vertices.len() as u32,
         }
     }

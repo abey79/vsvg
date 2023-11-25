@@ -308,8 +308,12 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn options(&self, native_option: &mut eframe::NativeOptions) {
-        native_option.app_id = Some(format!("vsvg.sketch.{}", self.title()));
+    fn native_options(&self) -> eframe::NativeOptions {
+        eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default()
+                .with_app_id(format!("vsvg.sketch.{}", self.title())),
+            ..Default::default()
+        }
     }
 
     fn title(&self) -> String {

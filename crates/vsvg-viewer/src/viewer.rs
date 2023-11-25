@@ -19,10 +19,6 @@ struct ViewerState {
 
     /// Show memory window.
     show_memory: bool,
-
-    #[cfg(feature = "puffin")]
-    /// Show profiler window.
-    show_profile: bool,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -68,10 +64,10 @@ impl Viewer {
 
     #[allow(clippy::unused_self)]
     #[cfg(not(target_arch = "wasm32"))]
-    fn menu_file(&self, frame: &mut Frame, ui: &mut Ui) {
+    fn menu_file(&self, ui: &mut Ui) {
         ui.menu_button("File", |ui| {
             if ui.button("Quit").clicked() {
-                frame.close();
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
             }
         });
     }
@@ -93,7 +89,7 @@ impl Viewer {
 
             #[cfg(feature = "puffin")]
             if ui.button("Show profiler window").clicked() {
-                self.state.show_profile = true;
+                puffin::set_scopes_on(true);
                 ui.close_menu();
             }
 
@@ -149,12 +145,8 @@ impl eframe::App for Viewer {
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
         #[cfg(feature = "puffin")]
         {
-            if self.state.show_profile {
-                self.state.show_profile = puffin_egui::profiler_window(ctx);
-            }
+            puffin_egui::show_viewport_if_enabled(ctx);
             puffin::GlobalProfiler::lock().new_frame();
-
-            puffin::set_scopes_on(self.state.show_profile);
         }
 
         vsvg::trace_function!();
@@ -163,7 +155,7 @@ impl eframe::App for Viewer {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 #[cfg(not(target_arch = "wasm32"))]
-                self.menu_file(frame, ui);
+                self.menu_file(ui);
 
                 self.document_widget.view_menu_ui(ui);
                 self.document_widget.layer_menu_ui(ui);

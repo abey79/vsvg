@@ -151,7 +151,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
 
-    if (any(in.m0 != 0.)) {
+    if (any(in.m0 != vec2<f32>(0., 0.))) {
         let side = dot(in.tex_coords, vec2<f32>(-in.m0.y, in.m0.x));
 
         if (side > 0.) {
@@ -159,7 +159,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         }
     }
 
-    if (any(in.m2 != 0.)) {
+    if (any(in.m2 !=  vec2<f32>(0., 0.))) {
         let side = dot(in.tex_coords - vec2<f32>(in.distance, 0.), vec2<f32>(-in.m2.y, in.m2.x));
 
         if (side <= 0. ) {

@@ -59,10 +59,10 @@ impl LinePainterData {
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 
+        #[allow(clippy::cast_possible_truncation)]
         Self {
             points_buffer,
             attributes_buffer,
-            #[allow(clippy::cast_possible_truncation)]
             instance_count: attribs.len() as u32,
         }
     }
@@ -90,9 +90,9 @@ impl LinePainterData {
                     vertices.push(points.last().expect("length checked").into());
                 }
 
+                #[allow(clippy::cast_possible_truncation)]
                 let attr = Attribute {
                     color: path.metadata().color.to_rgba(),
-                    #[allow(clippy::cast_possible_truncation)]
                     width: path.metadata().stroke_width as f32,
                 };
 
