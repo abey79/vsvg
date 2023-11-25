@@ -101,21 +101,19 @@ impl DocumentWidget {
         // handle mouse input
         let old_offset = self.offset;
         let old_scale = self.scale;
-        response.ctx.input(|i| {
-            self.offset -= response.drag_delta() / self.scale;
 
-            if let Some(mut pos) = response.hover_pos() {
+        self.offset -= response.drag_delta() / self.scale;
+        if let Some(mut pos) = response.hover_pos() {
+            response.ctx.input(|i| {
                 self.offset -= i.scroll_delta / self.scale;
-
-                let old_scale = self.scale;
                 self.scale *= i.zoom_delta();
+            });
 
-                // zoom around mouse
-                pos -= rect.min.to_vec2();
-                let dz = 1. / old_scale - 1. / self.scale;
-                self.offset += pos.to_vec2() * dz;
-            }
-        });
+            // zoom around mouse
+            pos -= rect.min.to_vec2();
+            let dz = 1. / old_scale - 1. / self.scale;
+            self.offset += pos.to_vec2() * dz;
+        }
 
         #[allow(clippy::float_cmp)]
         if old_offset != self.offset || old_scale != self.scale {

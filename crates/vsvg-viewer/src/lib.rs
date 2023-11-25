@@ -106,7 +106,9 @@ pub trait ViewerApp {
 
     /// Hook to modify the native options before starting the app.
     #[cfg(not(target_arch = "wasm32"))]
-    fn options(&self, _native_option: &mut eframe::NativeOptions) {}
+    fn native_options(&self) -> eframe::NativeOptions {
+        eframe::NativeOptions::default()
+    }
 
     /// Window title
     fn title(&self) -> String {
@@ -129,8 +131,7 @@ pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Res
 
     let viewer_app = Box::new(viewer_app);
 
-    let mut native_options = eframe::NativeOptions::default();
-    viewer_app.options(&mut native_options);
+    let native_options = viewer_app.native_options();
 
     eframe::run_native(
         viewer_app.title().as_str(),

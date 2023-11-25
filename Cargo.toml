@@ -17,19 +17,19 @@ anyhow = "1"
 bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
 convert_case = "0.6.0"
 criterion = "0.5.1"
-eframe = { version = "0.23.0", default-features = false, features = [
+eframe = { version = "0.24.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "persistence",
     "wgpu",
 ] }
-egui = "0.23.0"
+egui = "0.24.0"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
 itertools = "0.11.0"
 kurbo = "0.10.3"
 log = "0.4.20"
-puffin = "0.17.0"  # sync with egui
-puffin_egui = "0.23.0"  # sync with egui
+puffin = "0.18.0"  # sync with egui
+puffin_egui = "0.24.0"  # sync with egui
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
@@ -41,4 +41,4 @@ wasm-bindgen = "0.2.88"
 wasm-bindgen-futures = "0.4.38"
 web-time = "0.2.0"
 winit = "0.28.7" # same as egui
-wgpu = { version = "0.17.1", default-features = false, features = ["webgl"] } # same as egui
+wgpu = { version = "0.18", default-features = false, features = ["webgl"] } # same as egui

@@ -47,9 +47,9 @@ impl PointPainterData {
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 
+        #[allow(clippy::cast_possible_truncation)]
         Self {
             instance_buffer,
-            #[allow(clippy::cast_possible_truncation)]
             instance_count: instances.len() as u32,
         }
     }
