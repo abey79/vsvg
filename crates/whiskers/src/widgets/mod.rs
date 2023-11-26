@@ -113,9 +113,16 @@ pub use string::*;
 pub trait Widget<T> {
     /// This function implements the actual UI for the widget.
     ///
-    /// Note that the [`crate::Runner`] calls this function in the context of a 2-column
-    /// [`egui::Grid`], so it must contain exactly two top level egui UI calls.
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> egui::Response;
+    /// Returns [`true`] if the value was changed.
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> bool;
+
+    /// Indicates whether the widget should be displayed in a two-column grid.
+    ///
+    /// Complex and/or compound widgets which cannot fit the two-column grid layout should return
+    /// [`false`].
+    fn use_grid() -> bool {
+        true
+    }
 }
 
 /// This utility trait serves to associate a [`Widget`] type with a given sketch parameter type `T`.

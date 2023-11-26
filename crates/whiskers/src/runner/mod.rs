@@ -234,6 +234,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
             .default_width(200.)
             .show(ctx, |ui| {
                 ui.spacing_mut().item_spacing.y = 6.0;
+                ui.spacing_mut().indent = 14.0;
                 ui.spacing_mut().slider_width = 170.0;
                 ui.visuals_mut().slider_trailing_fill = true;
                 ui.visuals_mut().collapsing_header_frame = true;
@@ -263,10 +264,7 @@ impl vsvg_viewer::ViewerApp for Runner<'_> {
                             self.save_ui.ui(ui, self.last_document.clone());
 
                             collapsing_header(ui, "Sketch Parameters", "", true, |ui| {
-                                let changed = egui::Grid::new("sketch_param_grid")
-                                    .num_columns(2)
-                                    .show(ui, |ui| self.app.ui(ui))
-                                    .inner;
+                                let changed = self.app.ui(ui);
                                 self.set_dirty(changed);
                             });
                         })

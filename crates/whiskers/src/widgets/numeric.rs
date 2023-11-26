@@ -56,7 +56,7 @@ impl<T: Numeric> NumericWidget<T> {
 }
 
 impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> egui::Response {
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> bool {
         ui.add(egui::Label::new(label));
         let range = self.min.unwrap_or(T::MIN)..=self.max.unwrap_or(T::MAX);
         if self.slider {
@@ -67,13 +67,13 @@ impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
             if self.logarithmic {
                 slider = slider.logarithmic(true);
             }
-            ui.add(slider)
+            ui.add(slider).changed()
         } else {
             let mut drag_value = egui::DragValue::new(value).clamp_range(range);
             if let Some(step) = self.step {
                 drag_value = drag_value.speed(step.to_f64());
             }
-            ui.add(drag_value)
+            ui.add(drag_value).changed()
         }
     }
 }
