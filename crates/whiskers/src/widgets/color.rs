@@ -3,7 +3,7 @@
 pub struct ColorWidget;
 
 impl super::Widget<vsvg::Color> for ColorWidget {
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut vsvg::Color) -> egui::Response {
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut vsvg::Color) -> bool {
         // empty first column
         ui.label(label);
 
@@ -13,7 +13,7 @@ impl super::Widget<vsvg::Color> for ColorWidget {
             *value = color_components.into();
         }
 
-        resp
+        resp.changed()
     }
 }
 
