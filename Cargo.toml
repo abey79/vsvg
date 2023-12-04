@@ -17,15 +17,15 @@ anyhow = "1"
 bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
 convert_case = "0.6.0"
 criterion = "0.5.1"
-eframe = { version = "0.24.0", default-features = false, features = [
+eframe = { version = "0.24.1", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "persistence",
     "wgpu",
 ] }
-egui = "0.24.0"
+egui = "0.24.1"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
-itertools = "0.11.0"
+itertools = "0.12.0"
 kurbo = "0.10.3"
 log = "0.4.20"
 puffin = "0.18.0"  # sync with egui
