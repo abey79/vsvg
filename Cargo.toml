@@ -15,6 +15,7 @@ whiskers-derive = { path = "crates/whiskers-derive", version = "=0.3.0-alpha.0" 
 # dependencies
 anyhow = "1"
 bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
+camino = "1.1.0"
 convert_case = "0.6.0"
 criterion = "0.5.1"
 eframe = { version = "0.24.1", default-features = false, features = [
