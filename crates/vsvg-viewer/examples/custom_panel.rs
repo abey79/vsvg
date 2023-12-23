@@ -30,7 +30,7 @@ impl ViewerApp for SidePanelViewerApp {
         Ok(())
     }
 
-    fn update(
+    fn show_panels(
         &mut self,
         ctx: &egui::Context,
         document_widget: &mut DocumentWidget,

@@ -91,7 +91,10 @@ impl DocumentWidget {
     pub fn ui(&mut self, ui: &mut Ui) {
         vsvg::trace_function!();
 
-        let (rect, response) = ui.allocate_exact_size(ui.available_size(), Sense::click_and_drag());
+        // do not actually allocate any space, so custom viewer code may use all of the central
+        // panel
+        let rect = ui.available_rect_before_wrap();
+        let response = ui.interact(rect, ui.id(), Sense::click_and_drag());
 
         // fit to view on request
         if self.must_fit_to_view {

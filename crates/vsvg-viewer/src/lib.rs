@@ -93,12 +93,23 @@ pub trait ViewerApp {
         Ok(())
     }
 
-    /// Main update hook
+    /// Hook to show side panels
     ///
-    /// Create side panels for UI and/or update the document widget.
-    fn update(
+    /// This hook is called before the central panel is drawn, as per the [`egui`] documentation.
+    fn show_panels(
         &mut self,
         _ctx: &egui::Context,
+        _document_widget: &mut DocumentWidget,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    /// Hook to show the central panel.
+    ///
+    /// This is call after the wgpu render callback that displays the document.
+    fn show_central_panel(
+        &mut self,
+        _ui: &mut egui::Ui,
         _document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
         Ok(())

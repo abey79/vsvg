@@ -169,19 +169,26 @@ impl eframe::App for Viewer {
             });
         });
 
+        // hook for creating side panels
+        //TODO: better error management
+        self.viewer_app
+            .show_panels(ctx, &mut self.document_widget)
+            .expect("ViewerApp failed!!!");
+
         let panel_frame = egui::Frame::central_panel(&ctx.style())
             .inner_margin(egui::style::Margin::same(0.))
             .fill(Color32::from_rgb(242, 242, 242));
 
-        // hook for creating side panels
-        //TODO: better error management
-        self.viewer_app
-            .update(ctx, &mut self.document_widget)
-            .expect("ViewerApp failed!!!");
-
         egui::CentralPanel::default()
             .frame(panel_frame)
-            .show(ctx, |ui| self.document_widget.ui(ui));
+            .show(ctx, |ui| {
+                self.document_widget.ui(ui);
+
+                //TODO: better error management
+                self.viewer_app
+                    .show_central_panel(ui, &mut self.document_widget)
+                    .expect("ViewerApp failed!!!");
+            });
 
         egui::Window::new("🔧 Settings")
             .open(&mut self.state.show_settings)
