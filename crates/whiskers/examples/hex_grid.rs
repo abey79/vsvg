@@ -39,7 +39,7 @@ impl App for HexGridSketch {
         grid.cell_size(self.cell_size)
             .columns(self.columns)
             .rows(self.rows)
-            .spacing([self.spacing, self.spacing])
+            .spacing(self.spacing)
             .build(sketch, |sketch, cell| {
                 sketch.add_path(cell);
             });

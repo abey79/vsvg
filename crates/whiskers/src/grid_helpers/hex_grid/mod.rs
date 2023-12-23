@@ -77,8 +77,12 @@ impl HexGrid {
     /// Overrides grid's current horizontal and vertical spacing values.
     /// By default, grid instance will have zero spacing on both axes.
     #[must_use]
-    pub fn spacing(mut self, value: [f64; 2]) -> Self {
-        self.gutter = value;
+    pub fn spacing(mut self, value: f64) -> Self {
+        let triangle_h = 0.5 * 3.0_f64.sqrt();
+        self.gutter = match self.orientation {
+            Orientation::Flat => [value * triangle_h, value],
+            Orientation::Pointy => [value, value * triangle_h]
+        };
         self
     }
 
@@ -124,20 +128,20 @@ impl HexGrid {
                 let is_even_row = row % 2 == 0;
                 let x: f64;
                 let y: f64;
-                let gutter_x = self.gutter[0] * column as f64;
-                let gutter_y = self.gutter[1] * row as f64;
+                let gutter_x = self.gutter[0];
+                let gutter_y = self.gutter[1];
 
                 match self.orientation {
                     Orientation::Flat => {
                         horiz = cell_size_one_half;
                         vert = sqrt_three * self.cell_size;
 
-                        x = horiz * column as f64 + gutter_x;
+                        x = (gutter_x + horiz) * column as f64;
                         y = if is_even_col {
-                            vert * row as f64
+                            (vert + gutter_y) * row as f64
                         } else {
-                            vert * row as f64 + (vert / 2.0)
-                        } + gutter_y;
+                            (vert + gutter_y) * (row as f64 + 0.5)
+                        };
 
                         cell = HexGridCell::with_flat_orientation();
                     }
@@ -146,11 +150,11 @@ impl HexGrid {
                         vert = cell_size_one_half;
 
                         x = if is_even_row {
-                            horiz * column as f64
+                            (horiz + gutter_x) * column as f64
                         } else {
-                            horiz * column as f64 + (horiz / 2.0)
-                        } + gutter_x;
-                        y = (vert * row as f64 + vert) + gutter_y;
+                            (horiz + gutter_x) * (column as f64 + 0.5)
+                        };
+                        y = (vert + gutter_y) * row as f64;
 
                         cell = HexGridCell::with_pointy_orientation();
                     }
