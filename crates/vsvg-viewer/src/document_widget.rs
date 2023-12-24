@@ -96,6 +96,11 @@ impl DocumentWidget {
         let rect = ui.available_rect_before_wrap();
         let response = ui.interact(rect, ui.id(), Sense::click_and_drag());
 
+        // fit to view on double click
+        if response.double_clicked() {
+            self.must_fit_to_view = true;
+        }
+
         // fit to view on request
         if self.must_fit_to_view {
             self.fit_to_view(&rect);
