@@ -167,12 +167,16 @@ impl App {
             self.active_document = new_active_document;
             self.document_dirty = true;
             self.scroll_to_selected_row = true;
-            self.file_name_overlay.show(
-                self.paths[self.active_document]
-                    .file_name()
-                    .unwrap_or("!!! no file name>"),
-            );
+            self.show_file_name_overlay();
         }
+    }
+
+    fn show_file_name_overlay(&mut self) {
+        self.file_name_overlay.show(
+            self.paths[self.active_document]
+                .file_name()
+                .unwrap_or("!!! no file name>"),
+        );
     }
 }
 
@@ -182,6 +186,8 @@ impl ViewerApp for App {
         _cc: &CreationContext,
         _document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
+        self.show_file_name_overlay();
+
         Ok(())
     }
 
