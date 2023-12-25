@@ -151,6 +151,9 @@ impl eframe::App for Viewer {
 
         vsvg::trace_function!();
 
+        // hook to handle input (called early to allow capturing input before egui)
+        self.viewer_app.handle_input(ctx, &mut self.document_widget);
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {

@@ -93,6 +93,11 @@ pub trait ViewerApp {
         Ok(())
     }
 
+    /// Handle input
+    ///
+    /// This is call very early in the frame loop to allow consuming input before egui.
+    fn handle_input(&mut self, _ctx: &egui::Context, _document_widget: &mut DocumentWidget) {}
+
     /// Hook to show side panels
     ///
     /// This hook is called before the central panel is drawn, as per the [`egui`] documentation.
@@ -127,9 +132,13 @@ pub trait ViewerApp {
     }
 
     /// Hook to load persistent data.
+    ///
+    /// Use [`eframe::get_value`] to retrieve the data.
     fn load(&mut self, _storage: &dyn eframe::Storage) {}
 
     /// Hook to save persistent data.
+    ///
+    /// Use [`eframe::set_value`] to store the data.
     fn save(&self, _storage: &mut dyn eframe::Storage) {}
 }
 
