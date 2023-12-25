@@ -8,6 +8,8 @@ This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 Compared to *vpype*, *vsvg* is *extremely* fast to load and display SVGs. This makes a tool that can load a whole bunch of SVGs possible, for example to chose amongst many realisations of a generative art algorithm. This is what *msvg* aims to be.
 
+https://github.com/abey79/vsvg/assets/49431240/817f7dbe-2562-4c4d-9ab2-41368ed60677
+
 ## Installation
 
 **WARNING**: this is at an early prototype stage!
