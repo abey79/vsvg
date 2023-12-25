@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use std::time::Duration;
 
 use camino::Utf8PathBuf;
 use eframe::{CreationContext, Storage};
@@ -30,6 +31,68 @@ struct AppState {
     side_panel_open: bool,
 }
 
+#[derive(Default)]
+struct FileNameOverlay {
+    should_show: bool,
+    hide_time: f64,
+    file_name: String,
+}
+
+impl FileNameOverlay {
+    pub fn show(&mut self, file_name: &str) {
+        self.should_show = true;
+        self.file_name = file_name.to_owned();
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui, rect: &egui::Rect) {
+        if self.should_show {
+            self.hide_time = ui.input(|i| i.time) + 2.0;
+            self.should_show = false;
+        }
+
+        let margin = 30.0;
+        let max_width = rect.width() - 2.0 * margin;
+
+        let cur_time = ui.input(|i| i.time);
+        let opacity = ui
+            .ctx()
+            .animate_bool("file_name_hide".into(), self.hide_time > cur_time);
+
+        if self.hide_time > cur_time {
+            ui.ctx()
+                .request_repaint_after(Duration::from_secs_f64(self.hide_time - cur_time));
+        }
+
+        egui::Window::new("file_path")
+            .title_bar(false)
+            .resizable(false)
+            .collapsible(false)
+            .movable(false)
+            .interactable(false)
+            .pivot(egui::Align2::CENTER_BOTTOM)
+            .fixed_pos(rect.center_bottom() - egui::vec2(0.0, 40.0))
+            .max_width(max_width)
+            .default_width(max_width)
+            .min_width(max_width)
+            .frame(egui::Frame {
+                fill: ui.visuals().window_fill().gamma_multiply(opacity),
+                inner_margin: Margin::symmetric(10.0, 7.0),
+                rounding: egui::Rounding::same(10.0),
+                ..Default::default()
+            })
+            .show(ui.ctx(), |ui| {
+                ui.visuals_mut().widgets.noninteractive.fg_stroke.color = ui
+                    .visuals_mut()
+                    .widgets
+                    .noninteractive
+                    .fg_stroke
+                    .color
+                    .gamma_multiply(opacity);
+                ui.add(egui::Label::new(&self.file_name).truncate(true))
+            });
+    }
+}
+
 pub(crate) struct App {
     /// The list of paths to be loaded.
     paths: Vec<Utf8PathBuf>,
@@ -45,6 +108,8 @@ pub(crate) struct App {
 
     /// Flag indicating if we should scroll to the selected file in the side panel.
     scroll_to_selected_row: bool,
+
+    file_name_overlay: FileNameOverlay,
 
     /// The channel rx
     rx: std::sync::mpsc::Receiver<LoadingMessage>,
@@ -90,9 +155,23 @@ impl App {
             active_document: 0,
             document_dirty: true,
             scroll_to_selected_row: false,
+            file_name_overlay: FileNameOverlay::default(),
             rx,
             waiting_for_messages: true,
             app_state: AppState::default(),
+        }
+    }
+
+    fn switch_document(&mut self, new_active_document: usize) {
+        if new_active_document != self.active_document {
+            self.active_document = new_active_document;
+            self.document_dirty = true;
+            self.scroll_to_selected_row = true;
+            self.file_name_overlay.show(
+                self.paths[self.active_document]
+                    .file_name()
+                    .unwrap_or("!!! no file name>"),
+            );
         }
     }
 }
@@ -111,21 +190,23 @@ impl ViewerApp for App {
             if i.consume_key(egui::Modifiers::COMMAND, egui::Key::L) {
                 self.app_state.side_panel_open = !self.app_state.side_panel_open;
             }
+        });
 
+        let new_active_document = ctx.input_mut(|i| {
             if i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp) {
-                self.active_document = self.active_document.saturating_sub(1);
-                self.document_dirty = true;
-                self.scroll_to_selected_row = true;
+                return self.active_document.saturating_sub(1);
             }
 
             if i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown)
                 && self.active_document < self.loaded_documents.len() - 1
             {
-                self.active_document = self.active_document.saturating_add(1);
-                self.document_dirty = true;
-                self.scroll_to_selected_row = true;
+                return self.active_document.saturating_add(1);
             }
+
+            self.active_document
         });
+
+        self.switch_document(new_active_document);
     }
 
     fn show_panels(
@@ -253,35 +334,8 @@ impl ViewerApp for App {
         _document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
         let rect = ui.available_rect_before_wrap();
-        let margin = 30.0;
-        let max_width = rect.width() - 2.0 * margin;
-        egui::Window::new("file_path")
-            .title_bar(false)
-            .resizable(false)
-            .collapsible(false)
-            .movable(false)
-            .interactable(false)
-            .pivot(egui::Align2::CENTER_BOTTOM)
-            .fixed_pos(rect.center_bottom() - egui::vec2(0.0, 40.0))
-            .max_width(max_width)
-            .default_width(max_width)
-            .min_width(max_width)
-            .frame(egui::Frame {
-                fill: ui.visuals().window_fill(),
-                inner_margin: Margin::symmetric(10.0, 7.0),
-                rounding: egui::Rounding::same(10.0),
-                ..Default::default()
-            })
-            .show(ui.ctx(), |ui| {
-                ui.add(
-                    egui::Label::new(
-                        self.paths[self.active_document]
-                            .file_name()
-                            .unwrap_or("!!! no file name>"),
-                    )
-                    .truncate(true),
-                )
-            });
+        self.file_name_overlay.ui(ui, &rect);
+
         Ok(())
     }
 
