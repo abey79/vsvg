@@ -172,26 +172,24 @@ impl ViewerApp for App {
 
                 let file_name = path.file_name().map(ToOwned::to_owned).unwrap_or_default();
 
-                let response = match state {
-                    LoadedDocument::Pending => ui.weak(file_name),
+                let mut list_item = vsvg_viewer::list_item::ListItem::new(file_name);
 
-                    LoadedDocument::Loading => {
-                        ui.horizontal(|ui| {
-                            ui.weak(file_name);
-                            ui.spinner();
-                        })
-                        .response
-                    }
-                    LoadedDocument::Loaded(_) => {
-                        let response = ui.selectable_label(self.active_document == i, file_name);
-                        if response.clicked() {
-                            self.active_document = i;
-                            self.document_dirty = true;
-                        }
+                match state {
+                    LoadedDocument::Pending => list_item = list_item.weak(true).active(false),
+                    LoadedDocument::Loading => list_item = list_item.subdued(true).active(false),
+                    LoadedDocument::Loaded(_) => {}
+                }
 
-                        response
-                    }
-                };
+                if self.active_document == i {
+                    list_item = list_item.selected(true);
+                }
+
+                let response = list_item.show(ui);
+
+                if response.clicked() {
+                    self.active_document = i;
+                    self.document_dirty = true;
+                }
 
                 if self.scroll_to_selected_row && self.active_document == i {
                     ui.scroll_to_rect(response.rect, None);
@@ -215,19 +213,31 @@ impl ViewerApp for App {
             .default_width(200.)
             .frame(egui::Frame {
                 fill: ctx.style().visuals.panel_fill,
-                inner_margin: Margin::same(2.0),
                 ..Default::default()
             })
             .show_animated(ctx, self.app_state.side_panel_open, |ui| {
-                // always show the handle
-                ui.style_mut().spacing.scroll.dormant_handle_opacity = 0.6;
+                ui.spacing_mut().item_spacing.y = 0.0;
 
-                egui::ScrollArea::both().show(ui, |ui| {
-                    egui::Frame {
-                        inner_margin: Margin::symmetric(6.0, 0.0),
-                        ..Default::default()
-                    }
-                    .show(ui, content_ui);
+                // set the clip rectangle for using `vsvg_viewer::list_item::ListItem`
+                // lots of hacks to get pixel right...
+                let mut rect = ui.available_rect_before_wrap();
+                rect.min.x += 1.0;
+                rect.min.y -= 1.0;
+                ui.set_clip_rect(rect);
+                ui.add_space(-1.0);
+
+                egui::Frame {
+                    inner_margin: Margin::symmetric(2.0, 0.0),
+                    ..Default::default()
+                }
+                .show(ui, |ui| {
+                    egui::ScrollArea::both().show(ui, |ui| {
+                        egui::Frame {
+                            inner_margin: Margin::symmetric(6.0, 0.0),
+                            ..Default::default()
+                        }
+                        .show(ui, content_ui);
+                    });
                 });
             });
 

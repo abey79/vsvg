@@ -22,3 +22,4 @@ camino.workspace = true
 egui.workspace = true
 eframe.workspace = true
 rayon.workspace = true
+serde.workspace = true
