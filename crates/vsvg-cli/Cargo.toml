@@ -10,6 +10,12 @@ repository = "https://github.com/abey79/vsvg"
 license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
+[package.metadata.wix]
+upgrade-guid = "C62CB128-34BD-4A9F-8519-1E18CFCBB1E3"
+path-guid = "122B6016-4C30-4BEB-BD76-BB9F621983FB"
+license = false
+eula = false
+
 [[bin]]
 name = "vsvg"
 path = "src/main.rs"
