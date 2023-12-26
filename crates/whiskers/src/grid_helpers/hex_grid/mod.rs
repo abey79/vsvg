@@ -81,7 +81,7 @@ impl HexGrid {
         let triangle_h = 0.5 * 3.0_f64.sqrt();
         self.gutter = match self.orientation {
             Orientation::Flat => [value * triangle_h, value],
-            Orientation::Pointy => [value, value * triangle_h]
+            Orientation::Pointy => [value, value * triangle_h],
         };
         self
     }
