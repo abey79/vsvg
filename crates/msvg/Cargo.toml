@@ -9,7 +9,6 @@ homepage = "https://github.com/abey79/vsvg"
 repository = "https://github.com/abey79/vsvg"
 license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
-publish = false # dont publish for now...
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
