@@ -1,0 +1,16 @@
+name: Labels
+
+on:
+  pull_request:
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require at least one category label
+        uses: mheap/github-action-required-labels@v5
+        with:
+          mode: exactly
+          count: 1
+          labels: "common, msvg, vsvg, vsvg-cli, vsvg-viewer, whiskers, web-demo"
