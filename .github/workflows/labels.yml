@@ -13,4 +13,4 @@ jobs:
         with:
           mode: exactly
           count: 1
-          labels: "common, msvg, vsvg, vsvg-cli, vsvg-viewer, whiskers, web-demo"
+          labels: "common, msvg, vsvg, vsvg-cli, vsvg-viewer, whiskers, web-demo, release"
