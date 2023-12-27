@@ -119,7 +119,7 @@ def change_in_changlog(commit_info: CommitInfo, previous_changelog: str) -> bool
     pr_number = commit_info.pr_number
 
     if pr_number is None:
-        return f"[{hexsha}]" in previous_changelog
+        return f"/{hexsha})" in previous_changelog
     else:
         return f"[#{pr_number}]" in previous_changelog
 
@@ -130,9 +130,7 @@ def format_change(commit_info: CommitInfo, pr_info: PrInfo | None) -> str:
     pr_number = commit_info.pr_number
 
     if pr_number is None:
-        summary = (
-            f"{title} [{hexsha}](https://github.com/{OWNER}/{REPO}/commit/{hexsha})"
-        )
+        summary = f"{title} [`{hexsha[:7]}`](https://github.com/{OWNER}/{REPO}/commit/{hexsha})"
     else:
         if pr_info is None:
             eprint(f"Warning: PR #{pr_number} not found")

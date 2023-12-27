@@ -30,7 +30,7 @@
 - Fit to view on double click [#73](https://github.com/abey79/vsvg/pull/73)
 - Add binary publishing support with `cargo-dist` [#78](https://github.com/abey79/vsvg/pull/78)
 - Update `CHANGELOG.md` for compatibility with `cargo-dist` and add automation script [#79](https://github.com/abey79/vsvg/pull/79)
-- Add plausible.io traffic monitoring to https://whisk.rs [1228521ac97d3286ff2a2f210267a23ee623c969](https://github.com/abey79/vsvg/commit/1228521ac97d3286ff2a2f210267a23ee623c969)
+- Add plausible.io traffic monitoring to https://whisk.rs [`1228521`](https://github.com/abey79/vsvg/commit/1228521ac97d3286ff2a2f210267a23ee623c969)
 - Update to egui 0.24 and wgpu 0.18 [#64](https://github.com/abey79/vsvg/pull/64)
 
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.2.0...v0.3.0
