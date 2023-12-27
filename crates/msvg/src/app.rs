@@ -26,9 +26,17 @@ enum LoadedDocument {
     // TODO: Document::from_svg() should return an proper error type
 }
 
-#[derive(Default, serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 struct AppState {
     side_panel_open: bool,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            side_panel_open: true,
+        }
+    }
 }
 
 #[derive(Default)]
@@ -283,15 +291,6 @@ impl ViewerApp for App {
                     self.scroll_to_selected_row = false;
                 }
             }
-
-            if self.document_dirty {
-                if let Some(LoadedDocument::Loaded(document)) =
-                    self.loaded_documents.get(&self.paths[self.active_document])
-                {
-                    document_widget.set_document(document.clone());
-                    self.document_dirty = false;
-                }
-            }
         };
 
         // --- Side panel structure ---
@@ -327,6 +326,17 @@ impl ViewerApp for App {
                     });
                 });
             });
+
+        // --- Update the document widget if needed ---
+
+        if self.document_dirty {
+            if let Some(LoadedDocument::Loaded(document)) =
+                self.loaded_documents.get(&self.paths[self.active_document])
+            {
+                document_widget.set_document(document.clone());
+                self.document_dirty = false;
+            }
+        }
 
         Ok(())
     }
