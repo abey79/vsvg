@@ -11,6 +11,7 @@
 
 - First prototype of `msvg` [#68](https://github.com/abey79/vsvg/pull/68)
 - Improve `msvg`'s file list side panel and add file name overlay [#76](https://github.com/abey79/vsvg/pull/76)
+- Fix blank window on first start [#81](https://github.com/abey79/vsvg/pull/81)
 
 ## `vsvg` CLI
 
