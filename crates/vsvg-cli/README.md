@@ -11,6 +11,13 @@ This crate is part of the [*vsvg* project](https://github.com/abey79/vsvg).
 
 ## Installation
 
+### From pre-built binaries
+
+A number of pre-built binaries and installers are available on the [Release](https://github.com/abey79/vsvg/releases/latest) page, including shell/PowerShell-based installers, binary archives for most platforms, and MSI archives for Windows.
+
+
+### From source
+
 Build and install *vsvg-cli*:
 
 ```
