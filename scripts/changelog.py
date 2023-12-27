@@ -175,11 +175,11 @@ def main() -> None:
         )
 
     categories = {
-        "whiskers": "`whiskers`",
-        "msvg": "`msvg`",
-        "vsvg-cli": "`vsvg`",
-        "vsvg": "vsvg",
-        "vsvg-viewer": "vsvg",
+        "whiskers": "`whiskers` crates",
+        "msvg": "`msvg` CLI",
+        "vsvg-cli": "`vsvg` CLI",
+        "vsvg": "`vsvg` crate",
+        "vsvg-viewer": "`vsvg-viewer` crate",
         "common": "Common",
         "web-demo": "Web Demos",
         "release": "Release",
