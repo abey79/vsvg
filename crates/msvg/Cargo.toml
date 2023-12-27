@@ -10,6 +10,12 @@ repository = "https://github.com/abey79/vsvg"
 license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
+[package.metadata.wix]
+upgrade-guid = "E7FA1C08-BD78-438B-AE8D-654330FD3D32"
+path-guid = "FF831BD3-4C44-49B0-9EFC-257F73D7942F"
+license = false
+eula = false
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
