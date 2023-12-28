@@ -9,7 +9,7 @@ const VSVG_VIEWER_STORAGE_KEY: &str = "vsvg-viewer-state";
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
-#[allow(clippy::struct_excessive_bools)]
+#[allow(clippy::struct_excessive_bools, clippy::struct_field_names)]
 struct ViewerState {
     /// Show settings window.
     show_settings: bool,

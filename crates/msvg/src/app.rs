@@ -27,11 +27,11 @@ enum LoadedDocument {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct AppState {
+struct State {
     side_panel_open: bool,
 }
 
-impl Default for AppState {
+impl Default for State {
     fn default() -> Self {
         Self {
             side_panel_open: true,
@@ -128,7 +128,7 @@ pub(crate) struct App {
     waiting_for_messages: bool,
 
     /// Persisted application state.
-    app_state: AppState,
+    state: State,
 }
 
 impl App {
@@ -166,7 +166,7 @@ impl App {
             file_name_overlay: FileNameOverlay::default(),
             rx,
             waiting_for_messages: true,
-            app_state: AppState::default(),
+            state: State::default(),
         }
     }
 
@@ -202,7 +202,7 @@ impl ViewerApp for App {
     fn handle_input(&mut self, ctx: &Context, _document_widget: &mut DocumentWidget) {
         ctx.input_mut(|i| {
             if i.consume_key(egui::Modifiers::COMMAND, egui::Key::L) {
-                self.app_state.side_panel_open = !self.app_state.side_panel_open;
+                self.state.side_panel_open = !self.state.side_panel_open;
             }
         });
 
@@ -301,7 +301,7 @@ impl ViewerApp for App {
                 fill: ctx.style().visuals.panel_fill,
                 ..Default::default()
             })
-            .show_animated(ctx, self.app_state.side_panel_open, |ui| {
+            .show_animated(ctx, self.state.side_panel_open, |ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
 
                 // set the clip rectangle for using `vsvg_viewer::list_item::ListItem`
@@ -361,11 +361,11 @@ impl ViewerApp for App {
 
     fn load(&mut self, storage: &dyn Storage) {
         if let Some(app_state) = eframe::get_value(storage, "msvg-app-state") {
-            self.app_state = app_state;
+            self.state = app_state;
         }
     }
 
     fn save(&self, storage: &mut dyn Storage) {
-        eframe::set_value(storage, "msvg-app-state", &self.app_state);
+        eframe::set_value(storage, "msvg-app-state", &self.state);
     }
 }

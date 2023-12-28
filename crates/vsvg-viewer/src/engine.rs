@@ -124,6 +124,7 @@ impl CameraUniform {
 
 /// Painters contains shaders and render pipelines needed for drawing, but not any actually
 /// vertex data.
+#[allow(clippy::struct_field_names)]
 struct LayerPainters {
     /// lines are always displayed
     line_painter: LinePainter,
