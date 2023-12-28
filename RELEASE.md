@@ -18,5 +18,8 @@
   - <https://docs.rs/whiskers/>
   - <https://docs.rs/vsvg/>
   - <https://docs.rs/vsvg-viewer/>
+- Finalise `CHANGELOG.md` with proper heading
 - Tag `v0.X.Y` and push tag
 - Check GH Release
+- Bump version to next alpha
+- Squash-merge the release PR, undelete the branch
