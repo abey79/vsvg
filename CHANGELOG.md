@@ -1,4 +1,53 @@
-# 0.2.0 (2023-10-22)
+# 0.3.0 - New `msvg` CLI, better `whiskers`, and more
+
+Released 2023-12-28
+
+## Highlights
+
+- Inspect SVG collections with the new, blazing fast `msvg` CLI (early alpha stage).
+- `whiskers` improvements:
+  - New hexagonal grid helper.
+  - Support for nested `struct` in sketch param.
+
+## `whiskers` crates
+
+- Add support for custom `struct` as sketch parameter [#66](https://github.com/abey79/vsvg/pull/66)
+- Add hexagonal grid helper [#60](https://github.com/abey79/vsvg/pull/60) (thanks [@afternoon2](https://github.com/afternoon2)!)
+- Change `HexGrid::spacing()` to accept a single scalar and maintain hexagonal grid [#72](https://github.com/abey79/vsvg/pull/72) (thanks [@karliss](https://github.com/karliss)!)
+- Implement `step` UI parameter for numeric value in normal mode [#58](https://github.com/abey79/vsvg/pull/58)
+
+## `msvg` CLI
+
+- First prototype of `msvg` [#68](https://github.com/abey79/vsvg/pull/68)
+- Improve `msvg`'s file list side panel and add file name overlay [#76](https://github.com/abey79/vsvg/pull/76)
+- Fix blank window on first start [#81](https://github.com/abey79/vsvg/pull/81)
+
+## `vsvg` CLI
+
+- Add "merge layers" operation to `vsvg` and `vsvg-cli` [#61](https://github.com/abey79/vsvg/pull/61)
+- Add `--strokewidth <W>` command to override the stroke width of all paths [#62](https://github.com/abey79/vsvg/pull/62)
+- Add `--flatten <TOL>` command to flatten all curves with the provided tolerance [#63](https://github.com/abey79/vsvg/pull/63)
+
+## `vsvg-viewer` crate
+
+- Improve `ViewerApp` hooks to give implementers more flexibility [#71](https://github.com/abey79/vsvg/pull/71)
+- Add input handle hook to the `ViewerApp` trait [#74](https://github.com/abey79/vsvg/pull/74)
+- Add `ListItem` UI widget [#75](https://github.com/abey79/vsvg/pull/75)
+
+## Common
+
+- Fit to view on double click [#73](https://github.com/abey79/vsvg/pull/73)
+- Add binary publishing support with `cargo-dist` [#78](https://github.com/abey79/vsvg/pull/78)
+- Update `CHANGELOG.md` for compatibility with `cargo-dist` and add automation script [#79](https://github.com/abey79/vsvg/pull/79)
+- Add plausible.io traffic monitoring to https://whisk.rs [`1228521`](https://github.com/abey79/vsvg/commit/1228521ac97d3286ff2a2f210267a23ee623c969)
+- Update to egui 0.24 and wgpu 0.18 [#64](https://github.com/abey79/vsvg/pull/64)
+
+**Full Changelog**: https://github.com/abey79/vsvg/compare/v0.2.0...v0.3.0
+
+
+# 0.2.0
+
+Released 2023-10-22
 
 ## New features
 
@@ -32,7 +81,9 @@
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.1.0...v0.2.0
 
 
-# 0.1.0 (2023-10-01)
+# 0.1.0
+
+Released 2023-10-01
 
 * Initial release, including:
   * *vsvg*

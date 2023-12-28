@@ -2,7 +2,7 @@
 name = "vsvg-viewer"
 description = "Portable, hardware-accelerated, extensible viewer for the vsvg crate."
 authors = ["Antoine Beyeler"]
-version = "0.3.0-alpha.0"
+version = "0.4.0-alpha.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
