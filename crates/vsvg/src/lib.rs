@@ -28,6 +28,7 @@ pub use catmull_rom::*;
 pub use crop::*;
 pub use document::*;
 pub use layer::*;
+#[allow(unused_imports)]
 pub use optimization::*;
 pub use page_size::*;
 pub use path::*;
