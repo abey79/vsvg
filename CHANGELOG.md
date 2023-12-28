@@ -1,4 +1,13 @@
-# Unreleased
+# 0.3.0 - New `msvg` CLI, better `whiskers`, and more
+
+Released 2023-12-28
+
+## Highlights
+
+- Inspect SVG collections with the new, blazing fast `msvg` CLI (early alpha stage).
+- `whiskers` improvements:
+  - New hexagonal grid helper.
+  - Support for nested `struct` in sketch param.
 
 ## `whiskers` crates
 
@@ -36,7 +45,9 @@
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.2.0...v0.3.0
 
 
-# 0.2.0 (2023-10-22)
+# 0.2.0
+
+Released 2023-10-22
 
 ## New features
 
@@ -70,7 +81,9 @@
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.1.0...v0.2.0
 
 
-# 0.1.0 (2023-10-01)
+# 0.1.0
+
+Released 2023-10-01
 
 * Initial release, including:
   * *vsvg*
