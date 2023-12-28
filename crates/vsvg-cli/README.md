@@ -18,14 +18,16 @@ A number of pre-built binaries and installers are available on the [Release](htt
 
 ### From source
 
+To install the `vsvg` CLI, you'll need Rust, which you can install using [`rustup`](https://www.rust-lang.org/learn/get-started).
+
+Then, run the following command:
+
+```
+cargo install vsvg-cli
+```
+
 Build and install *vsvg-cli*:
 
-```
-cargo build --release
-cargo install --path vsvg-cli
-```
-
-(If you cannot run `cargo`, your path hasn't been set correctly when installing Rust. Restart your terminal and try again. If it still fails, add `$HOME/.cargo/bin` in your PATH.)
 
 The `vsvg` command should now be available:
 
@@ -33,7 +35,7 @@ The `vsvg` command should now be available:
 vsvg --help
 ```
 
-To uninstall the `vsvg` command:
+To uninstall the `vsvg` CLI:
 
 ```
 cargo uninstall vsvg-cli

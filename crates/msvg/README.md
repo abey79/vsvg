@@ -25,7 +25,13 @@ To install `msvg`, you'll need Rust, which you can install using [`rustup`](http
 Then, run the following command:
 
 ```
-cargo install --git https://github.com/abey79/vsvg msvg
+cargo install msvg
+```
+
+To uninstall `msvg`:
+
+```
+cargo uninstall msvg
 ```
 
 
