@@ -21,10 +21,6 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "wasm-"
-
       - uses: taiki-e/install-action@v2
         with:
           tool: just

@@ -34,10 +34,6 @@ jobs:
         with:
           target: wasm32-unknown-unknown
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "demo-deploy-"
-
       - uses: taiki-e/install-action@v2
         with:
           tool: just
