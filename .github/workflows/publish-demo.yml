@@ -32,7 +32,7 @@ jobs:
 
       - uses: moonrepo/setup-rust@v1
         with:
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
 
       - uses: taiki-e/install-action@v2
         with:
