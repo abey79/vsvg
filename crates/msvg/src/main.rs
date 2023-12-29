@@ -5,6 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use camino::Utf8PathBuf;
+use clap::Parser;
 
 use vsvg_viewer::show_with_viewer_app;
 
@@ -32,10 +33,20 @@ fn visit_dir(dir: &Path, paths: &mut Vec<Utf8PathBuf>) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// SVG files or directories
+    #[arg(required = true, num_args = 1..)]
+    paths: Vec<PathBuf>,
+}
+
 fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+
     let mut svg_list = Vec::new();
 
-    for path in std::env::args().skip(1).map(PathBuf::from) {
+    for path in args.paths {
         if path.is_dir() {
             visit_dir(&path, &mut svg_list)?;
         } else {

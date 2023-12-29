@@ -24,6 +24,7 @@ vsvg-viewer.workspace = true
 
 anyhow.workspace = true
 camino.workspace = true
+clap = { workspace = true, features = ["derive"] }
 egui.workspace = true
 eframe.workspace = true
 rayon.workspace = true
