@@ -3,7 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use camino::Utf8PathBuf;
-use eframe::{CreationContext, Storage};
+use eframe::egui_wgpu::WgpuConfiguration;
+use eframe::{wgpu, CreationContext, NativeOptions, Storage};
 use egui::{Context, Margin};
 
 use vsvg::Document;
@@ -189,6 +190,23 @@ impl App {
 }
 
 impl ViewerApp for App {
+    #[cfg(not(target_arch = "wasm32"))]
+    fn native_options(&self) -> NativeOptions {
+        let options = NativeOptions::default();
+
+        NativeOptions {
+            wgpu_options: WgpuConfiguration {
+                device_descriptor: Arc::new(|_adapter| wgpu::DeviceDescriptor {
+                    label: Some("egui wgpu device"),
+                    features: wgpu::Features::default(),
+                    limits: wgpu::Limits::downlevel_defaults(), // minimalist limits for RPi, etc.
+                }),
+                ..options.wgpu_options
+            },
+            ..options
+        }
+    }
+
     fn setup(
         &mut self,
         _cc: &CreationContext,
