@@ -90,6 +90,23 @@ impl DocumentWidget {
     }
 
     #[must_use]
+    pub fn antialias(&self) -> f32 {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .anti_alias
+    }
+
+    pub fn set_antialias(&self, anti_alias: f32) {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .anti_alias = anti_alias;
+    }
+
+    #[must_use]
     pub fn vertex_count(&self) -> u64 {
         self.viewer_options.lock().unwrap().vertex_count
     }
