@@ -12,7 +12,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 import json
 
 from git import Repo  # pip install GitPython
@@ -20,9 +20,7 @@ from tqdm import tqdm
 
 OWNER = "abey79"
 REPO = "vsvg"
-OFFICIAL_DEVS = [
-    "abey79",
-]
+OFFICIAL_DEVS = {"abey79"}
 
 
 def eprint(*args, **kwargs) -> None:  # type: ignore
@@ -114,6 +112,22 @@ def print_section(title: str, items: list[str]) -> None:
         print()
 
 
+def print_contributors(contributors: set[str]) -> None:
+    if len(contributors) == 0:
+        return
+
+    def contributor_markdown(contributors: Iterable[str]) -> Iterable[str]:
+        for contributor in sorted(contributors):
+            img_url = f"https://wsrv.nl/?url=github.com/{contributor}.png?w=64&h=64&mask=circle&fit=cover&maxage=1w"
+            profile_url = f"https://github.com/{contributor}"
+            yield f'[<img src="{img_url}" width="32" height="32" alt="{contributor}" />]({profile_url})'
+
+    print(f"## Contributors")
+    print()
+    print(" ".join(contributor_markdown(contributors)))
+    print()
+
+
 def change_in_changlog(commit_info: CommitInfo, previous_changelog: str) -> bool:
     hexsha = commit_info.hexsha
     pr_number = commit_info.pr_number
@@ -137,6 +151,9 @@ def format_change(commit_info: CommitInfo, pr_info: PrInfo | None) -> str:
 
         title = pr_info.pr_title if pr_info else title
         title = title.rstrip(".").strip()  # Some PR end with an unnecessary period
+
+        if pr_info is not None and "breaking" in pr_info.labels:
+            title = f"**BREAKING:** {title}"
 
         summary = f"{title} [#{pr_number}](https://github.com/{OWNER}/{REPO}/pull/{pr_number})"
 
@@ -183,6 +200,7 @@ def main() -> None:
         "release": "Release",
     }
     by_category = {}
+    contributors = set()
 
     for commit_info, pr_info in zip(commit_infos, pr_infos):
         if pr_info is not None:
@@ -199,6 +217,9 @@ def main() -> None:
         change = format_change(commit_info, pr_info)
         labels = pr_info.labels if pr_info else []
 
+        if pr_info is not None:
+            contributors.add(pr_info.gh_user_name)
+
         has_category = False
         for category in categories.keys():
             if category in labels:
@@ -213,6 +234,8 @@ def main() -> None:
         print_section(title, by_category.get(category, []))
 
     print_section("!!! UNSORTED !!!", by_category.get("unsorted", []))
+
+    print_contributors(contributors - OFFICIAL_DEVS)
 
     print(
         f"**Full Changelog**: https://github.com/{OWNER}/{REPO}/compare/{'...'.join(args.commit_range.split('..'))}"

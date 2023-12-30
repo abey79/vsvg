@@ -42,6 +42,11 @@ Released 2023-12-28
 - Add plausible.io traffic monitoring to https://whisk.rs [`1228521`](https://github.com/abey79/vsvg/commit/1228521ac97d3286ff2a2f210267a23ee623c969)
 - Update to egui 0.24 and wgpu 0.18 [#64](https://github.com/abey79/vsvg/pull/64)
 
+## Contributors
+
+[<img src="https://wsrv.nl/?url=github.com/afternoon2.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="afternoon2" />](https://github.com/afternoon2) [<img src="https://wsrv.nl/?url=github.com/karliss.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="karliss" />](https://github.com/karliss)
+
+
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.2.0...v0.3.0
 
 
@@ -74,9 +79,9 @@ Released 2023-10-22
 * Rename `whiskers::Runner::with_layout_options` for consistency by @abey79 in [#38](https://github.com/abey79/vsvg/pull/38)
 * Fix spurious colon in `bool` UI widget label by @abey79 in [#40](https://github.com/abey79/vsvg/pull/40)
 
-## New Contributors
+## Contributors
 
-* @reidab made their first contribution in [#34](https://github.com/abey79/vsvg/pull/34)
+[<img src="https://wsrv.nl/?url=github.com/afternoon2.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="afternoon2" />](https://github.com/afternoon2) [<img src="https://wsrv.nl/?url=github.com/reidab.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="reidab" />](https://github.com/reidab)
 
 **Full Changelog**: https://github.com/abey79/vsvg/compare/v0.1.0...v0.2.0
 
