@@ -268,7 +268,17 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                             self.save_ui.ui(ui, self.last_document.clone());
 
                             collapsing_header(ui, "Sketch Parameters", "", true, |ui| {
-                                let changed = self.app.ui(ui);
+                                let mut changed = self.app.ui(ui);
+
+                                if ui
+                                    .button("Reset")
+                                    .on_hover_text("Reset the sketch parameters to their default")
+                                    .clicked()
+                                {
+                                    self.app = A::default();
+
+                                    changed = true;
+                                }
                                 self.set_dirty(changed);
                             });
                         })
