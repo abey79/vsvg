@@ -71,7 +71,7 @@ impl App for GridSketch {
 }
 
 fn main() -> Result {
-    Runner::new(GridSketch::default())
+    GridSketch::runner()
         .with_page_size_options(PageSize::A5H)
         .with_layout_options(LayoutOptions::Center)
         .run()

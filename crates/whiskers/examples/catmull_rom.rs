@@ -43,7 +43,7 @@ impl App for CatmullRomSketch {
 }
 
 fn main() -> Result {
-    Runner::new(CatmullRomSketch::default())
+    CatmullRomSketch::runner()
         .with_page_size_options(PageSize::A5H)
         .with_layout_options(LayoutOptions::Center)
         .run()

@@ -48,7 +48,7 @@ impl App for RngSketch {
 }
 
 fn main() -> Result {
-    Runner::new(RngSketch::default())
+    RngSketch::runner()
         .with_random_seed()
         .with_page_size_options(PageSize::A5H)
         .run()
