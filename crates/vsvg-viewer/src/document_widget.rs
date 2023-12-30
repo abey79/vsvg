@@ -1,10 +1,10 @@
-use crate::engine::{DisplayMode, Engine, ViewerOptions};
+use crate::engine::{DisplayMode, DisplayOptions, Engine, ViewerOptions};
 use eframe::egui_wgpu;
 use eframe::egui_wgpu::CallbackResources;
 use eframe::epaint::PaintCallbackInfo;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
-use vsvg::{Document, DocumentTrait, LayerTrait};
+use vsvg::{Document, DocumentTrait, LayerTrait, Length};
 use wgpu::{CommandBuffer, CommandEncoder, Device, Queue, RenderPass};
 
 /// Widget to display a [`Document`] in an egui application.
@@ -35,6 +35,13 @@ pub struct DocumentWidget {
     /// should fit to view flag
     must_fit_to_view: bool,
 }
+
+static PEN_WIDTHS_MM: &[f32] = &[
+    0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 3.0,
+    4.0, 5.0,
+];
+
+static PEN_OPACITY_PERCENT: &[u8] = &[100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
 
 impl DocumentWidget {
     /// Create a document widget.
@@ -140,8 +147,11 @@ impl DocumentWidget {
         ));
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn view_menu_ui(&mut self, ui: &mut Ui) {
         ui.menu_button("View", |ui| {
+            ui.set_min_width(200.0);
+
             ui.menu_button("Display Mode", |ui| {
                 if ui
                     .radio_value(
@@ -164,7 +174,69 @@ impl DocumentWidget {
                     ui.close_menu();
                 };
             });
+
             ui.separator();
+
+            {
+                let pen_width = &mut self
+                    .viewer_options
+                    .lock()
+                    .unwrap()
+                    .display_options
+                    .line_display_options
+                    .override_width;
+                ui.menu_button("Override Pen Width", |ui| {
+                    if ui.radio_value(pen_width, None, "Off").clicked() {
+                        ui.close_menu();
+                    }
+                    ui.separator();
+                    for width in PEN_WIDTHS_MM {
+                        if ui
+                            .radio_value(
+                                pen_width,
+                                Some(Length::mm(*width).into()),
+                                format!("{width:.2}mm"),
+                            )
+                            .clicked()
+                        {
+                            ui.close_menu();
+                        }
+                    }
+                });
+            }
+
+            {
+                let opacity = &mut self
+                    .viewer_options
+                    .lock()
+                    .unwrap()
+                    .display_options
+                    .line_display_options
+                    .override_opacity;
+
+                ui.menu_button("Override Pen Opacity", |ui| {
+                    if ui.radio_value(opacity, None, "Off").clicked() {
+                        ui.close_menu();
+                    }
+                    ui.separator();
+                    for opacity_value in PEN_OPACITY_PERCENT {
+                        #[allow(clippy::cast_lossless)]
+                        if ui
+                            .radio_value(
+                                opacity,
+                                Some(*opacity_value as f32 / 100.0),
+                                format!("{opacity_value}%"),
+                            )
+                            .clicked()
+                        {
+                            ui.close_menu();
+                        }
+                    }
+                });
+            }
+
+            ui.separator();
+
             ui.checkbox(
                 &mut self
                     .viewer_options
@@ -203,7 +275,12 @@ impl DocumentWidget {
             ui.horizontal(|ui| {
                 ui.label("AA:");
                 ui.add(egui::Slider::new(
-                    &mut self.viewer_options.lock().unwrap().anti_alias,
+                    &mut self
+                        .viewer_options
+                        .lock()
+                        .unwrap()
+                        .display_options
+                        .anti_alias,
                     0.0..=2.0,
                 ))
                 .on_hover_text("Renderer anti-aliasing (default: 0.5)");
@@ -225,6 +302,21 @@ impl DocumentWidget {
                 )
                 .on_hover_text("Tolerance for rendering curves (default: 0.01)");
             });
+
+            ui.separator();
+
+            if ui
+                .button("Reset")
+                .on_hover_text("Reset all display options to the default")
+                .clicked()
+            {
+                let options = &mut self.viewer_options.lock().unwrap().display_options;
+                *options = DisplayOptions {
+                    anti_alias: options.anti_alias,
+                    ..DisplayOptions::default()
+                };
+                ui.close_menu();
+            }
         });
     }
 
