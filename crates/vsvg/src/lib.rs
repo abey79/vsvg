@@ -11,6 +11,7 @@ mod color;
 mod crop;
 mod document;
 mod layer;
+mod length;
 mod optimization;
 mod page_size;
 mod path;
@@ -28,6 +29,7 @@ pub use catmull_rom::*;
 pub use crop::*;
 pub use document::*;
 pub use layer::*;
+pub use length::*;
 #[allow(unused_imports)]
 pub use optimization::*;
 pub use page_size::*;
