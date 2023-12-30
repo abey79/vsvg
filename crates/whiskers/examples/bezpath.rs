@@ -91,7 +91,7 @@ impl App for BezpathSketch {
 }
 
 fn main() -> Result {
-    Runner::new(BezpathSketch::default())
+    BezpathSketch::runner()
         .with_page_size_options(PageSize::A5V)
         .run()
 }

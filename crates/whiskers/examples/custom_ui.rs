@@ -92,6 +92,17 @@ struct CustomUISketch {
     color: GrayRed,
 }
 
+impl Default for CustomUISketch {
+    fn default() -> Self {
+        CustomUISketch {
+            color: GrayRed {
+                red: 0.5,
+                gray: 0.5,
+            },
+        }
+    }
+}
+
 impl App for CustomUISketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.color(self.color);
@@ -104,12 +115,7 @@ impl App for CustomUISketch {
 }
 
 fn main() -> Result {
-    Runner::new(CustomUISketch {
-        color: GrayRed {
-            red: 0.5,
-            gray: 0.5,
-        },
-    })
-    .with_page_size_options(PageSize::new(200.0, 200.0))
-    .run()
+    CustomUISketch::runner()
+        .with_page_size_options(PageSize::new(200.0, 200.0))
+        .run()
 }

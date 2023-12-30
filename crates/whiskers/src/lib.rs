@@ -39,7 +39,7 @@
 //! }
 //!
 //! fn main() -> Result {
-//!     Runner::new(MySketch::default())
+//!     MySketch::runner()
 //!         .with_page_size_options(PageSize::A5H)
 //!         /* add other Runner default configuration here */
 //!         .run()
@@ -74,7 +74,7 @@
 //!         Ok(())
 //!     }
 //! }
-//! wasm_sketch!(Runner::new(MySketch::default()));
+//! wasm_sketch!(MySketch::runner());
 //! ```
 //!
 //! The binary should then call the [`wasm_main!`] macro:
@@ -135,7 +135,12 @@ pub trait App {
 
 /// This trait is implemented by the [`whiskers_derive::Sketch`] derive macro and makes it possible
 /// for the [`Runner`] to execute your sketch.s
-pub trait SketchApp: App {
+pub trait SketchApp: App + Default {
+    /// Create a runner for this app.
+    fn runner<'a>() -> Runner<'a, Self> {
+        Runner::<Self>::new()
+    }
+
     /// The name of the sketch, used the window title, the default output file name, and persistent
     /// settings.
     fn name(&self) -> String;
