@@ -32,6 +32,7 @@ getrandom = { version = "0.2", features = ["js"] } # wasm support
 itertools = "0.12.0"
 kurbo = "0.10.3"
 log = "0.4.20"
+num-traits = "0.2.17"
 puffin = "0.18.0"  # sync with egui
 puffin_egui = "0.24.0"  # sync with egui
 rand = "0.8.5"
