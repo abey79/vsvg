@@ -43,6 +43,9 @@ pub(crate) struct DisplayOptions {
     /// tolerance parameter used for flattening curves by the renderer
     pub tolerance: f64,
 
+    /// anti alias parameter
+    pub anti_alias: f32,
+
     /// display options specific to the line painter
     pub line_display_options: LineDisplayOptions,
 }
@@ -54,12 +57,13 @@ impl Default for DisplayOptions {
             show_pen_up: false,
             show_bezier_handles: false,
             tolerance: crate::DEFAULT_RENDERER_TOLERANCE,
+            anti_alias: 0.5,
             line_display_options: LineDisplayOptions::default(),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub(crate) struct ViewerOptions {
     //TODO: implement that
     /// display mode
@@ -72,24 +76,8 @@ pub(crate) struct ViewerOptions {
     #[serde(skip)]
     pub layer_visibility: HashMap<LayerID, bool>,
 
-    /// anti alias parameter
-    #[serde(skip)]
-    pub anti_alias: f32,
-
     /// vertex count (updated by [`Engine::paint`] for display purposes)
     pub vertex_count: u64,
-}
-
-impl Default for ViewerOptions {
-    fn default() -> Self {
-        Self {
-            display_mode: DisplayMode::default(),
-            display_options: DisplayOptions::default(),
-            layer_visibility: HashMap::default(),
-            anti_alias: 0.5,
-            vertex_count: 0,
-        }
-    }
 }
 
 #[repr(C)]
@@ -356,7 +344,11 @@ impl Engine {
             projection(origin, scale, rect.width(), rect.height()),
             scale,
             (rect.width(), rect.height()),
-            self.viewer_options.lock().unwrap().anti_alias,
+            self.viewer_options
+                .lock()
+                .unwrap()
+                .display_options
+                .anti_alias,
         );
 
         queue.write_buffer(

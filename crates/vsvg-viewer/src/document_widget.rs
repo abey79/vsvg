@@ -1,4 +1,4 @@
-use crate::engine::{DisplayMode, Engine, ViewerOptions};
+use crate::engine::{DisplayMode, DisplayOptions, Engine, ViewerOptions};
 use eframe::egui_wgpu;
 use eframe::egui_wgpu::CallbackResources;
 use eframe::epaint::PaintCallbackInfo;
@@ -275,7 +275,12 @@ impl DocumentWidget {
             ui.horizontal(|ui| {
                 ui.label("AA:");
                 ui.add(egui::Slider::new(
-                    &mut self.viewer_options.lock().unwrap().anti_alias,
+                    &mut self
+                        .viewer_options
+                        .lock()
+                        .unwrap()
+                        .display_options
+                        .anti_alias,
                     0.0..=2.0,
                 ))
                 .on_hover_text("Renderer anti-aliasing (default: 0.5)");
@@ -297,6 +302,21 @@ impl DocumentWidget {
                 )
                 .on_hover_text("Tolerance for rendering curves (default: 0.01)");
             });
+
+            ui.separator();
+
+            if ui
+                .button("Reset")
+                .on_hover_text("Reset all display options to the default")
+                .clicked()
+            {
+                let options = &mut self.viewer_options.lock().unwrap().display_options;
+                *options = DisplayOptions {
+                    anti_alias: options.anti_alias,
+                    ..DisplayOptions::default()
+                };
+                ui.close_menu();
+            }
         });
     }
 
