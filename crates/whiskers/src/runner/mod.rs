@@ -34,9 +34,9 @@ use vsvg_viewer::DocumentWidget;
 ///
 /// [`Runner`] implements [`vsvg_viewer::ViewerApp`] to actually display the sketch with a custom,
 /// interactive UI.
-pub struct Runner<'a> {
+pub struct Runner<'a, A: crate::SketchApp> {
     /// User-provided sketch app to run.
-    app: Box<dyn crate::SketchApp>,
+    app: A,
 
     /// Last produced document, for saving purposes.
     last_document: Option<Arc<Document>>,
@@ -68,17 +68,21 @@ pub struct Runner<'a> {
 }
 
 // public methods
-impl Runner<'_> {
+impl<A: crate::SketchApp> Runner<'_, A> {
     /// Create a new [`Runner`] with the provided [`crate::SketchApp`] instance.
-    pub fn new(app: impl crate::SketchApp + 'static) -> Self {
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
+        let app = A::default();
+
         let mut save_ui = SaveUI::default();
+
         #[allow(clippy::field_reassign_with_default)]
         {
             save_ui.base_name = app.name().to_case(convert_case::Case::Snake);
         }
 
         Self {
-            app: Box::new(app),
+            app,
             last_document: None,
             dirty: true,
             info_options: InfoOptions::default(),
@@ -143,7 +147,7 @@ impl Runner<'_> {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-impl Runner<'static> {
+impl<A: crate::SketchApp + 'static> Runner<'static, A> {
     /// Execute the sketch app.
     pub fn run(self) -> anyhow::Result<()> {
         vsvg::trace_function!();
@@ -154,18 +158,18 @@ impl Runner<'static> {
 
 /// Convenience trait to be used with [`egui::Response`] for setting the [`Runner`] dirty
 /// flag.
-trait DirtySetter {
-    fn dirty(&self, runner: &mut Runner);
+trait DirtySetter<A: crate::SketchApp> {
+    fn dirty(&self, runner: &mut Runner<A>);
 }
 
-impl DirtySetter for egui::Response {
-    fn dirty(&self, runner: &mut Runner) {
+impl<A: crate::SketchApp> DirtySetter<A> for egui::Response {
+    fn dirty(&self, runner: &mut Runner<A>) {
         runner.set_dirty(self.changed());
     }
 }
 
 // private methods
-impl Runner<'_> {
+impl<A: crate::SketchApp> Runner<'_, A> {
     /// Set the dirty flag.
     #[inline]
     fn dirty(&mut self) {
@@ -218,7 +222,7 @@ impl Runner<'_> {
     }
 }
 
-impl vsvg_viewer::ViewerApp for Runner<'_> {
+impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
     fn show_panels(
         &mut self,
         ctx: &egui::Context,

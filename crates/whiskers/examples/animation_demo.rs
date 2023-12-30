@@ -84,7 +84,7 @@ impl App for AnimationDemoSketch {
 }
 
 fn main() -> Result {
-    Runner::new(AnimationDemoSketch::default())
+    AnimationDemoSketch::runner()
         .with_page_size_options(PageSize::Custom(600.0, 600.0, Unit::Px))
         // default to running the animation with the provided loop time
         .with_animation_options(AnimationOptions::looping(3.0).play())

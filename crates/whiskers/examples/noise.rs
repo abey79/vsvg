@@ -107,7 +107,7 @@ impl App for NoiseSketch {
 }
 
 fn main() -> Result {
-    Runner::new(NoiseSketch::default())
+    NoiseSketch::runner()
         .with_page_size_options(PageSize::A5H)
         .run()
 }

@@ -49,7 +49,7 @@ impl App for HexGridSketch {
 }
 
 fn main() -> Result {
-    Runner::new(HexGridSketch::default())
+    HexGridSketch::runner()
         .with_page_size_options(PageSize::A5H)
         .with_layout_options(LayoutOptions::Center)
         .run()
