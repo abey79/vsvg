@@ -119,17 +119,16 @@ impl PageSizeOptions {
                                 ui.selectable_value(&mut unit, *u, u.to_str());
                             }
                         });
-                    let factor = orig_unit.to_px() / unit.to_px();
-                    w *= factor;
-                    h *= factor;
+                    w = unit.convert_from(&orig_unit, w);
+                    h = unit.convert_from(&orig_unit, h);
                 });
 
                 PageSize::Custom(w, h, unit)
             } else {
                 ui.label(format!(
                     "{:.1}x{:.1} mm",
-                    new_page_size.w() / Unit::Mm,
-                    new_page_size.h() / Unit::Mm
+                    Unit::Mm.convert(new_page_size.w()),
+                    Unit::Mm.convert(new_page_size.h()),
                 ));
 
                 new_page_size

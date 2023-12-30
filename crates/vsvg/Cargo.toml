@@ -21,6 +21,7 @@ kurbo.workspace = true
 lazy_static = "1.4.0"
 log.workspace = true
 lyon_geom = "1.0.4"
+num-traits.workspace = true
 puffin = { workspace = true, optional = true }
 quick-xml = "0.30.0"
 rayon.workspace = true

@@ -184,7 +184,7 @@ impl PageSize {
             Self::ExecutiveH => (Self::EXECUTIVE_SIZE.1, Self::EXECUTIVE_SIZE.0),
             Self::TabloidH => (Self::TABLOID_SIZE.1, Self::TABLOID_SIZE.0),
 
-            Self::Custom(w, h, unit) => (*w * unit.to_px(), *h * unit.to_px()),
+            Self::Custom(w, h, unit) => ((*w * unit).into(), (*h * unit).into()),
         }
     }
 
