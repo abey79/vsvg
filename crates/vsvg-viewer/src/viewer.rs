@@ -5,7 +5,8 @@ use egui::{Color32, Ui};
 use crate::document_widget::DocumentWidget;
 use crate::ViewerApp;
 
-const VSVG_VIEWER_STORAGE_KEY: &str = "vsvg-viewer-state";
+const VSVG_VIEWER_STATE_STORAGE_KEY: &str = "vsvg-viewer-state";
+const VSVG_VIEWER_ANTIALIAS_STORAGE_KEY: &str = "vsvg-viewer-aa";
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -40,14 +41,19 @@ impl Viewer {
         cc: &'a eframe::CreationContext<'a>,
         mut viewer_app: Box<dyn ViewerApp>,
     ) -> Option<Self> {
+        let mut document_widget = DocumentWidget::new(cc)?;
+
         let state = if let Some(storage) = cc.storage {
             viewer_app.load(storage);
-            eframe::get_value(storage, VSVG_VIEWER_STORAGE_KEY).unwrap_or_default()
+
+            if let Some(aa) = eframe::get_value(storage, VSVG_VIEWER_ANTIALIAS_STORAGE_KEY) {
+                document_widget.set_antialias(aa);
+            };
+
+            eframe::get_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY).unwrap_or_default()
         } else {
             ViewerState::default()
         };
-
-        let mut document_widget = DocumentWidget::new(cc)?;
 
         //TODO: better error handling
         viewer_app
@@ -220,7 +226,12 @@ impl eframe::App for Viewer {
 
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, VSVG_VIEWER_STORAGE_KEY, &self.state);
+        eframe::set_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY, &self.state);
+        eframe::set_value(
+            storage,
+            VSVG_VIEWER_ANTIALIAS_STORAGE_KEY,
+            &self.document_widget.antialias(),
+        );
         self.viewer_app.save(storage);
     }
 }
