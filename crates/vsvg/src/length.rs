@@ -1,13 +1,17 @@
-use crate::Unit;
-use num_traits::{AsPrimitive, Float};
 use std::fmt::{Display, Formatter};
+
+use num_traits::{AsPrimitive, Float};
+
+use crate::Unit;
 
 /// A physical length, described by a value and a [`Unit`].
 ///
-/// A [`Length`] can be created with [`Length::new`] or by multiplying a float with a [`Unit`]:
+/// A [`Length`] can be created with [`Length::new`], by multiplying a float with a [`Unit`], or
+/// using the shorthand constructors:
 /// ```
 /// # use vsvg::{Unit, Length};
 /// assert_eq!(Length::new(0.0356, Unit::Cm), 0.0356 * Unit::Cm);
+/// assert_eq!(Length::new(0.0356, Unit::Cm), Length::cm(0.0356));
 /// ```
 ///
 /// All float conversion assume the default [`Unit`] of [`Unit::Px`]:
@@ -86,7 +90,18 @@ impl Display for Length {
     }
 }
 
+macro_rules! length_constructor {
+    ($ctor:ident, $unit:expr) => {
+        #[doc = concat!("Create a [`Length`] with the given value and a [`", stringify!($unit), "`] unit.")]
+        #[must_use]
+        pub fn $ctor<F: Float + AsPrimitive<f64>>(value: F) -> Self {
+            Self::new(value, $unit)
+        }
+    };
+}
+
 impl Length {
+    /// Create a [`Length`] with the given value and [`Unit`].
     #[must_use]
     pub fn new<F: Float + AsPrimitive<f64>>(value: F, unit: Unit) -> Self {
         Self {
@@ -95,12 +110,26 @@ impl Length {
         }
     }
 
+    length_constructor!(pixels, Unit::Px);
+    length_constructor!(inches, Unit::In);
+    length_constructor!(feet, Unit::Ft);
+    length_constructor!(yards, Unit::Yd);
+    length_constructor!(miles, Unit::Mi);
+    length_constructor!(mm, Unit::Mm);
+    length_constructor!(cm, Unit::Cm);
+    length_constructor!(meters, Unit::M);
+    length_constructor!(km, Unit::Km);
+    length_constructor!(picas, Unit::Pc);
+    length_constructor!(points, Unit::Pt);
+
+    /// Convert the [`Length`] to a float, assuming the default [`Unit`] of [`Unit::Px`].
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub fn to_px<F: Float>(&self) -> F {
         F::from(self.value).unwrap() * self.unit.to_px::<F>()
     }
 
+    /// Convert the [`Length`] to another [`Length`] with the given [`Unit`].
     #[must_use]
     pub fn convert_to(self, unit: Unit) -> Self {
         Self {

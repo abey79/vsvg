@@ -1,6 +1,15 @@
-use crate::Length;
-use num_traits::{AsPrimitive, Float};
 use std::fmt::{Display, Formatter};
+
+use num_traits::{AsPrimitive, Float};
+
+use crate::Length;
+
+/// Errors related to [`Unit`]
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum UnitError {
+    #[error("Unrecognised unit '{0}'")]
+    UnrecognisedError(String),
+}
 
 /// A distance unit.
 ///
@@ -46,6 +55,7 @@ pub enum Unit {
     Pt,
 }
 
+/// List of all available units, useful for iteration.
 pub const UNITS: [Unit; 11] = [
     Unit::Px,
     Unit::In,
@@ -61,6 +71,7 @@ pub const UNITS: [Unit; 11] = [
 ];
 
 impl Unit {
+    /// Convert the unit into the corresponding pixel factor.
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub fn to_px<F: Float>(&self) -> F {
@@ -79,18 +90,30 @@ impl Unit {
         }
     }
 
+    /// Convert a value from pixel unit.
+    #[must_use]
+    #[inline]
+    pub fn convert<F: Float>(&self, pixel_value: F) -> F {
+        self.convert_from(&Unit::Px, pixel_value)
+    }
+
+    /// Convert a value from `from_unit` to this [`Unit`].
     #[must_use]
     #[inline]
     pub fn convert_from<F: Float>(&self, from_unit: &Unit, value: F) -> F {
         value * from_unit.to_px() / self.to_px()
     }
 
+    /// Convert a value from this [`Unit`] to `to_unit`.
     #[must_use]
     #[inline]
     pub fn convert_to<F: Float>(&self, to_unit: &Unit, value: F) -> F {
         value * self.to_px() / to_unit.to_px()
     }
 
+    /// Convert the unit to its string representation.
+    ///
+    /// Note: The opposite operation is available via the [`TryFrom`] trait.
     #[must_use]
     pub const fn to_str(&self) -> &'static str {
         match &self {
@@ -107,12 +130,6 @@ impl Unit {
             Self::Pt => "pt",
         }
     }
-}
-
-#[derive(thiserror::Error, Debug, PartialEq)]
-pub enum UnitError {
-    #[error("Unrecognised unit '{0}'")]
-    UnrecognisedError(String),
 }
 
 impl TryFrom<&str> for Unit {
