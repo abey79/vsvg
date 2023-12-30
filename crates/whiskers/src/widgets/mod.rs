@@ -73,7 +73,7 @@
 //! Now let's consider a hypothetical sketch:
 //! ```rust
 //! # use whiskers::prelude::*;
-//! #[derive(Sketch)]
+//! #[derive(Sketch, Default)]
 //! struct MySketch {
 //!     #[param(slider, step = 0.1)]
 //!     irregularity: f64,
