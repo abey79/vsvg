@@ -1,5 +1,6 @@
 use crate::painters::{
-    BasicPainter, LinePainter, PageSizePainter, PageSizePainterData, Painter, PointPainter,
+    BasicPainter, LineDisplayOptions, LinePainter, PageSizePainter, PageSizePainterData, Painter,
+    PointPainter,
 };
 use eframe::egui_wgpu::RenderState;
 use std::collections::HashMap;
@@ -28,6 +29,7 @@ pub(crate) enum DisplayMode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[allow(clippy::struct_field_names)]
 pub(crate) struct DisplayOptions {
     /// show points
     pub show_display_vertices: bool,
@@ -40,6 +42,9 @@ pub(crate) struct DisplayOptions {
 
     /// tolerance parameter used for flattening curves by the renderer
     pub tolerance: f64,
+
+    /// display options specific to the line painter
+    pub line_display_options: LineDisplayOptions,
 }
 
 impl Default for DisplayOptions {
@@ -49,6 +54,7 @@ impl Default for DisplayOptions {
             show_pen_up: false,
             show_bezier_handles: false,
             tolerance: crate::DEFAULT_RENDERER_TOLERANCE,
+            line_display_options: LineDisplayOptions::default(),
         }
     }
 }
@@ -61,12 +67,6 @@ pub(crate) struct ViewerOptions {
 
     /// display options
     pub display_options: DisplayOptions,
-
-    /// override width
-    pub override_width: Option<f32>,
-
-    /// override opacity
-    pub override_opacity: Option<f32>,
 
     /// layer visibility
     #[serde(skip)]
@@ -85,8 +85,6 @@ impl Default for ViewerOptions {
         Self {
             display_mode: DisplayMode::default(),
             display_options: DisplayOptions::default(),
-            override_width: None,
-            override_opacity: None,
             layer_visibility: HashMap::default(),
             anti_alias: 0.5,
             vertex_count: 0,

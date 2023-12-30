@@ -24,6 +24,15 @@ impl Attribute {
     }
 }
 
+#[derive(Copy, Clone, Default, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct LineDisplayOptions {
+    /// override width
+    pub override_width: Option<f32>,
+
+    /// override opacity
+    pub override_opacity: Option<f32>,
+}
+
 pub(crate) struct LinePainterData {
     points_buffer: Buffer,
     attributes_buffer: Buffer,
@@ -31,13 +40,17 @@ pub(crate) struct LinePainterData {
 }
 
 impl LinePainterData {
-    pub fn new<'b, I>(render_objects: &EngineRenderObjects, paths: I) -> Self
+    pub fn new<'b, I>(
+        render_objects: &EngineRenderObjects,
+        paths: I,
+        display_options: &LineDisplayOptions,
+    ) -> Self
     where
         I: IntoIterator<Item = &'b FlattenedPath>,
     {
         vsvg::trace_function!();
 
-        let (vertices, attribs) = Self::build_buffers(paths);
+        let (vertices, attribs) = Self::build_buffers(paths, display_options);
 
         // prepare point buffer
         let points_buffer =
@@ -67,7 +80,10 @@ impl LinePainterData {
         }
     }
 
-    fn build_buffers<'b, I>(paths: I) -> (Vec<Vertex>, Vec<Attribute>)
+    fn build_buffers<'b, I>(
+        paths: I,
+        display_options: &LineDisplayOptions,
+    ) -> (Vec<Vertex>, Vec<Attribute>)
     where
         I: IntoIterator<Item = &'b FlattenedPath>,
     {
@@ -75,6 +91,7 @@ impl LinePainterData {
             path: &FlattenedPath,
             vertices: &mut Vec<Vertex>,
             attribs: &mut Vec<Attribute>,
+            display_options: &LineDisplayOptions,
         ) {
             vsvg::trace_function!();
 
@@ -90,10 +107,19 @@ impl LinePainterData {
                     vertices.push(points.last().expect("length checked").into());
                 }
 
+                let mut color = path.metadata().color.to_rgba();
+                #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+                if let Some(opacity) = display_options.override_opacity {
+                    color = (color & 0x00_FF_FF_FF)
+                        + (((opacity * 255.0).clamp(0., 255.) as u32) << 24);
+                }
+
                 #[allow(clippy::cast_possible_truncation)]
                 let attr = Attribute {
-                    color: path.metadata().color.to_rgba(),
-                    width: path.metadata().stroke_width as f32,
+                    color,
+                    width: display_options
+                        .override_width
+                        .unwrap_or(path.metadata().stroke_width as f32),
                 };
 
                 for _ in 0..path.data().points().len() - 1 {
@@ -112,12 +138,12 @@ impl LinePainterData {
         let mut attribs = Vec::with_capacity(min_size);
 
         if let Some(path) = iter.next() {
-            add_path(path, &mut vertices, &mut attribs);
+            add_path(path, &mut vertices, &mut attribs, display_options);
             for path in iter {
                 attribs.push(Attribute::empty());
                 attribs.push(Attribute::empty());
                 attribs.push(Attribute::empty());
-                add_path(path, &mut vertices, &mut attribs);
+                add_path(path, &mut vertices, &mut attribs, display_options);
             }
         }
 

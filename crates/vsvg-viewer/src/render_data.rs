@@ -3,7 +3,6 @@ use crate::engine::{
     PEN_UP_TRAJECTORY_COLOR, POINTS_COLOR, POINTS_SIZE,
 };
 use crate::painters::{BasicPainterData, LinePainterData, PointPainterData};
-use crate::DEFAULT_RENDERER_TOLERANCE;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -31,7 +30,7 @@ pub(crate) struct LayerRenderData {
     vertex_count: u64,
 
     // BASE DATA
-    tolerance: f64,
+    display_options: DisplayOptions,
     flattened_layer: Option<FlattenedLayer>,
     line_painter_data: Option<LinePainterData>,
 
@@ -60,7 +59,7 @@ impl LayerRenderData {
             document,
             layer_id,
             vertex_count: 0,
-            tolerance: DEFAULT_RENDERER_TOLERANCE,
+            display_options: DisplayOptions::default(),
             flattened_layer: None,
             line_painter_data: None,
             bezier_handles: None,
@@ -91,6 +90,21 @@ impl LayerRenderData {
         self.pen_up_painter_data.as_ref()
     }
 
+    /// Invalidate our cache based on the provided display options.
+    #[allow(clippy::float_cmp)]
+    fn invalidate_display_options(&mut self, display_options: &DisplayOptions) {
+        if display_options.tolerance != self.display_options.tolerance {
+            self.flattened_layer = None;
+            self.line_painter_data = None;
+        }
+
+        if display_options.line_display_options != self.display_options.line_display_options {
+            self.line_painter_data = None;
+        }
+
+        self.display_options = *display_options;
+    }
+
     /// Ensure all the data needed for the provided [`DisplayOptions`] is generated.
     pub fn prepare(
         &mut self,
@@ -99,12 +113,8 @@ impl LayerRenderData {
     ) {
         vsvg::trace_function!();
 
-        #[allow(clippy::float_cmp)]
-        if display_options.tolerance != self.tolerance {
-            self.flattened_layer = None;
-            self.line_painter_data = None;
-        }
-        self.tolerance = display_options.tolerance;
+        // check the provided options and invalidate our cache if needed
+        self.invalidate_display_options(&display_options);
 
         self.prepare_line_painter_data(render_objects);
 
@@ -124,15 +134,18 @@ impl LayerRenderData {
     fn prepare_line_painter_data(&mut self, render_objects: &EngineRenderObjects) {
         vsvg::trace_function!();
 
-        let flattened_layer = self
-            .flattened_layer
-            .get_or_insert_with(|| self.document.layers[&self.layer_id].flatten(self.tolerance));
+        let flattened_layer = self.flattened_layer.get_or_insert_with(|| {
+            self.document.layers[&self.layer_id].flatten(self.display_options.tolerance)
+        });
 
         self.vertex_count = flattened_layer.vertex_count();
 
         if self.line_painter_data.is_none() {
-            self.line_painter_data =
-                Some(LinePainterData::new(render_objects, &flattened_layer.paths));
+            self.line_painter_data = Some(LinePainterData::new(
+                render_objects,
+                &flattened_layer.paths,
+                &self.display_options.line_display_options,
+            ));
         }
     }
 

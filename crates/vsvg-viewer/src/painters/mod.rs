@@ -7,7 +7,7 @@ use vsvg::Point;
 use wgpu::RenderPass;
 
 pub(crate) use basic_painter::{BasicPainter, BasicPainterData};
-pub(crate) use line_painter::{LinePainter, LinePainterData};
+pub(crate) use line_painter::{LineDisplayOptions, LinePainter, LinePainterData};
 pub(crate) use page_size_painter::{PageSizePainter, PageSizePainterData};
 pub(crate) use point_painter::{PointPainter, PointPainterData};
 
