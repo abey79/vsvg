@@ -26,4 +26,7 @@ web-serve:
 test:
     cargo test --workspace --all-features --bins --examples
 
-lint: clippy clippy-wasm fmt test docs
+doc-test:
+    cargo test --doc --all-features
+
+lint: clippy clippy-wasm fmt test doc-test docs

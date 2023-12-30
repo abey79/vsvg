@@ -41,6 +41,7 @@ jobs:
           tool: just
 
       - run: just test
+      - run: just doc-test
 
   docs:
     runs-on: ubuntu-latest

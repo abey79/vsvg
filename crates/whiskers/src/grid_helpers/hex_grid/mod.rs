@@ -19,7 +19,7 @@ pub mod cell;
 ///     .cell_size(30.0)
 ///     .columns(20)
 ///     .rows(40)
-///     .spacing([10.0, 20.0])
+///     .spacing(10.0)
 ///     .build(sketch, |sketch, hex_grid_cell| {
 ///         sketch.add_path(hex_grid_cell);
 ///     })
