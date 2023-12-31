@@ -2,7 +2,7 @@
 
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct GridSketch {
     #[param(slider, min = 20.0, max = 400.0)]
     width: f64,

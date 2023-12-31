@@ -1,6 +1,6 @@
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct HelloWorldSketch {
     width: f64,
     height: f64,

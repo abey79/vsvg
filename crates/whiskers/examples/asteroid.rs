@@ -11,7 +11,7 @@ use rand_distr::{Distribution, Normal};
 use std::f64::consts::PI;
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct AsteroidSketch {
     #[param(slider, min = 0.1, max = 1.5)]
     irregularity: f64,

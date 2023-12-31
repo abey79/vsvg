@@ -4,7 +4,7 @@ use noise::{Fbm, NoiseFn, Perlin};
 use rayon::prelude::*;
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct NoiseSketch {
     #[param(slider, min = 0.0, max = 500.0)]
     margin: f64,

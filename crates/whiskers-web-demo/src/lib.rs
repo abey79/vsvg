@@ -4,7 +4,7 @@
 use itertools::iproduct;
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 pub struct WhiskersDemoSketch {
     col_count: u32,
     row_count: u32,

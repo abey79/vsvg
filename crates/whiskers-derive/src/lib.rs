@@ -11,6 +11,46 @@ fn format_label(label: &str) -> String {
     format!("{}:", label.to_case(Case::Lower))
 }
 
+/// Attribute macro to automatically derive some of the required traits for a sketch app.
+///
+/// This is equivalent to:
+/// ```ignore
+/// #[derive(Sketch, serde::Serialize, serde::Deserialize)]
+/// #[serde(crate = "::whiskers::prelude::serde")]
+/// ```
+#[proc_macro_attribute]
+pub fn sketch_app(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(item as DeriveInput);
+
+    let expanded = quote! {
+        #[derive(Sketch, serde::Serialize, serde::Deserialize)]
+        #[serde(crate = "::whiskers::prelude::serde")]
+        #ast
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Attribute macro to automatically derive some of the required traits for a sketch widget.
+///
+/// This is equivalent to:
+/// ```ignore
+/// #[derive(Widget, serde::Serialize, serde::Deserialize)]
+/// #[serde(crate = "::whiskers::prelude::serde")]
+/// ```
+#[proc_macro_attribute]
+pub fn sketch_widget(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(item as DeriveInput);
+
+    let expanded = quote! {
+        #[derive(Widget, serde::Serialize, serde::Deserialize)]
+        #[serde(crate = "::whiskers::prelude::serde")]
+        #ast
+    };
+
+    TokenStream::from(expanded)
+}
+
 #[proc_macro_derive(Sketch, attributes(param, skip))]
 pub fn sketch_derive(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);

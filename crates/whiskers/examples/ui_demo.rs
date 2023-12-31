@@ -3,7 +3,8 @@
 
 use whiskers::prelude::*;
 
-#[derive(Sketch, Default)]
+#[sketch_app]
+#[derive(Default)]
 struct UiDemoSketch {
     // all basic numerical types are supported
     int_64: i64,
@@ -40,7 +41,8 @@ struct UiDemoSketch {
 // the [`whiskers::widgets::WidgetMapper`] trait can be implemented manually, see the `custom_ui`
 // example.
 // Note: all types must implement [`Default`].
-#[derive(Widget, Default)]
+#[sketch_widget]
+#[derive(Default)]
 struct CustomStruct {
     #[param(min = 0.0)]
     some_float: f64,
@@ -53,7 +55,8 @@ struct CustomStruct {
 }
 
 // Tuple structs are supported too
-#[derive(Widget, Default)]
+#[sketch_widget]
+#[derive(Default)]
 struct CustomStructUnnamed(bool, String);
 
 impl App for UiDemoSketch {

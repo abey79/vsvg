@@ -2,7 +2,7 @@ use std::ops::Range;
 use vsvg::COLORS;
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct RngSketch {
     width: f64,
     height: f64,
