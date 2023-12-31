@@ -1,6 +1,6 @@
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct CatmullRomSketch {
     #[param(slider, min = 3, max = 1500)]
     num_points: usize,

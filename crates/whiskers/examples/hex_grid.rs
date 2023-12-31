@@ -1,7 +1,7 @@
 //! This example demonstrates the use of the [`HexGrid`] helper.
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct HexGridSketch {
     is_pointy_orientation: bool,
     #[param(slider, min = 2, max = 20)]

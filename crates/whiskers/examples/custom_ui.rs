@@ -2,7 +2,7 @@ use egui::Ui;
 use whiskers::prelude::*;
 
 /// Very custom data structure that is not supported by default
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 struct GrayRed {
     gray: f64,
     red: f64,
@@ -85,7 +85,7 @@ register_widget_ui!(GrayRed, GrayRedWidget);
 // =================================================================================
 // from here on, we're back to super standard  sketch code...
 
-#[derive(Sketch)]
+#[sketch_app]
 struct CustomUISketch {
     // these param key/value will call into the [`GrayRedWidget`]'s builder methods.
     #[param(underline, label_color = egui::Color32::BLUE)]

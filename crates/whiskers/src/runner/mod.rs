@@ -333,6 +333,10 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
     }
 
     fn load(&mut self, storage: &dyn Storage) {
+        if let Some(app) = eframe::get_value(storage, "whiskers-app") {
+            self.app = app;
+        }
+
         let save_ui: Option<SaveUI> = eframe::get_value(storage, "whiskers-runner-save-ui");
         #[allow(unused_mut)]
         if let Some(mut save_ui) = save_ui {
@@ -358,6 +362,7 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
     }
 
     fn save(&self, storage: &mut dyn Storage) {
+        eframe::set_value(storage, "whiskers-app", &self.app);
         eframe::set_value(storage, "whiskers-runner-save-ui", &self.save_ui);
         eframe::set_value(storage, "whiskers-layout-options", &self.layout_options);
         eframe::set_value(storage, "whiskers-page-size", &self.page_size_options);

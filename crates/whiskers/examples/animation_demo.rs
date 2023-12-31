@@ -4,7 +4,7 @@
 use std::f64::consts::TAU;
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct AnimationDemoSketch {
     #[param(min = 3, max = 15)]
     ngon_sides: usize,

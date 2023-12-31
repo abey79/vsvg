@@ -5,7 +5,7 @@
 
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct BezpathSketch {
     // path 1
     move_to: Point,

@@ -1,6 +1,6 @@
 use whiskers::prelude::*;
 
-#[derive(Sketch)]
+#[sketch_app]
 struct MySketch {
     #[param(slider, min = 0.0, max = 10.0, step = 2.0)]
     rate: f64,

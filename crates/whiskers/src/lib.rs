@@ -14,7 +14,7 @@
 //! ```no_run
 //! use whiskers::prelude::*;
 //!
-//! #[derive(Sketch)]
+//! #[sketch_app]
 //! struct MySketch {
 //!     /* add sketch parameters here */
 //! }
@@ -60,7 +60,7 @@
 //! use whiskers::prelude::*;
 //! use whiskers::wasm_main;
 //!
-//! #[derive(Sketch)]
+//! #[sketch_app]
 //! struct MySketch { }
 //!
 //! impl Default for MySketch {
@@ -135,7 +135,7 @@ pub trait App {
 
 /// This trait is implemented by the [`whiskers_derive::Sketch`] derive macro and makes it possible
 /// for the [`Runner`] to execute your sketch.s
-pub trait SketchApp: App + Default {
+pub trait SketchApp: App + Default + serde::Serialize + serde::de::DeserializeOwned {
     /// Create a runner for this app.
     fn runner<'a>() -> Runner<'a, Self> {
         Runner::<Self>::new()

@@ -4,11 +4,13 @@ pub use crate::{
     HexGridCell, InfoOptions, LayoutOptions, PageSizeOptions, Result, Runner, Sketch, SketchApp,
 };
 pub use vsvg::{Color, Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Point, Transforms, Unit};
-pub use whiskers_derive::{Sketch, Widget};
+pub use whiskers_derive::{sketch_app, sketch_widget, Sketch, Widget};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use vsvg_viewer::show;
 
+// re-exports
+pub use ::serde;
 pub use anyhow;
 pub use egui;
 pub use rand::prelude::*;
