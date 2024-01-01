@@ -1,7 +1,7 @@
 pub use crate::widgets::Widget as _; // bring trait in scope, but avoid name-clash with macro
 pub use crate::{
     register_widget_ui, wasm_sketch, AnimationOptions, App, Context, Grid, GridCell, HexGrid,
-    HexGridCell, InfoOptions, LayoutOptions, PageSizeOptions, Result, Runner, Sketch, SketchApp,
+    HexGridCell, InfoOptions, LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp,
 };
 pub use vsvg::{Color, Draw, IntoBezPath, IntoBezPathTolerance, PageSize, Point, Transforms, Unit};
 pub use whiskers_derive::{sketch_app, sketch_widget, Sketch, Widget};
