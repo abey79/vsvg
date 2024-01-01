@@ -100,25 +100,20 @@ impl PageSizeOptions {
                     );
 
                     let orig_unit = unit;
-                    egui::ComboBox::from_id_source("sketch_page_size_unit")
-                        .selected_text(unit.to_str())
-                        .width(40.)
-                        .show_ui(ui, |ui| {
-                            const UNITS: [Unit; 8] = [
-                                Unit::Px,
-                                Unit::In,
-                                Unit::Ft,
-                                Unit::Mm,
-                                Unit::Cm,
-                                Unit::M,
-                                Unit::Pc,
-                                Unit::Pt,
-                            ];
+                    #[allow(clippy::items_after_statements)]
+                    const UNITS: &[Unit] = &[
+                        Unit::Px,
+                        Unit::In,
+                        Unit::Ft,
+                        Unit::Mm,
+                        Unit::Cm,
+                        Unit::M,
+                        Unit::Pc,
+                        Unit::Pt,
+                    ];
 
-                            for u in &UNITS {
-                                ui.selectable_value(&mut unit, *u, u.to_str());
-                            }
-                        });
+                    crate::widgets::unit_combo_box(ui, "sketch_page_size_unit", &mut unit, UNITS);
+
                     w = unit.convert_from(&orig_unit, w);
                     h = unit.convert_from(&orig_unit, h);
                 });

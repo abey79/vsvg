@@ -25,6 +25,13 @@ struct UiDemoSketch {
     #[param(slider, logarithmic, min = 0.01, max = 10.)]
     float_log: f64,
 
+    // `vsvg::Length` are supported...
+    length: Length,
+
+    // ...and have similar parameters as numeric types.
+    #[param(slider, logarithmic, min = 0.01, max = 10.)]
+    length_log: Length,
+
     // custom types
     custom_struct: CustomStruct,
     custom_struct_unnamed: CustomStructUnnamed,
