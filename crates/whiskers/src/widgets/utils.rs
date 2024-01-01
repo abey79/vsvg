@@ -1,6 +1,6 @@
 /// An [`egui::ComboBox`] for selecting a [`vsvg::Unit`] out of the provided list.
 ///
-/// See [`vsvg::UNITS`] for a list of all available [`Unit`].
+/// See [`vsvg::UNITS`] for a list of all available [`vsvg::Unit`].
 pub fn unit_combo_box(
     ui: &mut egui::Ui,
     id_source: impl std::hash::Hash,
