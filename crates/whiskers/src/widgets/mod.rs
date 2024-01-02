@@ -101,6 +101,7 @@ mod length;
 mod numeric;
 mod point;
 mod string;
+mod unit;
 mod utils;
 
 pub use crate::widgets::bool::*;

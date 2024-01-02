@@ -100,19 +100,12 @@ impl PageSizeOptions {
                     );
 
                     let orig_unit = unit;
-                    #[allow(clippy::items_after_statements)]
-                    const UNITS: &[Unit] = &[
-                        Unit::Px,
-                        Unit::In,
-                        Unit::Ft,
-                        Unit::Mm,
-                        Unit::Cm,
-                        Unit::M,
-                        Unit::Pc,
-                        Unit::Pt,
-                    ];
-
-                    crate::widgets::unit_combo_box(ui, "sketch_page_size_unit", &mut unit, UNITS);
+                    crate::widgets::unit_combo_box(
+                        ui,
+                        "sketch_page_size_unit",
+                        &mut unit,
+                        vsvg::SMALL_UNITS,
+                    );
 
                     w = unit.convert_from(&orig_unit, w);
                     h = unit.convert_from(&orig_unit, h);

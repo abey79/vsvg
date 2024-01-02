@@ -1,6 +1,4 @@
-/// A widget for built-in numeric values.
-///
-/// This widget piggybacks on the [`Numeric`] trait for its implementation.
+/// A widget for [`vsvg::Length`].
 #[derive(Default)]
 pub struct LengthWidget {
     min: Option<f64>,
@@ -8,6 +6,7 @@ pub struct LengthWidget {
     step: Option<f64>,
     slider: bool,
     logarithmic: bool,
+    all_units: bool,
 }
 
 impl LengthWidget {
@@ -51,6 +50,13 @@ impl LengthWidget {
         }
         self
     }
+
+    /// Enable all units (including large ones such as [`vsvg::Unit::Km`]).
+    #[must_use]
+    pub fn all_units(mut self, all_units: bool) -> Self {
+        self.all_units = all_units;
+        self
+    }
 }
 
 impl super::Widget<vsvg::Length> for LengthWidget {
@@ -78,8 +84,13 @@ impl super::Widget<vsvg::Length> for LengthWidget {
                 ui.add(drag_value).changed()
             };
 
-            changed |=
-                crate::widgets::unit_combo_box(ui, label, &mut value.unit, &vsvg::UNITS).changed();
+            let units = if self.all_units {
+                vsvg::UNITS
+            } else {
+                vsvg::SMALL_UNITS
+            };
+
+            changed |= crate::widgets::unit_combo_box(ui, label, &mut value.unit, units);
 
             changed
         })
