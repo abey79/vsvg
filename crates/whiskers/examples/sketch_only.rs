@@ -1,4 +1,4 @@
-//! This example demonstrates how to directly use [`whiskers::Sketch`] without using the [`Runner`]
+//! This example demonstrates how to directly use [`whiskers::Sketch`] without using the [`whiskers::Runner`]
 //! API.
 use whiskers::prelude::*;
 

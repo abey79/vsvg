@@ -29,8 +29,8 @@ use vsvg_viewer::DocumentWidget;
 
 /// The [`Runner`] is the main entry point for executing a [`crate::SketchApp`].
 ///
-/// It can be configured using the builder pattern with the `with_*()` functions, and then run
-/// using the [`Runner::run`] method.
+/// A [`Runner`] is typically created using [`crate::SketchApp::runner`]. It can be configured using the builder pattern
+/// with the `with_*()` functions, and then run using the [`Runner::run`] method.
 ///
 /// [`Runner`] implements [`vsvg_viewer::ViewerApp`] to actually display the sketch with a custom,
 /// interactive UI.
@@ -71,7 +71,7 @@ pub struct Runner<'a, A: crate::SketchApp> {
 impl<A: crate::SketchApp> Runner<'_, A> {
     /// Create a new [`Runner`] with the provided [`crate::SketchApp`] instance.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let app = A::default();
 
         let mut save_ui = SaveUI::default();
