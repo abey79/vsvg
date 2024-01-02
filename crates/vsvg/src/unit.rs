@@ -40,8 +40,9 @@ pub enum UnitError {
 /// assert_eq!(Unit::try_from("m"), Ok(Unit::M));
 /// assert_eq!(Unit::try_from("kilometre"), Ok(Unit::Km));
 /// ```
-#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Unit {
+    #[default]
     Px,
     In,
     Ft,
@@ -56,7 +57,7 @@ pub enum Unit {
 }
 
 /// List of all available units, useful for iteration.
-pub const UNITS: [Unit; 11] = [
+pub const UNITS: &[Unit] = &[
     Unit::Px,
     Unit::In,
     Unit::Ft,
@@ -66,6 +67,18 @@ pub const UNITS: [Unit; 11] = [
     Unit::Cm,
     Unit::M,
     Unit::Km,
+    Unit::Pc,
+    Unit::Pt,
+];
+
+/// List of reasonably small units that are typically useful for drawings..
+pub const SMALL_UNITS: &[Unit] = &[
+    Unit::Px,
+    Unit::In,
+    Unit::Ft,
+    Unit::Mm,
+    Unit::Cm,
+    Unit::M,
     Unit::Pc,
     Unit::Pt,
 ];
