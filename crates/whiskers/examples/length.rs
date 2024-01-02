@@ -30,7 +30,7 @@ impl App for LengthSketch {
         sketch.translate(0., 2. * u);
         sketch.rect(4. * u, 2. * u, 6. * u, 2. * u);
 
-        // NOTE: this is equivalent to the arguable more idiomatic following code:
+        // NOTE: this is equivalent to the arguably more idiomatic following code:
         // sketch.scale(self.unit);
         // sketch.line(1., 2., 7., 4.);
         // sketch.translate(0., 2.);
