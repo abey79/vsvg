@@ -90,7 +90,7 @@ impl super::Widget<vsvg::Length> for LengthWidget {
                 vsvg::SMALL_UNITS
             };
 
-            changed |= crate::widgets::unit_combo_box(ui, label, &mut value.unit, units);
+            changed |= vsvg_viewer::utils::unit_combo_box(ui, label, &mut value.unit, units);
 
             changed
         })

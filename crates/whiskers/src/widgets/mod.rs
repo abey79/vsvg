@@ -102,14 +102,12 @@ mod numeric;
 mod point;
 mod string;
 mod unit;
-mod utils;
 
 pub use crate::widgets::bool::*;
 pub use color::*;
 pub use numeric::*;
 pub use point::*;
 pub use string::*;
-pub use utils::*;
 
 /// This is the base trait for widgets used to display sketch parameters in the UI.
 ///

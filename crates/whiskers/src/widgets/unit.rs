@@ -24,7 +24,7 @@ impl super::Widget<vsvg::Unit> for UnitWidget {
                 vsvg::SMALL_UNITS
             };
 
-            crate::widgets::unit_combo_box(ui, label, value, units)
+            vsvg_viewer::utils::unit_combo_box(ui, label, value, units)
         })
         .inner
     }
