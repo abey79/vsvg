@@ -25,6 +25,18 @@ struct UiDemoSketch {
     #[param(slider, logarithmic, min = 0.01, max = 10.)]
     float_log: f64,
 
+    // `vsvg::Length` are supported...
+    length: Length,
+
+    // ...and have similar parameters as numeric types. Also, by default only a subset of the available units is
+    // provided. All units can be shown using `all_units`.
+    #[param(slider, logarithmic, min = 0.01, max = 10., all_units)]
+    length_log: Length,
+
+    // a unit to be used by the sketch to, e.g., create `Length`
+    #[param(all_units)]
+    unit: Unit,
+
     // custom types
     custom_struct: CustomStruct,
     custom_struct_unnamed: CustomStructUnnamed,

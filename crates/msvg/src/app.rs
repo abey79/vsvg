@@ -267,7 +267,7 @@ impl ViewerApp for App {
 
                 let file_name = path.file_name().map(ToOwned::to_owned).unwrap_or_default();
 
-                let mut list_item = vsvg_viewer::list_item::ListItem::new(file_name);
+                let mut list_item = vsvg_viewer::utils::ListItem::new(file_name);
 
                 match state {
                     LoadedDocument::Pending => list_item = list_item.weak(true).active(false),

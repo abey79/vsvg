@@ -100,25 +100,13 @@ impl PageSizeOptions {
                     );
 
                     let orig_unit = unit;
-                    egui::ComboBox::from_id_source("sketch_page_size_unit")
-                        .selected_text(unit.to_str())
-                        .width(40.)
-                        .show_ui(ui, |ui| {
-                            const UNITS: [Unit; 8] = [
-                                Unit::Px,
-                                Unit::In,
-                                Unit::Ft,
-                                Unit::Mm,
-                                Unit::Cm,
-                                Unit::M,
-                                Unit::Pc,
-                                Unit::Pt,
-                            ];
+                    vsvg_viewer::utils::unit_combo_box(
+                        ui,
+                        "sketch_page_size_unit",
+                        &mut unit,
+                        vsvg::SMALL_UNITS,
+                    );
 
-                            for u in &UNITS {
-                                ui.selectable_value(&mut unit, *u, u.to_str());
-                            }
-                        });
                     w = unit.convert_from(&orig_unit, w);
                     h = unit.convert_from(&orig_unit, h);
                 });
