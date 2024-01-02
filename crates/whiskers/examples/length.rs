@@ -26,12 +26,12 @@ impl App for LengthSketch {
 
         // Most methods accept anything that converts to f64, which includes `Length` (constructed
         // from a float and a `Unit`)
-        sketch.line(1. * u, 2. * u, 7. * u, 4. * u);
+        sketch.line(u, 2. * u, 7. * u, 4. * u);
         sketch.translate(0., 2. * u);
         sketch.rect(4. * u, 2. * u, 6. * u, 2. * u);
 
         // NOTE: this is equivalent to the arguable more idiomatic following code:
-        // sketch.scale(1.0 * self.unit);
+        // sketch.scale(self.unit);
         // sketch.line(1., 2., 7., 4.);
         // sketch.translate(0., 2.);
         // sketch.rect(4., 2., 6., 2.);
