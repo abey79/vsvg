@@ -74,3 +74,6 @@ lto = "thin"
 
 [patch.crates-io]
 # geo = { path = "../geo/geo" }
+
+[profile.dev]
+opt-level = 0

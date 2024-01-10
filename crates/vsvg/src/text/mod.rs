@@ -1,4 +1,4 @@
-use crate::{PathDataTrait, Transforms};
+use crate::Transforms;
 
 pub mod builtin;
 
@@ -28,6 +28,36 @@ pub enum TextAlign {
     Right,
 }
 
+enum Command {
+    Advance(f64),
+    AdvanceWord(f64),
+    DrawGlyph { path: kurbo::BezPath, offset: f64 },
+}
+
+fn commands_from_chars<'a, F: Font>(
+    chars: impl Iterator<Item = char> + 'a,
+    font: &'a F,
+) -> impl Iterator<Item = Command> + 'a {
+    chars
+        .flat_map(|c| {
+            if let Some(Glyph { lt, rt, path }) = font.glyph(c) {
+                [
+                    Some(Command::DrawGlyph { path, offset: -lt }),
+                    if c == ' ' {
+                        Some(Command::AdvanceWord(rt - lt))
+                    } else {
+                        Some(Command::Advance(rt - lt))
+                    },
+                ]
+                .into_iter()
+            } else {
+                // TODO: a placeholder glyph would be better here
+                [Some(Command::Advance(0.0)), None].into_iter()
+            }
+        })
+        .filter_map(|x| x)
+}
+
 /// Fundamental text layout function.
 ///
 /// Returns a list of glyphs and the total width of the line.
@@ -39,21 +69,19 @@ fn basic_text_line<F: Font>(
 ) -> (Vec<kurbo::BezPath>, f64) {
     let mut x = 0.0;
 
-    let glyphs = text
-        .chars()
-        .filter_map(|ch| {
-            if let Some(Glyph { lt, rt, mut path }) = font.glyph(ch) {
-                path.translate(x - lt, 0.0);
-                x += rt - lt + glyph_spacing;
-                if ch == ' ' {
-                    x += word_spacing;
-                }
-
-                Some(path)
-            } else {
-                x += glyph_spacing;
-
+    let glyphs = commands_from_chars(text.chars(), font)
+        .filter_map(|cmd| match cmd {
+            Command::Advance(offset) => {
+                x += offset + glyph_spacing;
                 None
+            }
+            Command::AdvanceWord(offset) => {
+                x += offset + word_spacing;
+                None
+            }
+            Command::DrawGlyph { mut path, offset } => {
+                path.translate(x + offset, 0.0);
+                Some(path)
             }
         })
         .collect();
@@ -61,16 +89,24 @@ fn basic_text_line<F: Font>(
     (glyphs, x)
 }
 
-fn glyphs_bounds<'a>(glyphs: impl Iterator<Item = &'a kurbo::BezPath>) -> Option<kurbo::Rect> {
-    glyphs.fold(None, |acc, path| {
-        let bounds = path.bounds();
-        if let Some(acc) = acc {
-            Some(acc.union(bounds))
-        } else {
-            Some(bounds)
-        }
-    })
-}
+// fn split_text_for_width<'a, 'txt, F: Font>(
+//     text: &'txt str,
+//     font: &'a F,
+//     glyph_spacing: f64,
+// ) -> (Vec<kurbo::BezPath>, &'txt str, &'txt str, f64) {
+//     text.split_ascii_whitespace()
+// }
+
+// fn glyphs_bounds<'a>(glyphs: impl Iterator<Item = &'a kurbo::BezPath>) -> Option<kurbo::Rect> {
+//     glyphs.fold(None, |acc, path| {
+//         let bounds = path.bounds();
+//         if let Some(acc) = acc {
+//             Some(acc.union(bounds))
+//         } else {
+//             Some(bounds)
+//         }
+//     })
+// }
 
 pub fn text_line<F: Font>(
     text: &str,
@@ -96,4 +132,53 @@ pub fn text_line<F: Font>(
     }
 
     glyphs
+}
+
+pub fn text_paragraph<F: Font>(
+    text: &str,
+    font: &F,
+    size: f64,
+    align: TextAlign,
+    extra_spacing: f64,
+    width: impl Into<f64>,
+) -> Vec<kurbo::BezPath> {
+    let mut x = 0.0;
+    let mut x_word = 0.0;
+    let mut y = 0.0;
+
+    let line_spacing = 1.0 * font.height();
+    let scale = size / font.height();
+    let width = width.into() / scale;
+
+    let mut cur_word = vec![];
+    let commands = commands_from_chars(text.chars(), font);
+
+    let mut paragraph = vec![];
+
+    // Note: we prepend an `AdvanceWord`command to make sure we flush `cur_word` for the last word.
+    for command in commands.chain(std::iter::once(Command::AdvanceWord(0.0))) {
+        match command {
+            Command::Advance(offset) => {
+                x_word += offset + extra_spacing;
+            }
+            Command::AdvanceWord(offset) => {
+                if x + x_word > width {
+                    x = 0.0;
+                    y += line_spacing;
+                }
+
+                cur_word.translate(x, y);
+                paragraph.extend(cur_word.drain(..));
+                x += x_word + offset;
+                x_word = 0.0;
+            }
+            Command::DrawGlyph { mut path, offset } => {
+                path.translate(x_word + offset, 0.0);
+                cur_word.push(path);
+            }
+        }
+    }
+
+    paragraph.scale(scale);
+    paragraph
 }

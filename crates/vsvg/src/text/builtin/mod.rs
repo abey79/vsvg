@@ -102,10 +102,6 @@ impl GlyphData {
             })
             .collect();
 
-        if path.is_empty() {
-            return None;
-        }
-
         Some(Self {
             lt: data.0 as f64,
             rt: data.1 as f64,

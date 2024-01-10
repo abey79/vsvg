@@ -4,11 +4,17 @@ use whiskers::prelude::*;
 #[sketch_app]
 struct TextSketch {
     font_size: f64,
+    glyph_spacing: f64,
+    text_width: Length,
 }
 
 impl Default for TextSketch {
     fn default() -> Self {
-        Self { font_size: 12.0 }
+        Self {
+            font_size: 12.0,
+            glyph_spacing: 0.0,
+            text_width: 5.0 * Unit::Cm,
+        }
     }
 }
 
@@ -31,7 +37,7 @@ impl App for TextSketch {
             &font,
             self.font_size,
             vsvg::text::TextAlign::Left,
-            0.0,
+            self.glyph_spacing,
         ));
 
         sketch.translate(0., 2. * Unit::Cm);
@@ -41,7 +47,7 @@ impl App for TextSketch {
             &font,
             self.font_size,
             vsvg::text::TextAlign::Center,
-            0.0,
+            self.glyph_spacing,
         ));
 
         sketch.translate(0., 2. * Unit::Cm);
@@ -51,7 +57,22 @@ impl App for TextSketch {
             &font,
             self.font_size,
             vsvg::text::TextAlign::Right,
-            0.0,
+            self.glyph_spacing,
+        ));
+
+        sketch.translate(0., 2. * Unit::Cm);
+        origin_cross(sketch);
+        sketch.push_matrix_and(|sketch| {
+            sketch.translate(self.text_width, 0.);
+            origin_cross(sketch);
+        });
+        sketch.add_paths(vsvg::text::text_paragraph(
+            "Lorm ipsum dolor. Honnis soit qui mal y pense. Pierre qui roule n'amasse pas mousse.",
+            &font,
+            self.font_size,
+            vsvg::text::TextAlign::Left,
+            self.glyph_spacing,
+            self.text_width,
         ));
 
         Ok(())
