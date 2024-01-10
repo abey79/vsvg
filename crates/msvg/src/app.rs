@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    cmp::Ordering, collections::HashMap, iter::Peekable, str::Chars, sync::Arc, time::Duration,
+};
 
 use camino::Utf8PathBuf;
 use eframe::{CreationContext, Storage};
@@ -106,7 +106,7 @@ pub(crate) struct App {
     paths: Vec<Utf8PathBuf>,
 
     /// The loaded documents.
-    loaded_documents: BTreeMap<Utf8PathBuf, LoadedDocument>,
+    loaded_documents: HashMap<Utf8PathBuf, LoadedDocument>,
 
     /// The currently selected document.
     active_document: usize,
@@ -132,14 +132,13 @@ pub(crate) struct App {
 }
 
 impl App {
-    pub fn from_paths(paths: Vec<Utf8PathBuf>) -> Self {
-        let loaded_documents: BTreeMap<_, _> = paths
-            .into_iter()
-            .map(|path| (path, LoadedDocument::Pending))
-            .collect();
+    pub fn from_paths(mut paths: Vec<Utf8PathBuf>) -> Self {
+        paths.sort_unstable_by(natural_order_cmp);
 
-        // make sure they are in the same order
-        let paths: Vec<_> = loaded_documents.keys().cloned().collect();
+        let loaded_documents = paths
+            .iter()
+            .map(|path| (path.clone(), LoadedDocument::Pending))
+            .collect();
 
         let (sender, rx) = std::sync::mpsc::channel::<LoadingMessage>();
 
@@ -239,7 +238,8 @@ impl ViewerApp for App {
                 }
                 LoadingMessage::Loaded(path, doc) => {
                     // find index into paths vec
-                    if self.paths.iter().position(|p| p == &path) == Some(self.active_document) {
+                    let pos = self.paths.binary_search_by(|p| natural_order_cmp(p, &path));
+                    if pos == Ok(self.active_document) {
                         self.document_dirty = true;
                     }
 
@@ -367,5 +367,47 @@ impl ViewerApp for App {
 
     fn save(&self, storage: &mut dyn Storage) {
         eframe::set_value(storage, "msvg-app-state", &self.state);
+    }
+}
+
+fn natural_order_cmp(lhs: &Utf8PathBuf, rhs: &Utf8PathBuf) -> Ordering {
+    let mut lhs = lhs.file_stem().unwrap().chars().peekable();
+    let mut rhs = rhs.file_stem().unwrap().chars().peekable();
+
+    let eat_num = |it: &mut Peekable<Chars>| {
+        let mut num = 0;
+        while let Some(d) = it.peek().and_then(|d| d.to_digit(10)) {
+            num = num * 10 + d;
+            it.next();
+        }
+        num
+    };
+
+    loop {
+        match (lhs.peek(), rhs.peek()) {
+            (None, None) => break Ordering::Equal,
+            (None, Some(_)) => break Ordering::Less,
+            (Some(_), None) => break Ordering::Greater,
+            (Some(l), Some(r)) => {
+                if l.is_ascii_digit() && r.is_ascii_digit() {
+                    let ln = eat_num(&mut lhs);
+                    let rn = eat_num(&mut rhs);
+                    if ln != rn {
+                        return ln.cmp(&rn);
+                    }
+                }
+
+                match (lhs.next(), rhs.next()) {
+                    (None, None) => break Ordering::Equal,
+                    (None, Some(_)) => break Ordering::Less,
+                    (Some(_), None) => break Ordering::Greater,
+                    (Some(a), Some(b)) => {
+                        if a != b {
+                            break a.cmp(&b);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
