@@ -29,6 +29,7 @@ eframe = { version = "0.24.1", default-features = false, features = [
 ] }
 egui = "0.24.1"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
+geo = "0.27.0"
 itertools = "0.12.0"
 kurbo = "0.10.3"
 log = "0.4.20"
@@ -68,3 +69,7 @@ aarch64-unknown-linux-gnu = "buildjet-8vcpu-ubuntu-2204-arm"
 [profile.dist]
 inherits = "release"
 lto = "thin"
+
+
+[patch.crates-io]
+# geo = { path = "../geo/geo" }
