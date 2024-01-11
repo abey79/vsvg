@@ -38,6 +38,7 @@ pub enum ParagraphAlign {
     Justified,
 }
 
+#[derive(Clone, Debug)]
 enum Command {
     Advance(f64),
     AdvanceWord(f64),
@@ -110,25 +111,6 @@ fn basic_text_line<F: Font>(
 
     (glyphs, x)
 }
-
-// fn split_text_for_width<'a, 'txt, F: Font>(
-//     text: &'txt str,
-//     font: &'a F,
-//     glyph_spacing: f64,
-// ) -> (Vec<kurbo::BezPath>, &'txt str, &'txt str, f64) {
-//     text.split_ascii_whitespace()
-// }
-
-// fn glyphs_bounds<'a>(glyphs: impl Iterator<Item = &'a kurbo::BezPath>) -> Option<kurbo::Rect> {
-//     glyphs.fold(None, |acc, path| {
-//         let bounds = path.bounds();
-//         if let Some(acc) = acc {
-//             Some(acc.union(bounds))
-//         } else {
-//             Some(bounds)
-//         }
-//     })
-// }
 
 pub fn text_line<F: Font>(
     text: &str,
@@ -204,8 +186,14 @@ pub fn text_paragraph<F: Font>(
             }
         };
 
+    // Always remember the last offset after a word, so we can remove it when computing line alignment
+    let mut last_advance_word_offset = None;
+
     // Note: we prepend an `AdvanceWord`command to make sure we flush `cur_word` for the last word.
-    for command in commands.chain(std::iter::once(Command::AdvanceWord(0.0))) {
+    for command in commands
+        .into_iter()
+        .chain(std::iter::once(Command::AdvanceWord(0.0)))
+    {
         match command {
             Command::Advance(offset) => {
                 x_word += offset + extra_spacing;
@@ -213,7 +201,12 @@ pub fn text_paragraph<F: Font>(
             Command::AdvanceWord(offset) => {
                 if x + x_word > width {
                     // flush the current line into the paragraph
-                    flush_line(&mut line, x, offset, false);
+                    flush_line(
+                        &mut line,
+                        x,
+                        last_advance_word_offset.unwrap_or_default(),
+                        false,
+                    );
 
                     // reset coordinates
                     x = 0.0;
@@ -227,6 +220,7 @@ pub fn text_paragraph<F: Font>(
 
                 x += x_word + offset;
                 x_word = 0.0;
+                last_advance_word_offset = Some(offset);
             }
             Command::DrawGlyph {
                 mut path,
@@ -240,7 +234,12 @@ pub fn text_paragraph<F: Font>(
     }
 
     // flush the last line
-    flush_line(&mut line, x, 0.0, true);
+    flush_line(
+        &mut line,
+        x,
+        last_advance_word_offset.unwrap_or_default(),
+        true,
+    );
 
     paragraph.scale(scale);
     paragraph
