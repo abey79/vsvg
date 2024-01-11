@@ -3,8 +3,8 @@ use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
 use syn::{
-    parse_macro_input, parse_quote, visit_mut::VisitMut, Data, DataStruct, DeriveInput, Expr,
-    ExprPath, Fields, FieldsNamed, FieldsUnnamed, Index,
+    parse_macro_input, parse_quote, visit_mut::VisitMut, Data, DataEnum, DataStruct, DeriveInput,
+    Expr, ExprPath, Fields, FieldsNamed, FieldsUnnamed, Index,
 };
 
 fn format_label(label: &str) -> String {
@@ -84,12 +84,17 @@ pub fn sketch_ui_derive(input: TokenStream) -> TokenStream {
     let name = input.ident;
     let widget_name = format_ident!("{}Widget", name);
 
-    let fields_ui = match input.data {
-        Data::Struct(DataStruct { fields, .. }) => {
-            process_fields(fields, &name, &format_ident!("value"))
+    match input.data {
+        Data::Struct(DataStruct { fields, .. }) => process_struct(fields, &name, &widget_name),
+        Data::Enum(DataEnum { variants, .. }) => {
+            todo!();
         }
         _ => panic!("The Sketch derive macro only supports structs"),
-    };
+    }
+}
+
+fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStream {
+    let fields_ui = process_fields(fields, &name, &format_ident!("value"));
 
     TokenStream::from(quote! {
         #[derive(Default)]
