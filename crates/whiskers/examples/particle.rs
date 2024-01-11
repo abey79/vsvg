@@ -1,6 +1,8 @@
 //! Example sketch showcasing the use of the `geos` crate.
 //!
-//! **Important**: you need `libgeos` to be installed on your system for this example to run.
+//! **Important**:
+//! - You need `libgeos` to be installed on your system for this example to run.
+//! - Using `geos` makes it very difficult to target WASM.
 //!
 //! Original sketch contributed by [Daniel Simu](https://github.com/hapiel)
 

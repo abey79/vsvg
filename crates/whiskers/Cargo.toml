@@ -51,16 +51,17 @@ features = [
     "Window",
 ]
 
-
-
 # for examples
 [dev-dependencies]
 geo.workspace = true
-geos = "8.3.0"
 itertools.workspace = true
 noise = "0.8.2"
 rayon.workspace = true
 voronoice = "0.2.0"
+
+# for particle.rs example
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+geos = "8.3.0"
 
 [features]
 default = ["viewer"]
