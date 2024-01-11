@@ -14,6 +14,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - run: apt-get install geos
+
       - uses: actions/checkout@v3
       - uses: moonrepo/setup-rust@v1
         with:
@@ -29,12 +31,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - run: apt-get install geos
 
+      - uses: actions/checkout@v3
       - uses: moonrepo/setup-rust@v1
         with:
           components: rustfmt, clippy
-
 
       - uses: taiki-e/install-action@v2
         with:
@@ -46,6 +48,8 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
+      - run: apt-get install geos
+
       - uses: actions/checkout@v3
       - uses: moonrepo/setup-rust@v1
         with:
