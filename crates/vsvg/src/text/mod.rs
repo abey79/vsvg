@@ -7,6 +7,7 @@ pub struct Glyph {
     lt: f64,
     rt: f64,
     path: kurbo::BezPath,
+    c: char,
 }
 
 /// Trait for font data.
@@ -40,7 +41,11 @@ pub enum ParagraphAlign {
 enum Command {
     Advance(f64),
     AdvanceWord(f64),
-    DrawGlyph { path: kurbo::BezPath, offset: f64 },
+    DrawGlyph {
+        path: kurbo::BezPath,
+        offset: f64,
+        c: char,
+    },
 }
 
 fn commands_from_chars<'a, F: Font>(
@@ -49,9 +54,13 @@ fn commands_from_chars<'a, F: Font>(
 ) -> impl Iterator<Item = Command> + 'a {
     chars
         .flat_map(|c| {
-            if let Some(Glyph { lt, rt, path }) = font.glyph(c) {
+            if let Some(Glyph { lt, rt, path, c }) = font.glyph(c) {
                 [
-                    Some(Command::DrawGlyph { path, offset: -lt }),
+                    Some(Command::DrawGlyph {
+                        path,
+                        offset: -lt,
+                        c,
+                    }),
                     if c == ' ' {
                         Some(Command::AdvanceWord(rt - lt))
                     } else {
@@ -88,7 +97,11 @@ fn basic_text_line<F: Font>(
                 x += offset + word_spacing;
                 None
             }
-            Command::DrawGlyph { mut path, offset } => {
+            Command::DrawGlyph {
+                mut path,
+                offset,
+                c: _c,
+            } => {
                 path.translate(x + offset, 0.0);
                 Some(path)
             }
@@ -165,20 +178,31 @@ pub fn text_paragraph<F: Font>(
     let mut line = vec![];
     let mut paragraph = vec![];
 
-    let mut flush_line = |line: &mut Vec<Vec<kurbo::BezPath>>, x: f64, offset: f64| {
-        let align_offset = match align {
-            ParagraphAlign::Left => 0.0,
-            ParagraphAlign::Center => (width - x + offset + extra_spacing) / 2.0,
-            ParagraphAlign::Right => width - x + offset + extra_spacing,
-            ParagraphAlign::Justified => {
-                todo!()
+    let mut flush_line =
+        |line: &mut Vec<Vec<kurbo::BezPath>>, x: f64, offset: f64, last_line: bool| {
+            if !last_line && matches!(align, ParagraphAlign::Justified) {
+                let space = if line.len() >= 2 {
+                    (width - x + offset + extra_spacing) / (line.len() - 1) as f64
+                } else {
+                    0.0
+                };
+
+                line.drain(..).enumerate().for_each(|(i, mut word)| {
+                    word.translate(space * i as f64, 0.0);
+                    paragraph.extend(word.drain(..));
+                });
+            } else {
+                let align_offset = match align {
+                    ParagraphAlign::Left | ParagraphAlign::Justified => 0.0,
+                    ParagraphAlign::Center => (width - x + offset + extra_spacing) / 2.0,
+                    ParagraphAlign::Right => width - x + offset + extra_spacing,
+                };
+
+                line.translate(align_offset, 0.0);
+                line.drain(..)
+                    .for_each(|mut word: Vec<kurbo::BezPath>| paragraph.extend(word.drain(..)));
             }
         };
-
-        line.translate(align_offset, 0.0);
-        line.drain(..)
-            .for_each(|mut word: Vec<kurbo::BezPath>| paragraph.extend(word.drain(..)));
-    };
 
     // Note: we prepend an `AdvanceWord`command to make sure we flush `cur_word` for the last word.
     for command in commands.chain(std::iter::once(Command::AdvanceWord(0.0))) {
@@ -189,7 +213,7 @@ pub fn text_paragraph<F: Font>(
             Command::AdvanceWord(offset) => {
                 if x + x_word > width {
                     // flush the current line into the paragraph
-                    flush_line(&mut line, x, offset);
+                    flush_line(&mut line, x, offset, false);
 
                     // reset coordinates
                     x = 0.0;
@@ -204,7 +228,11 @@ pub fn text_paragraph<F: Font>(
                 x += x_word + offset;
                 x_word = 0.0;
             }
-            Command::DrawGlyph { mut path, offset } => {
+            Command::DrawGlyph {
+                mut path,
+                offset,
+                c: _c,
+            } => {
                 path.translate(x_word + offset, 0.0);
                 cur_word.push(path);
             }
@@ -212,7 +240,7 @@ pub fn text_paragraph<F: Font>(
     }
 
     // flush the last line
-    flush_line(&mut line, x, 0.0);
+    flush_line(&mut line, x, 0.0, true);
 
     paragraph.scale(scale);
     paragraph

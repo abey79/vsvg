@@ -154,6 +154,7 @@ impl super::Font for FontData {
             lt: glyph_data.lt,
             rt: glyph_data.rt,
             path: glyph_data.path.clone(),
+            c,
         })
     }
 
