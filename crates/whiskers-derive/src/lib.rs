@@ -210,11 +210,15 @@ fn process_enum(
             )*
         }.to_owned();
         let initial_selected_text = selected_text.clone();
-        egui::ComboBox::from_label(#name_string).selected_text(&selected_text).show_ui(ui, |ui| {
-            #(
-                ui.selectable_value(&mut selected_text, #ident_strings.to_owned(), #ident_strings);
-            )*
+        ui.horizontal(|ui|{
+            ui.label(label);
+            egui::ComboBox::from_id_source(#name_string).selected_text(&selected_text).show_ui(ui, |ui| {
+                #(
+                    ui.selectable_value(&mut selected_text, #ident_strings.to_owned(), #ident_strings);
+                )*
+            });
         });
+
         let mut changed = initial_selected_text != selected_text;
 
         if changed {
