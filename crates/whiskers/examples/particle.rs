@@ -1,76 +1,79 @@
+//! Example sketch showcasing the use of the `geos` crate.
+//!
+//! Original sketch contributed by [Daniel Simu](https://github.com/hapiel)
+
 use geos::{CoordSeq, Geom, Geometry};
 use vsvg::trace_scope;
 use whiskers::prelude::*;
 
 #[sketch_app]
-struct MySketch {
-    /* add sketch parameters here */
-    pen_width: f64,
-    width: f64,
-    height: f64,
+struct ParticleSketch {
+    pen_width: Length,
+    margin: Length,
     circle_count: usize,
-    circle_radius: f64,
+
+    #[param(slider, min = 0.1, max = 5.0, logarithmic)]
+    circle_radius: Length,
 }
 
-impl Default for MySketch {
+impl Default for ParticleSketch {
     fn default() -> Self {
         Self {
-            /* initialize sketch parameters to default values here */
-            pen_width: 0.3,
-            width: 190.0,
-            height: 120.0,
-            circle_count: 20,
-            circle_radius: 2.,
+            pen_width: 0.3 * Unit::Mm,
+            margin: 15.0 * Unit::Mm,
+            circle_count: 200,
+            circle_radius: 0.5 * Unit::Cm,
         }
     }
 }
 
-impl App for MySketch {
-    fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        // draw code goes here
-
+impl App for ParticleSketch {
+    fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch
-            .scale(Unit::Mm)
             .stroke_width(self.pen_width)
             .color(Color::new(0, 0, 20, 220));
 
-        let mut circles = vec![]; //MultiPolygon::new(vec![]);
+        let mut circles = vec![];
+
+        let margin: f64 = (self.margin + self.circle_radius).into();
 
         {
             trace_scope!("create circles");
 
-            for _i in 0..self.circle_count {
-                let x = _ctx.rng_range(0.0..self.width);
-                let y = _ctx.rng_range(0.0..self.height);
+            for _ in 0..self.circle_count {
+                let x = ctx.rng_range(margin..(sketch.width() - margin));
+                let y = ctx.rng_range(margin..(sketch.height() - margin));
 
                 let coords = CoordSeq::new_from_vec(&[&[x, y]]).expect("failed to create CoordSeq");
 
                 let geom = Geometry::create_point(coords)
                     .unwrap()
-                    .buffer(self.circle_radius, 20)
+                    .buffer(self.circle_radius.into(), 20)
                     .unwrap();
 
                 circles.push(geom);
             }
         }
 
-        let mut union_result: geos::Geometry; // = MultiPolygon::new(vec![circles.0[0].clone()]);
+        let mut union_result: Geometry;
 
         {
             trace_scope!("union circles");
 
-            let geom = Geometry::create_multipolygon(circles).unwrap();
-            union_result = geom.unary_union().expect("unary union failed");
+            let circles_multi_polygon = Geometry::create_multipolygon(circles).unwrap();
+            union_result = circles_multi_polygon
+                .unary_union()
+                .expect("unary union failed");
             union_result.normalize().expect("normalize failed");
         }
 
         {
             trace_scope!("to sketch");
 
-            let ext = union_result.boundary().expect("boundary");
+            let boundary = union_result.boundary().expect("boundary");
 
-            for k in 0..ext.get_num_geometries().expect("num geometries") {
-                let geom = ext.get_geometry_n(k).expect("geometry");
+            for k in 0..boundary.get_num_geometries().expect("num geometries") {
+                let geom = boundary.get_geometry_n(k).expect("geometry");
                 let coords = geom.get_coord_seq().expect("coord seq");
 
                 let pts = (0..coords.size().expect("size"))
@@ -89,7 +92,7 @@ impl App for MySketch {
 }
 
 fn main() -> Result {
-    MySketch::runner()
+    ParticleSketch::runner()
         .with_page_size_options(PageSize::Custom(205., 130., Unit::Mm))
         .with_layout_options(LayoutOptions::Center)
         .run()
