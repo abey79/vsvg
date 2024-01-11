@@ -1,5 +1,7 @@
 //! Example sketch showcasing the use of the `geos` crate.
 //!
+//! **Important**: you need `libgeos` to be installed on your system for this example to run.
+//!
 //! Original sketch contributed by [Daniel Simu](https://github.com/hapiel)
 
 use geos::{CoordSeq, Geom, Geometry};
@@ -77,7 +79,6 @@ impl App for ParticleSketch {
                 let coords = geom.get_coord_seq().expect("coord seq");
 
                 let pts = (0..coords.size().expect("size"))
-                    .into_iter()
                     .map(|i| {
                         vsvg::Point::new(coords.get_x(i).expect("x"), coords.get_y(i).expect("y"))
                     })
