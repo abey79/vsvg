@@ -22,10 +22,19 @@ pub trait Font {
     fn height(&self) -> f64;
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum TextAlign {
     Left,
     Center,
     Right,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ParagraphAlign {
+    Left,
+    Center,
+    Right,
+    Justified,
 }
 
 enum Command {
@@ -138,7 +147,7 @@ pub fn text_paragraph<F: Font>(
     text: &str,
     font: &F,
     size: f64,
-    align: TextAlign,
+    align: ParagraphAlign,
     extra_spacing: f64,
     width: impl Into<f64>,
 ) -> Vec<kurbo::BezPath> {
@@ -153,7 +162,23 @@ pub fn text_paragraph<F: Font>(
     let mut cur_word = vec![];
     let commands = commands_from_chars(text.chars(), font);
 
+    let mut line = vec![];
     let mut paragraph = vec![];
+
+    let mut flush_line = |line: &mut Vec<Vec<kurbo::BezPath>>, x: f64, offset: f64| {
+        let align_offset = match align {
+            ParagraphAlign::Left => 0.0,
+            ParagraphAlign::Center => (width - x + offset + extra_spacing) / 2.0,
+            ParagraphAlign::Right => width - x + offset + extra_spacing,
+            ParagraphAlign::Justified => {
+                todo!()
+            }
+        };
+
+        line.translate(align_offset, 0.0);
+        line.drain(..)
+            .for_each(|mut word: Vec<kurbo::BezPath>| paragraph.extend(word.drain(..)));
+    };
 
     // Note: we prepend an `AdvanceWord`command to make sure we flush `cur_word` for the last word.
     for command in commands.chain(std::iter::once(Command::AdvanceWord(0.0))) {
@@ -163,12 +188,19 @@ pub fn text_paragraph<F: Font>(
             }
             Command::AdvanceWord(offset) => {
                 if x + x_word > width {
+                    // flush the current line into the paragraph
+                    flush_line(&mut line, x, offset);
+
+                    // reset coordinates
                     x = 0.0;
                     y += line_spacing;
+                } else {
                 }
 
                 cur_word.translate(x, y);
-                paragraph.extend(cur_word.drain(..));
+
+                line.push(std::mem::take(&mut cur_word));
+
                 x += x_word + offset;
                 x_word = 0.0;
             }
@@ -178,6 +210,9 @@ pub fn text_paragraph<F: Font>(
             }
         }
     }
+
+    // flush the last line
+    flush_line(&mut line, x, 0.0);
 
     paragraph.scale(scale);
     paragraph

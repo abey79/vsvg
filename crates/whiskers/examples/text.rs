@@ -70,7 +70,37 @@ impl App for TextSketch {
             "Lorm ipsum dolor. Honnis soit qui mal y pense. Pierre qui roule n'amasse pas mousse.",
             &font,
             self.font_size,
-            vsvg::text::TextAlign::Left,
+            vsvg::text::ParagraphAlign::Left,
+            self.glyph_spacing,
+            self.text_width,
+        ));
+
+        sketch.translate(0., 6. * Unit::Cm);
+        origin_cross(sketch);
+        sketch.push_matrix_and(|sketch| {
+            sketch.translate(self.text_width, 0.);
+            origin_cross(sketch);
+        });
+        sketch.add_paths(vsvg::text::text_paragraph(
+            "Lorm ipsum dolor. Honnis soit qui mal y pense. Pierre qui roule n'amasse pas mousse.",
+            &font,
+            self.font_size,
+            vsvg::text::ParagraphAlign::Center,
+            self.glyph_spacing,
+            self.text_width,
+        ));
+
+        sketch.translate(0., 6. * Unit::Cm);
+        origin_cross(sketch);
+        sketch.push_matrix_and(|sketch| {
+            sketch.translate(self.text_width, 0.);
+            origin_cross(sketch);
+        });
+        sketch.add_paths(vsvg::text::text_paragraph(
+            "Lorm ipsum dolor. Honnis soit qui mal y pense. Pierre qui roule n'amasse pas mousse.",
+            &font,
+            self.font_size,
+            vsvg::text::ParagraphAlign::Right,
             self.glyph_spacing,
             self.text_width,
         ));
