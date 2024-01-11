@@ -141,6 +141,9 @@ pub trait ViewerApp {
     ///
     /// Use [`eframe::set_value`] to store the data.
     fn save(&self, _storage: &mut dyn eframe::Storage) {}
+
+    /// Hook executed before shutting down the app.
+    fn on_exit(&mut self) {}
 }
 
 /// Show a custom [`ViewerApp`].

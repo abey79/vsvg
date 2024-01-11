@@ -234,4 +234,9 @@ impl eframe::App for Viewer {
         );
         self.viewer_app.save(storage);
     }
+
+    /// Called by the framework before shutting down.
+    fn on_exit(&mut self) {
+        self.viewer_app.on_exit();
+    }
 }
