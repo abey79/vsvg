@@ -2,9 +2,11 @@ use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 use syn::{
     parse_macro_input, parse_quote, visit_mut::VisitMut, Data, DataEnum, DataStruct, DeriveInput,
-    Expr, ExprPath, Fields, FieldsNamed, FieldsUnnamed, Index,
+    Expr, ExprPath, Field, Fields, FieldsNamed, FieldsUnnamed, Index, Variant,
 };
 
 fn format_label(label: &str) -> String {
@@ -86,10 +88,10 @@ pub fn sketch_ui_derive(input: TokenStream) -> TokenStream {
 
     match input.data {
         Data::Struct(DataStruct { fields, .. }) => process_struct(fields, &name, &widget_name),
-        Data::Enum(DataEnum { variants, .. }) => {
-            todo!();
+        Data::Enum(DataEnum { variants, .. }) => process_enum(variants, &name, &widget_name),
+        Data::Union(_) => {
+            unimplemented!()
         }
-        _ => panic!("The Sketch derive macro only supports structs"),
     }
 }
 
@@ -119,6 +121,155 @@ fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStr
     })
 }
 
+fn field_defaults<'a>(fields: impl Iterator<Item = &'a Field>) -> proc_macro2::TokenStream {
+    let mut output = proc_macro2::TokenStream::new();
+    for field in fields {
+        let typ_ = &field.ty;
+        if let Some(name) = &field.ident {
+            output.extend(quote! {
+                #name: #typ_::default(),
+            });
+        } else {
+            output.extend(quote! {
+                #typ_::default(),
+            });
+        }
+    }
+
+    output
+}
+
+fn default_function_name_for_variant(variant_ident: &Ident) -> Ident {
+    format_ident!("__default_{}", variant_ident)
+}
+
+fn process_enum(
+    variants: Punctuated<Variant, Comma>,
+    name: &Ident,
+    widget_name: &Ident,
+) -> TokenStream {
+    //
+    // For each variant, create a function that returns the default value for that variant.
+    //
+
+    let mut default_functions = proc_macro2::TokenStream::new();
+    for Variant { ident, fields, .. } in variants.iter() {
+        let func_ident = default_function_name_for_variant(ident);
+
+        let fields_defaults = match fields {
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                let fields = field_defaults(unnamed.iter());
+                quote! {( #fields )}
+            }
+            Fields::Named(FieldsNamed { named, .. }) => {
+                let fields = field_defaults(named.iter());
+                quote! {{ #fields }}
+            }
+            Fields::Unit => {
+                quote! {}
+            }
+        };
+
+        default_functions.extend(quote! {
+            #[allow(non_snake_case)]
+            fn #func_ident() -> Self {
+                #name::#ident #fields_defaults
+            }
+        });
+    }
+
+    let impl_default_functions = quote! {
+        impl #name {
+            #default_functions
+        }
+    };
+
+    //
+    // Create the UI code to display the enum.
+    //
+
+    let idents = variants
+        .iter()
+        .map(|Variant { ident, .. }| ident.clone())
+        .collect::<Vec<_>>();
+    let ident_default_functions = idents
+        .iter()
+        .map(|ident| default_function_name_for_variant(ident))
+        .collect::<Vec<_>>();
+    let ident_strings = idents
+        .iter()
+        .map(|ident| ident.to_string())
+        .collect::<Vec<_>>();
+
+    let name_string = name.to_string();
+
+    let combobox_ui_code = quote! {
+        let mut selected_text = match value {
+            #(
+                #name::#idents => #ident_strings,
+            )*
+        }.to_owned();
+        let initial_selected_text = selected_text.clone();
+        egui::ComboBox::from_label(#name_string).selected_text(&selected_text).show_ui(ui, |ui| {
+            #(
+                ui.selectable_value(&mut selected_text, #ident_strings.to_owned(), #ident_strings);
+            )*
+        });
+        let mut changed = initial_selected_text != selected_text;
+
+        if changed {
+            *value = match selected_text.as_str() {
+                #(
+                    #ident_strings => #name::#ident_default_functions(),
+                )*
+                _ => unreachable!(),
+            };
+        }
+    };
+
+    //let mut fields_ui_for_ident: HashMap<Ident, proc_macro2::TokenStream> = HashMap::new();
+    let mut idents = Vec::new();
+    let mut field_uis = Vec::new();
+    for Variant { ident, fields, .. } in variants.into_iter() {
+        let fields_ui = process_fields(fields, &name, &format_ident!("value"));
+        //fields_ui_for_ident.insert(ident, fields_ui);
+        idents.push(ident);
+        field_uis.push(fields_ui);
+    }
+
+    TokenStream::from(quote! {
+        #impl_default_functions
+
+        #[derive(Default)]
+        pub struct #widget_name;
+
+        impl ::whiskers::widgets::Widget<#name> for #widget_name {
+            fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut #name) -> bool {
+
+                #combobox_ui_code
+
+                changed |= match value {
+                    #(
+                        #name::#idents => {
+                             #field_uis
+                        }
+                    )*
+                };
+
+                changed
+            }
+
+            fn use_grid() -> bool {
+                false
+            }
+        }
+
+        impl ::whiskers::widgets::WidgetMapper<#name> for #name {
+            type Type = #widget_name;
+        }
+    })
+}
+
 fn process_fields(
     fields: Fields,
     parent_type: &Ident,
@@ -129,7 +280,9 @@ fn process_fields(
     let fields = match fields {
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => unnamed,
         Fields::Named(FieldsNamed { named, .. }) => named,
-        _ => panic!("The Sketch derive macro only supports named-field structs"),
+        Fields::Unit => {
+            return quote! { false };
+        }
     };
 
     for (idx, field) in fields.into_iter().enumerate() {
