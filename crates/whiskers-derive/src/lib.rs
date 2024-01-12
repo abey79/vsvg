@@ -185,13 +185,23 @@ fn process_enum(
     };
 
     //
-    // Create the UI code to display the enum.
+    // Create the UI code for the combo box menu
     //
 
     let idents = variants
         .iter()
         .map(|Variant { ident, .. }| ident.clone())
         .collect::<Vec<_>>();
+
+    let field_captures_catch_all: Vec<_> = variants
+        .iter()
+        .map(|variant| match &variant.fields {
+            Fields::Named(FieldsNamed { .. }) => quote! { { .. } },
+            Fields::Unnamed(FieldsUnnamed { .. }) => quote! { ( .. ) },
+            Fields::Unit => quote! {},
+        })
+        .collect();
+
     let ident_default_functions = idents
         .iter()
         .map(|ident| default_function_name_for_variant(ident))
@@ -206,7 +216,7 @@ fn process_enum(
     let combobox_ui_code = quote! {
         let mut selected_text = match value {
             #(
-                #name::#idents => #ident_strings,
+                #name::#idents #field_captures_catch_all => #ident_strings,
             )*
         }.to_owned();
         let initial_selected_text = selected_text.clone();
@@ -231,15 +241,88 @@ fn process_enum(
         }
     };
 
-    //let mut fields_ui_for_ident: HashMap<Ident, proc_macro2::TokenStream> = HashMap::new();
-    let mut idents = Vec::new();
-    let mut field_uis = Vec::new();
-    for Variant { ident, fields, .. } in variants.into_iter() {
-        let fields_ui = process_fields(fields, &name, &format_ident!("value"));
-        //fields_ui_for_ident.insert(ident, fields_ui);
-        idents.push(ident);
-        field_uis.push(fields_ui);
-    }
+    //
+    // UI for the variant's content
+    //
+
+    // collect things like:
+    // - tuple variant => (field_0, field_1)
+    // - struct variant => { some_field, another_field }
+    // - unit variant => <empty>
+    let field_captures: Vec<_> = variants
+        .iter()
+        .map(|variant| match &variant.fields {
+            Fields::Named(FieldsNamed { named, .. }) => {
+                let fields = named
+                    .iter()
+                    .map(|field| field.ident.clone().unwrap())
+                    .collect::<Vec<_>>();
+
+                quote! {
+                    { #( #fields, )* }
+                }
+            }
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                let fields = (0..unnamed.len())
+                    .map(|idx| format_ident!("field_{}", Index::from(idx)))
+                    .collect::<Vec<_>>();
+
+                quote! {
+                    ( #( #fields, )* )
+                }
+            }
+            Fields::Unit => quote! {},
+        })
+        .collect();
+
+    let field_tuples: Vec<_> = variants
+        .iter()
+        .map(|variant| match &variant.fields {
+            Fields::Named(FieldsNamed { named, .. }) => {
+                let idents = named.iter().map(|field| field.ident.clone().unwrap()).collect::<Vec<_>>();
+                let types = named.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
+                let ident_string = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+
+                quote! {
+                    #(
+                        (
+                            &mut |ui| {
+                                <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
+                                    ui,
+                                    #ident_string,
+                                    #idents,
+                                )
+                            },
+                            &<#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::use_grid,
+                        )
+                    ),*
+                }
+            }
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                let idents = (0..unnamed.len())
+                    .map(|idx| format_ident!("field_{}", Index::from(idx)))
+                    .collect::<Vec<_>>();
+                let types = unnamed.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
+                let ident_string = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+
+                quote! {
+                    #(
+                        (
+                            &mut |ui| {
+                                <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
+                                    ui,
+                                    #ident_string,
+                                    #idents,
+                                )
+                            },
+                            &<#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::use_grid,
+                        )
+                    ),*
+                }
+            }
+            Fields::Unit => quote!{}
+        })
+        .collect();
 
     TokenStream::from(quote! {
         #impl_default_functions
@@ -252,13 +335,43 @@ fn process_enum(
 
                 #combobox_ui_code
 
-                changed |= match value {
-                    #(
-                        #name::#idents => {
-                             #field_uis
+                // draw the UI for a bunch of fields, swapping the grid on and off based on grid support
+                fn draw_ui(
+                    ui: &mut egui::Ui,
+                    changed: &mut bool,
+                    array: &mut [(&mut dyn FnMut(&mut egui::Ui) -> bool, &dyn Fn() -> bool)],
+                ) {
+                    let mut cur_index = 0;
+                    while cur_index < array.len() {
+                        if array[cur_index].1() {
+                            egui::Grid::new(cur_index).num_columns(2).show(ui, |ui| {
+                                while cur_index < array.len() && array[cur_index].1() {
+                                    *changed = (array[cur_index].0)(ui) || *changed;
+                                    ui.end_row();
+                                    cur_index += 1;
+                                }
+                            });
                         }
-                    )*
-                };
+                        while cur_index < array.len() && !array[cur_index].1() {
+                            *changed = (array[cur_index].0)(ui) || *changed;
+                            cur_index += 1;
+                        }
+                    }
+                }
+
+                ui.indent("enum content", |ui| {
+                    match value {
+                        #(
+                            #name::#idents #field_captures => {
+                                draw_ui(
+                                    ui,
+                                    &mut changed,
+                                    &mut [ #field_tuples ],
+                                );
+                            }
+                        )*
+                    };
+                });
 
                 changed
             }

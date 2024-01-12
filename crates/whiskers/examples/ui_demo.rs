@@ -78,30 +78,25 @@ impl App for UiDemoSketch {
     }
 }
 
-#[derive(Widget, serde::Serialize, serde::Deserialize)]
+#[derive(Widget, Default, serde::Serialize, serde::Deserialize)]
 #[serde(crate = "::whiskers::prelude::serde")]
 enum CustomEnum {
-    Variant1,
-    Variant2,
-    /*Variant1 { some_float: f64, some_bool: bool },
-    Variant2(String, bool),*/
+    Variant1 {
+        some_float: f64,
+    },
+    Variant2(bool, f64),
+    #[default]
     Variant3,
 }
 
-impl Default for CustomEnum {
-    fn default() -> Self {
-        /*Self::Variant1 {
-            some_float: 0.0,
-            some_bool: false,
-        }*/
+// THIS IS WORKING!!!!
 
-        Self::Variant1
-    }
-}
 // impl CustomEnum {
 //     #[allow(non_snake_case)]
 //     fn __default_Variant1() -> Self {
-//         CustomEnum::Variant1
+//         CustomEnum::Variant1 {
+//             some_float: f64::default(),
+//         }
 //     }
 //     #[allow(non_snake_case)]
 //     fn __default_Variant2() -> Self {
@@ -117,19 +112,22 @@ impl Default for CustomEnum {
 // impl ::whiskers::widgets::Widget<CustomEnum> for CustomEnumWidget {
 //     fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut CustomEnum) -> bool {
 //         let mut selected_text = match value {
-//             CustomEnum::Variant1 => "Variant1",
+//             CustomEnum::Variant1 { .. } => "Variant1",
 //             CustomEnum::Variant2 => "Variant2",
 //             CustomEnum::Variant3 => "Variant3",
 //         }
 //         .to_owned();
 //         let initial_selected_text = selected_text.clone();
-//         egui::ComboBox::from_label("CustomEnum")
-//             .selected_text(&selected_text)
-//             .show_ui(ui, |ui| {
-//                 ui.selectable_value(&mut selected_text, "Variant1".to_owned(), "Variant1");
-//                 ui.selectable_value(&mut selected_text, "Variant2".to_owned(), "Variant2");
-//                 ui.selectable_value(&mut selected_text, "Variant3".to_owned(), "Variant3");
-//             });
+//         ui.horizontal(|ui| {
+//             ui.label(label);
+//             egui::ComboBox::from_id_source("CustomEnum")
+//                 .selected_text(&selected_text)
+//                 .show_ui(ui, |ui| {
+//                     ui.selectable_value(&mut selected_text, "Variant1".to_owned(), "Variant1");
+//                     ui.selectable_value(&mut selected_text, "Variant2".to_owned(), "Variant2");
+//                     ui.selectable_value(&mut selected_text, "Variant3".to_owned(), "Variant3");
+//                 });
+//         });
 //         let mut changed = initial_selected_text != selected_text;
 //         if changed {
 //             *value = match selected_text.as_str() {
@@ -139,86 +137,54 @@ impl Default for CustomEnum {
 //                 _ => unreachable!(),
 //             };
 //         }
-//         changed |= match value {
-//             CustomEnum::Variant1 => false,
-//             CustomEnum::Variant2 => false,
-//             CustomEnum::Variant3 => false,
-//         };
-//         changed
-//     }
-//     fn use_grid() -> bool {
-//         false
-//     }
-// }
-// impl ::whiskers::widgets::WidgetMapper<CustomEnum> for CustomEnum {
-//     type Type = CustomEnumWidget;
-// }
-
-// #[derive(Default)]
-// pub struct CustomEnumWidget;
-// impl ::whiskers::widgets::Widget<CustomEnum> for CustomEnumWidget {
-//     fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut CustomEnum) -> bool {
-//         match value {
-//             CustomEnum::Variant1 { some_float } => {
-//                 let mut array: &mut [(&mut dyn FnMut(&mut egui::Ui) -> bool, &dyn Fn() -> bool)] =
-//                     &mut [(
-//                         &mut |ui| {
-//                             <f64 as ::whiskers::widgets::WidgetMapper<f64>>::Type::default().ui(
-//                                 ui,
-//                                 "some float:",
-//                                 some_float,
-//                             )
-//                         },
-//                         &<f64 as ::whiskers::widgets::WidgetMapper<f64>>::Type::use_grid,
-//                     )];
-//                 let mut cur_index = 0;
-//                 let mut changed = false;
-//                 while cur_index < array.len() {
-//                     if array[cur_index].1() {
-//                         egui::Grid::new(cur_index).num_columns(2).show(ui, |ui| {
-//                             while cur_index < array.len() && array[cur_index].1() {
-//                                 changed = (array[cur_index].0)(ui) || changed;
-//                                 ui.end_row();
-//                                 cur_index += 1;
-//                             }
-//                         });
-//                     }
-//                     while cur_index < array.len() && !array[cur_index].1() {
-//                         changed = (array[cur_index].0)(ui) || changed;
-//                         cur_index += 1;
-//                     }
+//
+//         fn draw_ui(
+//             ui: &mut egui::Ui,
+//             changed: &mut bool,
+//             array: &mut [(&mut dyn FnMut(&mut egui::Ui) -> bool, &dyn Fn() -> bool)],
+//         ) {
+//             let mut cur_index = 0;
+//             while cur_index < array.len() {
+//                 if array[cur_index].1() {
+//                     egui::Grid::new(cur_index).num_columns(2).show(ui, |ui| {
+//                         while cur_index < array.len() && array[cur_index].1() {
+//                             *changed = (array[cur_index].0)(ui) || *changed;
+//                             ui.end_row();
+//                             cur_index += 1;
+//                         }
+//                     });
 //                 }
-//                 changed
-//             }
-//             CustomEnum::Variant2(p0) => {
-//                 let array: &[(&dyn FnMut(&mut egui::Ui) -> bool, &dyn Fn() -> bool)] = &[(
-//                     &|ui| {
-//                         <String as ::whiskers::widgets::WidgetMapper<String>>::Type::default()
-//                             .ui(ui, "field 0:", p0)
-//                     },
-//                     &<String as ::whiskers::widgets::WidgetMapper<String>>::Type::use_grid,
-//                 )];
-//                 let mut cur_index = 0;
-//                 let mut changed = false;
-//                 while cur_index < array.len() {
-//                     if array[cur_index].1() {
-//                         egui::Grid::new(cur_index).num_columns(2).show(ui, |ui| {
-//                             while cur_index < array.len() && array[cur_index].1() {
-//                                 changed = (array[cur_index].0)(ui) || changed;
-//                                 ui.end_row();
-//                                 cur_index += 1;
-//                             }
-//                         });
-//                     }
-//                     while cur_index < array.len() && !array[cur_index].1() {
-//                         changed = (array[cur_index].0)(ui) || changed;
-//                         cur_index += 1;
-//                     }
+//                 while cur_index < array.len() && !array[cur_index].1() {
+//                     *changed = (array[cur_index].0)(ui) || *changed;
+//                     cur_index += 1;
 //                 }
-//                 changed
 //             }
-//             CustomEnumVariant3 => false,
 //         }
+//
+//         ui.indent("enum content", |ui| {
+//             match value {
+//                 CustomEnum::Variant1 { some_float } => {
+//                     draw_ui(
+//                         ui,
+//                         &mut changed,
+//                         &mut [(
+//                             &mut |ui| {
+//                                 <f64 as ::whiskers::widgets::WidgetMapper<f64>>::Type::default().ui(
+//                                     ui,
+//                                     "some float:",
+//                                     some_float,
+//                                 )
+//                             },
+//                             &<f64 as ::whiskers::widgets::WidgetMapper<f64>>::Type::use_grid,
+//                         )],
+//                     );
+//                 }
+//                 CustomEnum::Variant2 => {}
+//                 CustomEnum::Variant3 => {}
+//             };
+//         });
+//
+//         changed
 //     }
 //     fn use_grid() -> bool {
 //         false
