@@ -109,8 +109,7 @@ enum SimpleEnum {
     Dalmatian,
 }
 
-#[derive(Widget, serde::Serialize, serde::Deserialize)]
-#[serde(crate = "::whiskers::prelude::serde")]
+#[sketch_widget]
 #[derive(Default)]
 enum CustomEnum {
     Variant1 {
