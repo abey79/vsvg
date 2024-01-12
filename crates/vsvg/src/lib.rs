@@ -20,7 +20,11 @@ mod stats;
 mod svg;
 mod test_utils;
 mod traits;
+#[cfg(feature = "egui")]
+pub mod ui;
 mod unit;
+#[cfg(feature = "whiskers-widgets")]
+pub mod widgets;
 
 pub use crate::svg::*;
 pub use color::*;

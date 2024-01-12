@@ -1,11 +1,11 @@
+use crate::Point;
 use egui::Ui;
-use vsvg::Point;
 
 /// Widget for the [`Point`] type.
 #[derive(Default)]
 pub struct PointWidget;
 
-impl super::Widget<Point> for PointWidget {
+impl whiskers_widgets::Widget<Point> for PointWidget {
     fn ui(&self, ui: &mut Ui, label: &str, value: &mut Point) -> bool {
         ui.add(egui::Label::new(label));
         ui.horizontal(|ui| {
@@ -17,4 +17,4 @@ impl super::Widget<Point> for PointWidget {
     }
 }
 
-crate::register_widget_ui!(Point, PointWidget);
+whiskers_widgets::register_widget_ui!(Point, PointWidget);

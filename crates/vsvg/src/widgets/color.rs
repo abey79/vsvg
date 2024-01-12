@@ -1,9 +1,9 @@
-/// Widget to display [`vsvg::Color`] sketch parameters.
+/// Widget to display [`crate::Color`] sketch parameters.
 #[derive(Default)]
 pub struct ColorWidget;
 
-impl super::Widget<vsvg::Color> for ColorWidget {
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut vsvg::Color) -> bool {
+impl whiskers_widgets::Widget<crate::Color> for ColorWidget {
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut crate::Color) -> bool {
         // empty first column
         ui.label(label);
 
@@ -17,4 +17,4 @@ impl super::Widget<vsvg::Color> for ColorWidget {
     }
 }
 
-crate::register_widget_ui!(vsvg::Color, ColorWidget);
+whiskers_widgets::register_widget_ui!(crate::Color, ColorWidget);

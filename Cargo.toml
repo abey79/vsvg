@@ -11,6 +11,7 @@ vsvg = { path = "crates/vsvg", version = "=0.4.0-alpha.0" }
 vsvg-viewer = { path = "crates/vsvg-viewer", version = "=0.4.0-alpha.0" }
 whiskers = { path = "crates/whiskers", version = "=0.4.0-alpha.0" }
 whiskers-derive = { path = "crates/whiskers-derive", version = "=0.4.0-alpha.0" }
+whiskers-widgets = { path = "crates/whiskers-widgets", version = "=0.4.0-alpha.0" }
 
 # dependencies
 anyhow = "1"

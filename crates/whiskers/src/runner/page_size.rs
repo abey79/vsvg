@@ -100,7 +100,7 @@ impl PageSizeOptions {
                     );
 
                     let orig_unit = unit;
-                    vsvg_viewer::utils::unit_combo_box(
+                    vsvg::ui::unit_combo_box(
                         ui,
                         "sketch_page_size_unit",
                         &mut unit,
