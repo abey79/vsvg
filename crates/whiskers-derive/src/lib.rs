@@ -321,33 +321,18 @@ fn process_enum(
     let field_tuples: Vec<_> = variants
         .iter()
         .map(|variant| match &variant.fields {
-            Fields::Named(FieldsNamed { named, .. }) => {
-                let field_names = named.iter().map(|field| field.ident.clone().unwrap()).collect::<Vec<_>>();
-                let field_types = named.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let field_labels = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
-
-                quote! {
-                    #(
-                        (
-                            &mut |ui| {
-                                <#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::default().ui(
-                                    ui,
-                                    #field_labels,
-                                    #field_names,
-                                )
-                            },
-                            &<#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::use_grid,
-                        )
-                    ),*
-                }
-            }
-            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-                let field_names = (0..unnamed.len())
-                    .map(|idx| format_ident!("field_{}", Index::from(idx)))
+            Fields::Named(FieldsNamed { named: field_list, .. })
+                | Fields::Unnamed(FieldsUnnamed { unnamed: field_list, .. }) => {
+                let field_names = field_list
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, field)| field
+                        .ident
+                        .clone()
+                        .unwrap_or(format_ident!("field_{}", Index::from(idx))))
                     .collect::<Vec<_>>();
-                let field_types = unnamed.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let field_labels
-                    = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
+                let field_types = field_list.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
+                let field_labels = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
 
                 quote! {
                     #(
