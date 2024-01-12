@@ -38,9 +38,17 @@ struct UiDemoSketch {
     unit: Unit,
 
     // custom types
+
+    // simple enums (no variant with data) are displayed as a combo box that fits the UI gruid
     simple_enum: SimpleEnum,
+
+    // complex enum hierarchically display their variant's content
     custom_enum: CustomEnum,
+
+    // structs display their content hierarchically and can be nested
     custom_struct: CustomStruct,
+
+    // unnamed structs have their field names displayed as "field_0", "field_1", etc.
     custom_struct_unnamed: CustomStructUnnamed,
 
     // these types are supported but have no configuration options
@@ -71,7 +79,7 @@ struct CustomStruct {
 // Tuple structs are supported too
 #[sketch_widget]
 #[derive(Default)]
-struct CustomStructUnnamed(bool, String);
+struct CustomStructUnnamed(bool, String, f64);
 
 impl App for UiDemoSketch {
     fn update(&mut self, _sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
@@ -79,8 +87,8 @@ impl App for UiDemoSketch {
     }
 }
 
-#[derive(Widget, Default, serde::Serialize, serde::Deserialize)]
-#[serde(crate = "::whiskers::prelude::serde")]
+#[sketch_widget]
+#[derive(Default)]
 enum SimpleEnum {
     #[default]
     Poodle,
@@ -88,13 +96,14 @@ enum SimpleEnum {
     Dalmatian,
 }
 
-#[derive(Widget, Default, serde::Serialize, serde::Deserialize)]
-#[serde(crate = "::whiskers::prelude::serde")]
+#[sketch_widget]
+#[derive(Default)]
 enum CustomEnum {
     Variant1 {
+        #[param(min = 0.0, max 1.0)]
         some_float: f64,
     },
-    Variant2(bool, f64),
+    Variant2(bool, #[param(slider, min = 0.0, max 1.0)] f64),
     #[default]
     Variant3,
 }
