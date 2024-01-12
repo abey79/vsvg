@@ -9,8 +9,8 @@ use syn::{
     Expr, ExprPath, Field, Fields, FieldsNamed, FieldsUnnamed, Index, Variant,
 };
 
-fn format_label(label: &str) -> String {
-    format!("{}:", label.to_case(Case::Lower))
+fn label_from_ident(ident: &Ident) -> String {
+    format!("{}:", ident.to_string().to_case(Case::Lower))
 }
 
 /// Attribute macro to automatically derive some of the required traits for a sketch app.
@@ -322,43 +322,44 @@ fn process_enum(
         .iter()
         .map(|variant| match &variant.fields {
             Fields::Named(FieldsNamed { named, .. }) => {
-                let idents = named.iter().map(|field| field.ident.clone().unwrap()).collect::<Vec<_>>();
-                let types = named.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let ident_strings = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+                let field_names = named.iter().map(|field| field.ident.clone().unwrap()).collect::<Vec<_>>();
+                let field_types = named.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
+                let field_labels = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
 
                 quote! {
                     #(
                         (
                             &mut |ui| {
-                                <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
+                                <#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::default().ui(
                                     ui,
-                                    #ident_strings,
-                                    #idents,
+                                    #field_labels,
+                                    #field_names,
                                 )
                             },
-                            &<#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::use_grid,
+                            &<#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::use_grid,
                         )
                     ),*
                 }
             }
             Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-                let idents = (0..unnamed.len())
+                let field_names = (0..unnamed.len())
                     .map(|idx| format_ident!("field_{}", Index::from(idx)))
                     .collect::<Vec<_>>();
-                let types = unnamed.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let ident_strings = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+                let field_types = unnamed.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
+                let field_labels
+                    = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
 
                 quote! {
                     #(
                         (
                             &mut |ui| {
-                                <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
+                                <#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::default().ui(
                                     ui,
-                                    #ident_strings,
-                                    #idents,
+                                    #field_labels,
+                                    #field_names,
                                 )
                             },
-                            &<#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::use_grid,
+                            &<#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::use_grid,
                         )
                     ),*
                 }
@@ -472,7 +473,6 @@ fn process_fields(
         };
 
         let field_type = field.ty;
-        let label = field_name.to_string();
 
         let skip_attr = field.attrs.iter().find(|attr| attr.path().is_ident("skip"));
         if skip_attr.is_some() {
@@ -514,7 +514,7 @@ fn process_fields(
             }
         }
 
-        let formatted_label = format_label(&label);
+        let formatted_label = label_from_ident(&field_name);
 
         output.extend(quote! {
             (
