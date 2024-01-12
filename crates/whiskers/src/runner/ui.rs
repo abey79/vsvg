@@ -27,3 +27,30 @@ pub fn collapsing_header<R>(
 
     body_response.map(|r| r.inner)
 }
+
+/// Display a collapsing header for enum, where the header allows selecting the variant.
+pub fn enum_collapsing_header<EnumType, HeaderRet, BodyRet>(
+    ui: &mut egui::Ui,
+    label: impl AsRef<str>,
+    value: &mut EnumType,
+    enum_select_ui: impl FnOnce(&mut egui::Ui, &mut EnumType) -> HeaderRet,
+    default_open: bool,
+    body: impl FnOnce(&mut egui::Ui, &mut EnumType) -> BodyRet,
+) -> (HeaderRet, Option<BodyRet>) {
+    let label = label.as_ref();
+
+    let id = ui.make_persistent_id(label);
+    let collapsing = egui::collapsing_header::CollapsingState::load_with_default_open(
+        ui.ctx(),
+        id,
+        default_open,
+    );
+    let (_, header_response, body_response) = collapsing
+        .show_header(ui, |ui| {
+            ui.strong(label);
+            enum_select_ui(ui, value)
+        })
+        .body(|ui| body(ui, value));
+
+    (header_response.inner, body_response.map(|r| r.inner))
+}

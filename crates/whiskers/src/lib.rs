@@ -111,7 +111,8 @@ pub use grid_helpers::{
     hex_grid::{cell::HexGridCell, HexGrid},
 };
 pub use runner::{
-    collapsing_header, AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner,
+    collapsing_header, enum_collapsing_header, AnimationOptions, InfoOptions, LayoutOptions,
+    PageSizeOptions, Runner,
 };
 pub use sketch::Sketch;
 

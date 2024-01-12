@@ -153,15 +153,20 @@ fn process_enum(
     //
 
     let mut default_functions = proc_macro2::TokenStream::new();
+    let mut simple_enum = true;
     for Variant { ident, fields, .. } in variants.iter() {
         let func_ident = default_function_name_for_variant(ident);
 
         let fields_defaults = match fields {
             Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                simple_enum = false;
+
                 let fields = field_defaults(unnamed.iter());
                 quote! {( #fields )}
             }
             Fields::Named(FieldsNamed { named, .. }) => {
+                simple_enum = false;
+
                 let fields = field_defaults(named.iter());
                 quote! {{ #fields }}
             }
@@ -213,22 +218,24 @@ fn process_enum(
 
     let name_string = name.to_string();
 
-    let combobox_ui_code = quote! {
+    let pre_combo_code = quote! {
         let mut selected_text = match value {
             #(
                 #name::#idents #field_captures_catch_all => #ident_strings,
             )*
         }.to_owned();
         let initial_selected_text = selected_text.clone();
-        ui.horizontal(|ui|{
-            ui.label(label);
-            egui::ComboBox::from_id_source(#name_string).selected_text(&selected_text).show_ui(ui, |ui| {
-                #(
-                    ui.selectable_value(&mut selected_text, #ident_strings.to_owned(), #ident_strings);
-                )*
-            });
-        });
+    };
 
+    let combo_code = quote! {
+        egui::ComboBox::from_id_source(#name_string).selected_text(&selected_text).show_ui(ui, |ui| {
+            #(
+                ui.selectable_value(&mut selected_text, #ident_strings.to_owned(), #ident_strings);
+            )*
+        });
+    };
+
+    let post_combo_code = quote! {
         let mut changed = initial_selected_text != selected_text;
 
         if changed {
@@ -242,7 +249,43 @@ fn process_enum(
     };
 
     //
-    // UI for the variant's content
+    // Simple enum case: build a simple UI and return.
+    //
+
+    if simple_enum {
+        let simple_enum_full_code = quote! {
+            #impl_default_functions
+
+            #[derive(Default)]
+            pub struct #widget_name;
+
+            impl ::whiskers::widgets::Widget<#name> for #widget_name {
+                fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut #name) -> bool {
+                    #pre_combo_code
+
+                    ui.label(label);
+                    #combo_code
+
+                    #post_combo_code
+
+                    changed
+                }
+
+                fn use_grid() -> bool {
+                    true
+                }
+            }
+
+            impl ::whiskers::widgets::WidgetMapper<#name> for #name {
+                type Type = #widget_name;
+            }
+        };
+
+        return TokenStream::from(simple_enum_full_code);
+    }
+
+    //
+    // Complex enum case: use a collapsing header whose body display the variant's UI.
     //
 
     // collect things like:
@@ -281,7 +324,7 @@ fn process_enum(
             Fields::Named(FieldsNamed { named, .. }) => {
                 let idents = named.iter().map(|field| field.ident.clone().unwrap()).collect::<Vec<_>>();
                 let types = named.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let ident_string = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+                let ident_strings = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
 
                 quote! {
                     #(
@@ -289,7 +332,7 @@ fn process_enum(
                             &mut |ui| {
                                 <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
                                     ui,
-                                    #ident_string,
+                                    #ident_strings,
                                     #idents,
                                 )
                             },
@@ -303,7 +346,7 @@ fn process_enum(
                     .map(|idx| format_ident!("field_{}", Index::from(idx)))
                     .collect::<Vec<_>>();
                 let types = unnamed.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let ident_string = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
+                let ident_strings = idents.iter().map(|ident| ident.to_string()).collect::<Vec<_>>();
 
                 quote! {
                     #(
@@ -311,7 +354,7 @@ fn process_enum(
                             &mut |ui| {
                                 <#types as ::whiskers::widgets::WidgetMapper<#types>>::Type::default().ui(
                                     ui,
-                                    #ident_string,
+                                    #ident_strings,
                                     #idents,
                                 )
                             },
@@ -332,8 +375,6 @@ fn process_enum(
 
         impl ::whiskers::widgets::Widget<#name> for #widget_name {
             fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut #name) -> bool {
-
-                #combobox_ui_code
 
                 // draw the UI for a bunch of fields, swapping the grid on and off based on grid support
                 fn draw_ui(
@@ -359,21 +400,40 @@ fn process_enum(
                     }
                 }
 
-                ui.indent("enum content", |ui| {
-                    match value {
-                        #(
-                            #name::#idents #field_captures => {
-                                draw_ui(
-                                    ui,
-                                    &mut changed,
-                                    &mut [ #field_tuples ],
-                                );
-                            }
-                        )*
-                    };
-                });
+                let (header_changed, body_changed) = ::whiskers::enum_collapsing_header(
+                    ui,
+                    label,
+                    value,
+                    |ui, value| {
+                        #pre_combo_code
+                        #combo_code
+                        #post_combo_code
 
-                changed
+                        changed
+                    },
+                    true,
+                    |ui, value| {
+
+                        let mut changed = false;
+
+                        match value {
+                            #(
+                                #name::#idents #field_captures => {
+                                    draw_ui(
+                                        ui,
+                                        &mut changed,
+                                        &mut [ #field_tuples ],
+                                    );
+                                }
+                            )*
+                        };
+
+                        changed
+
+                    },
+                );
+
+                header_changed || body_changed.unwrap_or(false)
             }
 
             fn use_grid() -> bool {

@@ -38,9 +38,10 @@ struct UiDemoSketch {
     unit: Unit,
 
     // custom types
+    simple_enum: SimpleEnum,
+    custom_enum: CustomEnum,
     custom_struct: CustomStruct,
     custom_struct_unnamed: CustomStructUnnamed,
-    custom_enum: CustomEnum,
 
     // these types are supported but have no configuration options
     boolean: bool,
@@ -76,6 +77,15 @@ impl App for UiDemoSketch {
     fn update(&mut self, _sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         Ok(())
     }
+}
+
+#[derive(Widget, Default, serde::Serialize, serde::Deserialize)]
+#[serde(crate = "::whiskers::prelude::serde")]
+enum SimpleEnum {
+    #[default]
+    Poodle,
+    Corgy,
+    Dalmatian,
 }
 
 #[derive(Widget, Default, serde::Serialize, serde::Deserialize)]
