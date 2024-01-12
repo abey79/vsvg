@@ -5,8 +5,8 @@ use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    parse_macro_input, parse_quote, visit_mut::VisitMut, Data, DataEnum, DataStruct, DeriveInput,
-    Expr, ExprPath, Field, Fields, FieldsNamed, FieldsUnnamed, Index, Variant,
+    parse_macro_input, parse_quote, visit_mut::VisitMut, Attribute, Data, DataEnum, DataStruct,
+    DeriveInput, Expr, ExprPath, Field, Fields, FieldsNamed, FieldsUnnamed, Index, Variant,
 };
 
 fn label_from_ident(ident: &Ident) -> String {
@@ -333,16 +333,19 @@ fn process_enum(
                     .collect::<Vec<_>>();
                 let field_types = field_list.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
                 let field_labels = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
+                let chained_calls = field_list.iter().map(|field| process_param_attr(&field.attrs)).collect::<Vec<_>>();
 
                 quote! {
                     #(
                         (
                             &mut |ui| {
-                                <#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::default().ui(
-                                    ui,
-                                    #field_labels,
-                                    #field_names,
-                                )
+                                <#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::default()
+                                    #chained_calls
+                                    .ui(
+                                        ui,
+                                        #field_labels,
+                                        #field_names,
+                                    )
                             },
                             &<#field_types as ::whiskers::widgets::WidgetMapper<#field_types>>::Type::use_grid,
                         )
@@ -433,6 +436,45 @@ fn process_enum(
     })
 }
 
+fn process_param_attr(attrs: &[Attribute]) -> proc_macro2::TokenStream {
+    let param_attr = attrs.iter().find(|attr| attr.path().is_ident("param"));
+
+    let mut chained_calls = proc_macro2::TokenStream::new();
+
+    if let Some(param_attr) = param_attr {
+        let res = param_attr.parse_nested_meta(|meta| {
+            let ident = meta.path.get_ident().expect("expected ident");
+            let value = meta.value();
+
+            if value.is_ok() {
+                let mut expr: Expr = meta.input.parse()?;
+
+                // replaces occurrences of self with obj
+                ReplaceSelf.visit_expr_mut(&mut expr);
+
+                chained_calls.extend(quote! {
+                    .#ident(#expr)
+                });
+            } else {
+                chained_calls.extend(quote! {
+                    .#ident(true)
+                });
+            }
+
+            Ok(())
+        });
+
+        match res {
+            Ok(_) => {}
+            Err(err) => {
+                panic!("failed to parse param attribute {err}");
+            }
+        }
+    }
+
+    chained_calls
+}
+
 fn process_fields(
     fields: Fields,
     parent_type: &Ident,
@@ -464,48 +506,14 @@ fn process_fields(
             continue;
         }
 
-        let param_attr = field
-            .attrs
-            .iter()
-            .find(|attr| attr.path().is_ident("param"));
-
-        let mut chained_calls = proc_macro2::TokenStream::new();
-
-        if let Some(param_attr) = param_attr {
-            let res = param_attr.parse_nested_meta(|meta| {
-                let ident = meta.path.get_ident().expect("expected ident");
-                let value = meta.value();
-
-                if value.is_ok() {
-                    let mut expr: Expr = meta.input.parse()?;
-
-                    // replaces occurrences of self with obj
-                    ReplaceSelf.visit_expr_mut(&mut expr);
-
-                    chained_calls.extend(quote! {
-                        .#ident(#expr)
-                    });
-                } else {
-                    chained_calls.extend(quote! {
-                        .#ident(true)
-                    });
-                }
-
-                Ok(())
-            });
-
-            if res.is_err() {
-                panic!("failed to parse param attribute");
-            }
-        }
-
+        let chained_call = process_param_attr(&field.attrs);
         let formatted_label = label_from_ident(&field_name);
 
         output.extend(quote! {
             (
                 &|ui, obj| {
                     <#field_type as ::whiskers::widgets::WidgetMapper<#field_type>>::Type::default()
-                        #chained_calls
+                        #chained_call
                         .ui(ui, #formatted_label, &mut obj.#field_access)
 
                 },

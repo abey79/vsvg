@@ -66,10 +66,10 @@ struct UiDemoSketch {
 #[sketch_widget]
 #[derive(Default)]
 struct CustomStruct {
-    #[param(min = 0.0)]
+    #[param(min = 0.0, max = 1.0)]
     some_float: f64,
 
-    #[param(min = 0.0, max = self.some_float)]
+    #[param(slider, min = 0.0, max = self.some_float)]
     another_float: f64,
 
     // nested struct are supported
@@ -79,13 +79,7 @@ struct CustomStruct {
 // Tuple structs are supported too
 #[sketch_widget]
 #[derive(Default)]
-struct CustomStructUnnamed(bool, String, f64);
-
-impl App for UiDemoSketch {
-    fn update(&mut self, _sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        Ok(())
-    }
-}
+struct CustomStructUnnamed(bool, String, #[param(slider, min = 0.0, max = 1.0)] f64);
 
 #[sketch_widget]
 #[derive(Default)]
@@ -96,16 +90,23 @@ enum SimpleEnum {
     Dalmatian,
 }
 
-#[sketch_widget]
+#[derive(Widget, serde::Serialize, serde::Deserialize)]
+#[serde(crate = "::whiskers::prelude::serde")]
 #[derive(Default)]
 enum CustomEnum {
     Variant1 {
-        #[param(min = 0.0, max 1.0)]
+        #[param(slider, min = 0.0, max = 1.0)]
         some_float: f64,
     },
-    Variant2(bool, #[param(slider, min = 0.0, max 1.0)] f64),
+    Variant2(bool, #[param(slider, min = 0.0, max = 1.0)] f64),
     #[default]
     Variant3,
+}
+
+impl App for UiDemoSketch {
+    fn update(&mut self, _sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 fn main() -> Result {
