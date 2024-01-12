@@ -56,6 +56,17 @@ struct UiDemoSketch {
     string: String,
     color: Color,
     point: Point,
+
+    #[skip]
+    incompatible: IncompatibleStruct,
+}
+
+// If a type doesn't implement [`Widget`], it can still be used, but `#[skip]` must be used. The
+// type still must implement `Default` and `{S|Des}erialize` so be compatible with the enclosing
+// type.
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+struct IncompatibleStruct {
+    some_float: f64,
 }
 
 // Custom types may be used as sketch parameter if a corresponding [`whiskers::widgets::Widget`]
@@ -74,12 +85,20 @@ struct CustomStruct {
 
     // nested struct are supported
     custom_struct_unnamed: CustomStructUnnamed,
+
+    #[skip]
+    incompatible: IncompatibleStruct,
 }
 
 // Tuple structs are supported too
 #[sketch_widget]
 #[derive(Default)]
-struct CustomStructUnnamed(bool, String, #[param(slider, min = 0.0, max = 1.0)] f64);
+struct CustomStructUnnamed(
+    bool,
+    String,
+    #[param(slider, min = 0.0, max = 1.0)] f64,
+    #[skip] IncompatibleStruct,
+);
 
 #[sketch_widget]
 #[derive(Default)]
@@ -97,8 +116,15 @@ enum CustomEnum {
     Variant1 {
         #[param(slider, min = 0.0, max = 1.0)]
         some_float: f64,
+
+        #[skip]
+        incompatible: IncompatibleStruct,
     },
-    Variant2(bool, #[param(slider, min = 0.0, max = 1.0)] f64),
+    Variant2(
+        bool,
+        #[param(slider, min = 0.0, max = 1.0)] f64,
+        #[skip] IncompatibleStruct,
+    ),
     #[default]
     Variant3,
 }

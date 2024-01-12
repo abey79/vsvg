@@ -190,7 +190,8 @@ fn process_enum(
     };
 
     //
-    // Create the UI code for the combo box menu
+    // Create the UI code for the combo box menu. This is done in parts that are combined later, differently
+    // depending on whether the enum is simple or complex.
     //
 
     let idents = variants
@@ -325,15 +326,27 @@ fn process_enum(
                 | Fields::Unnamed(FieldsUnnamed { unnamed: field_list, .. }) => {
                 let field_names = field_list
                     .iter()
+                    .filter(|variant| !has_skip_attr(&variant.attrs))
                     .enumerate()
                     .map(|(idx, field)| field
                         .ident
                         .clone()
                         .unwrap_or(format_ident!("field_{}", Index::from(idx))))
                     .collect::<Vec<_>>();
-                let field_types = field_list.iter().map(|field| field.ty.clone()).collect::<Vec<_>>();
-                let field_labels = field_names.iter().map(label_from_ident).collect::<Vec<_>>();
-                let chained_calls = field_list.iter().map(|field| process_param_attr(&field.attrs)).collect::<Vec<_>>();
+                let field_types = field_list
+                    .iter()
+                    .filter(|variant| !has_skip_attr(&variant.attrs))
+                    .map(|field| field.ty.clone())
+                    .collect::<Vec<_>>();
+                let field_labels = field_names
+                    .iter()
+                    .map(label_from_ident)
+                    .collect::<Vec<_>>();
+                let chained_calls = field_list
+                    .iter()
+                    .filter(|variant| !has_skip_attr(&variant.attrs))
+                    .map(|field| chained_call_for_attrs(&field.attrs))
+                    .collect::<Vec<_>>();
 
                 quote! {
                     #(
@@ -355,6 +368,10 @@ fn process_enum(
             Fields::Unit => quote!{}
         })
         .collect();
+
+    //
+    // Final assembly of the complex enum code.
+    //
 
     TokenStream::from(quote! {
         #impl_default_functions
@@ -407,6 +424,7 @@ fn process_enum(
 
                         match value {
                             #(
+                                #[allow(unused_variables)]
                                 #name::#idents #field_captures => {
                                     draw_ui(
                                         ui,
@@ -436,7 +454,10 @@ fn process_enum(
     })
 }
 
-fn process_param_attr(attrs: &[Attribute]) -> proc_macro2::TokenStream {
+fn has_skip_attr(attrs: &[Attribute]) -> bool {
+    attrs.iter().any(|attr| attr.path().is_ident("skip"))
+}
+fn chained_call_for_attrs(attrs: &[Attribute]) -> proc_macro2::TokenStream {
     let param_attr = attrs.iter().find(|attr| attr.path().is_ident("param"));
 
     let mut chained_calls = proc_macro2::TokenStream::new();
@@ -501,12 +522,11 @@ fn process_fields(
 
         let field_type = field.ty;
 
-        let skip_attr = field.attrs.iter().find(|attr| attr.path().is_ident("skip"));
-        if skip_attr.is_some() {
+        if has_skip_attr(&field.attrs) {
             continue;
         }
 
-        let chained_call = process_param_attr(&field.attrs);
+        let chained_call = chained_call_for_attrs(&field.attrs);
         let formatted_label = label_from_ident(&field_name);
 
         output.extend(quote! {
