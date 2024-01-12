@@ -38,7 +38,17 @@ struct UiDemoSketch {
     unit: Unit,
 
     // custom types
+
+    // simple enums (no variant with data) are displayed as a combo box that fits the UI gruid
+    simple_enum: SimpleEnum,
+
+    // complex enum hierarchically display their variant's content
+    custom_enum: CustomEnum,
+
+    // structs display their content hierarchically and can be nested
     custom_struct: CustomStruct,
+
+    // unnamed structs have their field names displayed as "field_0", "field_1", etc.
     custom_struct_unnamed: CustomStructUnnamed,
 
     // these types are supported but have no configuration options
@@ -46,6 +56,17 @@ struct UiDemoSketch {
     string: String,
     color: Color,
     point: Point,
+
+    #[skip]
+    incompatible: IncompatibleStruct,
+}
+
+// If a type doesn't implement [`Widget`], it can still be used, but `#[skip]` must be used. The
+// type still must implement `Default` and `{S|Des}erialize` so be compatible with the enclosing
+// type.
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+struct IncompatibleStruct {
+    some_float: f64,
 }
 
 // Custom types may be used as sketch parameter if a corresponding [`whiskers::widgets::Widget`]
@@ -56,20 +77,56 @@ struct UiDemoSketch {
 #[sketch_widget]
 #[derive(Default)]
 struct CustomStruct {
-    #[param(min = 0.0)]
+    #[param(min = 0.0, max = 1.0)]
     some_float: f64,
 
-    #[param(min = 0.0, max = self.some_float)]
+    #[param(slider, min = 0.0, max = self.some_float)]
     another_float: f64,
 
     // nested struct are supported
     custom_struct_unnamed: CustomStructUnnamed,
+
+    #[skip]
+    incompatible: IncompatibleStruct,
 }
 
 // Tuple structs are supported too
 #[sketch_widget]
 #[derive(Default)]
-struct CustomStructUnnamed(bool, String);
+struct CustomStructUnnamed(
+    bool,
+    String,
+    #[param(slider, min = 0.0, max = 1.0)] f64,
+    #[skip] IncompatibleStruct,
+);
+
+#[sketch_widget]
+#[derive(Default)]
+enum SimpleEnum {
+    #[default]
+    Poodle,
+    Corgy,
+    Dalmatian,
+}
+
+#[sketch_widget]
+#[derive(Default)]
+enum CustomEnum {
+    Variant1 {
+        #[param(slider, min = 0.0, max = 1.0)]
+        some_float: f64,
+
+        #[skip]
+        incompatible: IncompatibleStruct,
+    },
+    Variant2(
+        bool,
+        #[param(slider, min = 0.0, max = 1.0)] f64,
+        #[skip] IncompatibleStruct,
+    ),
+    #[default]
+    Variant3,
+}
 
 impl App for UiDemoSketch {
     fn update(&mut self, _sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
