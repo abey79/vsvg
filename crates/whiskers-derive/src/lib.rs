@@ -319,6 +319,7 @@ fn process_enum(
         })
         .collect();
 
+    // collect (UI function, grid predicate) list of tuples for each variants
     let field_tuples: Vec<_> = variants
         .iter()
         .map(|variant| match &variant.fields {
@@ -365,7 +366,15 @@ fn process_enum(
                     ),*
                 }
             }
-            Fields::Unit => quote!{}
+            Fields::Unit => quote!{
+                (
+                    &mut |ui| {
+                        ui.label(egui::RichText::new("no fields for this variant").weak().italics());
+                        false
+                    },
+                    &|| false,
+                )
+            }
         })
         .collect();
 
