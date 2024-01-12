@@ -96,7 +96,7 @@ pub fn sketch_ui_derive(input: TokenStream) -> TokenStream {
 }
 
 fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStream {
-    let fields_ui = process_fields(fields, &name, &format_ident!("value"));
+    let fields_ui = process_fields(fields, name, &format_ident!("value"));
 
     TokenStream::from(quote! {
         #[derive(Default)]
@@ -210,7 +210,7 @@ fn process_enum(
 
     let ident_default_functions = idents
         .iter()
-        .map(|ident| default_function_name_for_variant(ident))
+        .map(default_function_name_for_variant)
         .collect::<Vec<_>>();
     let ident_strings = idents
         .iter()
