@@ -106,7 +106,7 @@ fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStr
 
         impl whiskers_widgets::Widget<#name> for #widget_name {
             fn ui(&self, ui: &mut whiskers_widgets::exports::egui::Ui, label: &str, value: &mut #name) -> bool {
-                ::whiskers::collapsing_header(ui, label.trim_end_matches(':'), "", true, |ui|{
+                ::whiskers_widgets::collapsing_header(ui, label.trim_end_matches(':'), "", true, |ui|{
                         #fields_ui
                     })
                     .unwrap_or(false)
@@ -417,7 +417,7 @@ fn process_enum(
                     }
                 }
 
-                let (header_changed, body_changed) = ::whiskers::enum_collapsing_header(
+                let (header_changed, body_changed) = ::whiskers_widgets::enum_collapsing_header(
                     ui,
                     label,
                     value,

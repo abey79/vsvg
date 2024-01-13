@@ -1,8 +1,8 @@
-use crate::runner::collapsing_header;
 use std::fs::canonicalize;
 use std::path::PathBuf;
 use std::sync::Arc;
 use vsvg::{Document, DocumentTrait};
+use whiskers_widgets::collapsing_header;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(super) struct SaveUI {

@@ -6,7 +6,6 @@ mod page_size;
 mod save_ui_native;
 #[cfg(target_arch = "wasm32")]
 mod save_ui_wasm;
-mod ui;
 
 #[cfg(not(target_arch = "wasm32"))]
 use save_ui_native::SaveUI;
@@ -22,7 +21,6 @@ pub use info::InfoOptions;
 pub use layout::LayoutOptions;
 pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
-pub use ui::*;
 use vsvg::Document;
 
 use vsvg_viewer::DocumentWidget;
@@ -185,7 +183,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
     }
 
     fn seed_ui(&mut self, ui: &mut egui::Ui) {
-        collapsing_header(
+        whiskers_widgets::collapsing_header(
             ui,
             "Random Number Generator",
             format!("seed: {}", self.seed),
@@ -267,20 +265,28 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
 
                             self.save_ui.ui(ui, self.last_document.clone());
 
-                            collapsing_header(ui, "Sketch Parameters", "", true, |ui| {
-                                let mut changed = self.app.ui(ui);
+                            whiskers_widgets::collapsing_header(
+                                ui,
+                                "Sketch Parameters",
+                                "",
+                                true,
+                                |ui| {
+                                    let mut changed = self.app.ui(ui);
 
-                                if ui
-                                    .button("Reset")
-                                    .on_hover_text("Reset the sketch parameters to their default")
-                                    .clicked()
-                                {
-                                    self.app = A::default();
+                                    if ui
+                                        .button("Reset")
+                                        .on_hover_text(
+                                            "Reset the sketch parameters to their default",
+                                        )
+                                        .clicked()
+                                    {
+                                        self.app = A::default();
 
-                                    changed = true;
-                                }
-                                self.set_dirty(changed);
-                            });
+                                        changed = true;
+                                    }
+                                    self.set_dirty(changed);
+                                },
+                            );
                         })
                     });
             });

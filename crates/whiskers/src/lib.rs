@@ -109,10 +109,7 @@ pub use grid_helpers::{
     grid::{Grid, GridCell},
     hex_grid::{cell::HexGridCell, HexGrid},
 };
-pub use runner::{
-    collapsing_header, enum_collapsing_header, AnimationOptions, InfoOptions, LayoutOptions,
-    PageSizeOptions, Runner,
-};
+pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
 pub use sketch::Sketch;
 
 /// This is a convenience alias to the [`anyhow::Result`] type, which you can use for your sketch's
@@ -133,7 +130,7 @@ pub trait App {
     // - extra CLI?
 }
 
-/// This trait is implemented by the [`whiskers_derive::Sketch`] derive macro and makes it possible
+/// This trait is implemented by the [`whiskers_widgets::Sketch`] derive macro and makes it possible
 /// for the [`Runner`] to execute your sketch.s
 pub trait SketchApp:
     App + whiskers_widgets::WidgetApp + Default + serde::Serialize + serde::de::DeserializeOwned

@@ -1,5 +1,5 @@
-use crate::runner::collapsing_header;
 use vsvg::{PageSize, Unit};
+use whiskers_widgets::collapsing_header;
 
 /// Controls the page size feature of the runner.
 #[derive(serde::Serialize, serde::Deserialize, PartialEq)]

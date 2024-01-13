@@ -1,8 +1,8 @@
-use crate::runner::collapsing_header;
 use std::sync::Arc;
 use vsvg::DocumentTrait;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{Blob, BlobPropertyBag, Url};
+use whiskers_widgets::collapsing_header;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(super) struct SaveUI {

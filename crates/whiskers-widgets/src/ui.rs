@@ -1,3 +1,5 @@
+//! Miscellaneous UI helpers mainly used by the `whiskers` and `whiskers-derive` crates.
+
 /// Display a properly-styled collapsing header with some content. If the header is collapsed, the
 /// summary is displayed inline instead of the content.
 pub fn collapsing_header<R>(
