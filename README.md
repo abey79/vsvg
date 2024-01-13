@@ -14,6 +14,8 @@ The documentation is WIP—watch this space for updates.
 
 In the meantime, each crate of the *vsvg* project has its own README with additional information:
 - [*whiskers*](crates/whiskers/README.md)
+- [*whiskers-widgets*](crates/whiskers-widgets/README.md)
+- [*whiskers-derive*](crates/whiskers-derive/README.md)
 - [*msvg*](crates/msvg/README.md)
 - [*vsvg*](crates/vsvg/README.md)
 - [*vsvg-viewer*](crates/vsvg-viewer/README.md)
