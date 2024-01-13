@@ -1,4 +1,13 @@
-//! This module implements the UI widgets used to display the sketch parameters in the UI.
+//! # Overview
+//!
+//! This crate implements the UI widget machinery used by the `whiskers` crate to display the sketch
+//! parameter UI. The main entry point is the [`trait@Widget`] trait and the associated macros defined
+//! in [`whiskers-derive`].
+//!
+//! This crate is separate from the main crate to allow other crates (including the `vsvg` crate)
+//! to implement the [`trait@Widget`] trait for their own types.
+//!
+//! # Implementing the `Widget` trait
 //!
 //! For each supported sketch parameter type `T`, there must exist a widget type that implements
 //! [`Widget<T>`] and is registered with [`register_widget_ui!`] macro. This module include
@@ -10,14 +19,14 @@
 //! #[derive(Default)]
 //! pub struct BoolWidget;
 //!
-//! impl whiskers::widgets::Widget<bool> for BoolWidget {
+//! impl whiskers_widgets::Widget<bool> for BoolWidget {
 //!     fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut bool) -> egui::Response {
 //!         ui.horizontal(|_| {});
 //!         ui.checkbox(value, label)
 //!     }
 //! }
 //!
-//! whiskers::register_widget_ui!(bool, BoolWidget);
+//! whiskers_widgets::register_widget_ui!(bool, BoolWidget);
 //! ```
 //!
 //! The [`BoolWidget`] type implements the [`Widget<bool>`] trait, which requires the [`Widget::ui`]
@@ -39,7 +48,7 @@
 //!
 //! ```ignore
 //! # use egui::emath::Numeric;
-//! use egui::{Response, Ui};
+//! # use core::f64;
 //!
 //! #[derive(Default)]
 //! pub struct NumericWidget<T: Numeric> {
@@ -60,12 +69,12 @@
 //!     }
 //! }
 //!
-//! impl<T: Numeric> whiskers::widgets::Widget<T> for NumericWidget<T> {
+//! impl<T: Numeric> whiskers_widgets::Widget<T> for NumericWidget<T> {
 //!     /* ... */
-//! #    fn ui(&self, ui: &mut Ui, label: &str, value: &mut T) -> Response { todo!(); }
+//! #    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut T) -> bool { todo!(); }
 //! }
 //!
-//! whiskers::register_widget_ui!(::f64, NumericWidget<f64>);
+//! whiskers_widgets::register_widget_ui!(f64, NumericWidget<f64>);
 //! /* ... */
 //!
 //! # fn main() {}
