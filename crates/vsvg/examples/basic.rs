@@ -1,6 +1,6 @@
-use vsvg::{DocumentTrait, LayerTrait, PathTrait};
+use vsvg::{DocumentTrait, Draw, LayerTrait, PathTrait};
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     /* == Document == */
     let mut doc = vsvg::Document::default();
 
@@ -22,6 +22,13 @@ fn main() {
     path.metadata_mut().stroke_width = 3.0;
     doc.push_path(3, path);
 
+    /* == Draw == */
+    // `Layer` implements the `Draw` trait, so you can draw directly into it.
+    let layer = doc.get_mut(4);
+    layer.ellipse(100., 200., 30., 50., (15.0f64).to_radians());
+
     // save to SVG
-    doc.to_svg_file("basic.svg").unwrap();
+    doc.to_svg_file("basic.svg")?;
+
+    Ok(())
 }
