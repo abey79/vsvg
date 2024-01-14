@@ -1,5 +1,5 @@
 use super::{FlattenedLayer, LayerMetadata, LayerTrait, Transforms};
-use crate::{Path, Point};
+use crate::{Draw, IntoBezPathTolerance, Path, PathMetadata, Point};
 use rayon::prelude::*;
 
 #[derive(Default, Clone, Debug)]
@@ -8,6 +8,7 @@ pub struct Layer {
     metadata: LayerMetadata,
 }
 
+/// Implementing this trait allows applying affine transforms to the layer content.
 impl Transforms for Layer {
     fn transform(&mut self, affine: &kurbo::Affine) -> &mut Self {
         self.paths.par_iter_mut().for_each(|path| {
@@ -36,6 +37,26 @@ impl LayerTrait<Path, kurbo::BezPath> for Layer {
 
     fn metadata_mut(&mut self) -> &mut LayerMetadata {
         &mut self.metadata
+    }
+}
+
+/// Implementing this trait allows drawing directly into a layer.
+///
+/// Each [`trait@Draw`] method will append a new path with default metadata to the layer.
+///
+/// # Example
+///
+/// ```
+/// use vsvg::{Draw, DocumentTrait};
+///
+/// let mut doc = vsvg::Document::default();
+/// let layer = doc.get_mut(0);
+/// layer.circle(5.0, 5.0, 10.0);
+/// ```
+impl Draw for Layer {
+    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
+        self.push_path(Path::from_metadata(path, PathMetadata::default()));
+        self
     }
 }
 
