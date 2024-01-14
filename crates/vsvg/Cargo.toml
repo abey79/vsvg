@@ -33,9 +33,12 @@ thiserror.workspace = true
 time = { version = "0.3.20", features = ["formatting"] }
 usvg = "0.35.0"
 
+# optional support for whiskers widgets
+whiskers-widgets = { workspace = true, optional = true }
+egui = { workspace = true, optional = true }
+
 # optional dependencies, mainly for Point interop.
 geo = { workspace = true, optional = true }
-egui = { workspace = true, optional = true }
 glam = { version = "0", optional = true }
 
 [dev-dependencies]
@@ -50,6 +53,8 @@ criterion.workspace = true
 [features]
 default = ["geo"]
 puffin = ["dep:puffin"]
+whiskers-widgets = ["dep:whiskers-widgets", "dep:egui"]
+egui = ["dep:egui"]
 
 [[bench]]
 name = "bench_path_index"

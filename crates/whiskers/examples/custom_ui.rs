@@ -38,7 +38,7 @@ impl GrayRedWidget {
 }
 
 /// This is where the custom UI code happens.
-impl whiskers::widgets::Widget<GrayRed> for GrayRedWidget {
+impl whiskers_widgets::Widget<GrayRed> for GrayRedWidget {
     fn ui(&self, ui: &mut Ui, label: &str, value: &mut GrayRed) -> bool {
         let mut label = egui::RichText::new(label).color(self.label_color);
         if self.underline {
@@ -80,7 +80,7 @@ impl whiskers::widgets::Widget<GrayRed> for GrayRedWidget {
 }
 
 // Let the [`Sketch`] derive macro know that [`GrayRedWidget`] is the UI widget for [`GrayRed`].
-register_widget_ui!(GrayRed, GrayRedWidget);
+whiskers_widgets::register_widget_ui!(GrayRed, GrayRedWidget);
 
 // =================================================================================
 // from here on, we're back to super standard  sketch code...

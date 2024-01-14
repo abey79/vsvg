@@ -1,4 +1,4 @@
-use crate::runner::collapsing_header;
+use whiskers_widgets::collapsing_header;
 
 /// Controls the info section of the runner.
 #[derive(Default)]

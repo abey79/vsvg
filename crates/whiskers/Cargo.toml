@@ -11,9 +11,9 @@ license = "MIT"
 categories = ["command-line-utilities", "graphics", "visualization"]
 
 [dependencies]
-vsvg = { workspace = true, features = ["geo"] }
+vsvg = { workspace = true, features = ["geo", "whiskers-widgets", "egui"] }
 vsvg-viewer = { workspace = true, optional = true }
-whiskers-derive.workspace = true
+whiskers-widgets.workspace = true
 log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true

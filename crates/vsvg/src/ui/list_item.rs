@@ -123,8 +123,6 @@ pub enum WidthAllocationMode {
 ///     └── Frame (with inner margin)
 ///         └── ListItem
 /// ```
-///
-/// See [`ReUi::panel_content`] for a helper to build the [`egui::Frame`] with proper margins.
 #[allow(clippy::type_complexity)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct ListItem<'a> {
@@ -220,9 +218,6 @@ impl<'a> ListItem<'a> {
     }
 
     /// Set the item height.
-    ///
-    /// The default is provided by [`ReUi::list_item_height`] and is suitable for hierarchical
-    /// lists.
     #[must_use]
     #[inline]
     pub fn with_height(mut self, height: f32) -> Self {

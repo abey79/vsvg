@@ -23,7 +23,7 @@ puffin = { workspace = true, optional = true }
 puffin_egui = { workspace = true, optional = true }
 rayon.workspace = true
 serde.workspace = true
-vsvg.workspace = true
+vsvg = { workspace = true, features = ["egui"] }
 wgpu.workspace = true
 
 [dev-dependencies]  # mostly for examples

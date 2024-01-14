@@ -1,0 +1,17 @@
+[package]
+name = "whiskers-widgets"
+description = "Dynamic UI sub-system for whiskers"
+authors = ["Antoine Beyeler"]
+version = "0.4.0-alpha.0"
+edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/abey79/vsvg"
+repository = "https://github.com/abey79/vsvg"
+license = "MIT"
+
+
+[dependencies]
+whiskers-derive.workspace = true
+
+egui.workspace = true
+serde.workspace = true

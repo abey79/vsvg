@@ -9,7 +9,6 @@ mod engine;
 mod frame_history;
 mod painters;
 mod render_data;
-pub mod utils;
 pub mod viewer;
 #[cfg(target_arch = "wasm32")]
 pub mod web_handle;

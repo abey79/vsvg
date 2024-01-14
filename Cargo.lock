@@ -4213,6 +4213,7 @@ dependencies = [
  "thiserror",
  "time",
  "usvg",
+ "whiskers-widgets",
 ]
 
 [[package]]
@@ -4598,7 +4599,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "web-time",
- "whiskers-derive",
+ "whiskers-widgets",
 ]
 
 [[package]]
@@ -4617,6 +4618,15 @@ version = "0.4.0-alpha.0"
 dependencies = [
  "itertools 0.12.0",
  "whiskers",
+]
+
+[[package]]
+name = "whiskers-widgets"
+version = "0.4.0-alpha.0"
+dependencies = [
+ "egui",
+ "serde",
+ "whiskers-derive",
 ]
 
 [[package]]

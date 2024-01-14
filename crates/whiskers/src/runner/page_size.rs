@@ -1,5 +1,5 @@
-use crate::runner::collapsing_header;
 use vsvg::{PageSize, Unit};
+use whiskers_widgets::collapsing_header;
 
 /// Controls the page size feature of the runner.
 #[derive(serde::Serialize, serde::Deserialize, PartialEq)]
@@ -100,7 +100,7 @@ impl PageSizeOptions {
                     );
 
                     let orig_unit = unit;
-                    vsvg_viewer::utils::unit_combo_box(
+                    vsvg::ui::unit_combo_box(
                         ui,
                         "sketch_page_size_unit",
                         &mut unit,

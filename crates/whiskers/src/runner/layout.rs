@@ -1,6 +1,6 @@
-use crate::runner::collapsing_header;
 use crate::Sketch;
 use std::fmt::Display;
+use whiskers_widgets::collapsing_header;
 
 /// Controls the layout feature of the runner.
 #[derive(serde::Serialize, serde::Deserialize, Default, PartialEq)]

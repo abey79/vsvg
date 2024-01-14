@@ -1,4 +1,4 @@
-/// A widget for [`vsvg::Length`].
+/// A widget for [`crate::Length`].
 #[derive(Default)]
 pub struct LengthWidget {
     min: Option<f64>,
@@ -51,7 +51,7 @@ impl LengthWidget {
         self
     }
 
-    /// Enable all units (including large ones such as [`vsvg::Unit::Km`]).
+    /// Enable all units (including large ones such as [`crate::Unit::Km`]).
     #[must_use]
     pub fn all_units(mut self, all_units: bool) -> Self {
         self.all_units = all_units;
@@ -59,8 +59,8 @@ impl LengthWidget {
     }
 }
 
-impl super::Widget<vsvg::Length> for LengthWidget {
-    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut vsvg::Length) -> bool {
+impl whiskers_widgets::Widget<crate::Length> for LengthWidget {
+    fn ui(&self, ui: &mut egui::Ui, label: &str, value: &mut crate::Length) -> bool {
         ui.add(egui::Label::new(label));
 
         ui.horizontal(|ui| {
@@ -85,12 +85,12 @@ impl super::Widget<vsvg::Length> for LengthWidget {
             };
 
             let units = if self.all_units {
-                vsvg::UNITS
+                crate::UNITS
             } else {
-                vsvg::SMALL_UNITS
+                crate::SMALL_UNITS
             };
 
-            changed |= vsvg_viewer::utils::unit_combo_box(ui, label, &mut value.unit, units);
+            changed |= crate::ui::unit_combo_box(ui, label, &mut value.unit, units);
 
             changed
         })
@@ -98,4 +98,4 @@ impl super::Widget<vsvg::Length> for LengthWidget {
     }
 }
 
-crate::register_widget_ui!(vsvg::Length, LengthWidget);
+whiskers_widgets::register_widget_ui!(crate::Length, LengthWidget);
