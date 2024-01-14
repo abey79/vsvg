@@ -43,19 +43,24 @@ pub use stats::*;
 pub use traits::*;
 pub use unit::*;
 
-// re-export for the `trace` macro
-#[cfg(feature = "puffin")]
-pub use puffin;
-
-// re-export
-#[cfg(feature = "geo")]
-pub use ::geo;
+/// Export of core dependencies.
+pub mod exports {
+    #[cfg(feature = "egui")]
+    pub use ::egui;
+    #[cfg(feature = "geo")]
+    pub use ::geo;
+    pub use ::kurbo;
+    #[cfg(feature = "puffin")]
+    pub use ::puffin;
+    pub use ::serde;
+    pub use ::usvg;
+}
 
 #[macro_export]
 macro_rules! trace_function {
     () => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_function!();
+        $crate::exports::puffin::profile_function!();
     };
 }
 
@@ -63,10 +68,10 @@ macro_rules! trace_function {
 macro_rules! trace_scope {
     ($id:expr) => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_scope!($id);
+        $crate::exports::puffin::profile_scope!($id);
     };
     ($id:expr, $data:expr) => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_scope!($id, $data);
+        $crate::exports::puffin::profile_scope!($id, $data);
     };
 }

@@ -24,7 +24,7 @@ use vsvg::{
 /// In addition to the basic, primitive draw calls, the [`vsvg::Draw`] trait also provides a more
 /// flexible [`vsvg::Draw::add_path`] function that accepts any type which implements the
 /// [`IntoBezPathTolerance`] trait. This currently includes many types from the [`::kurbo`] and
-/// [`vsvg::geo`] crates.
+/// [`vsvg::exports::geo`] crates.
 ///
 /// # Transformations
 ///
