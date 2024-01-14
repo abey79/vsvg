@@ -7,6 +7,8 @@ struct TextSketch {
     glyph_spacing: f64,
     text_width: Length,
     paragraph_text: String,
+    text_align: vsvg::text::TextAlign,
+    paragraph_align: vsvg::text::ParagraphAlign,
 }
 
 impl Default for TextSketch {
@@ -18,6 +20,8 @@ impl Default for TextSketch {
             paragraph_text: "Lorem ipsum dolor sit amet. Honi soit qui mal y pense. \
                 Pierre qui roule n'amasse pas mousse."
                 .to_owned(),
+            text_align: vsvg::text::TextAlign::Left,
+            paragraph_align: vsvg::text::ParagraphAlign::Left,
         }
     }
 }
@@ -40,27 +44,7 @@ impl App for TextSketch {
             "Hello World",
             &font,
             self.font_size,
-            vsvg::text::TextAlign::Left,
-            self.glyph_spacing,
-        ));
-
-        sketch.translate(0., 2. * Unit::Cm);
-        origin_cross(sketch);
-        sketch.add_paths(vsvg::text::text_line(
-            "Hello World",
-            &font,
-            self.font_size,
-            vsvg::text::TextAlign::Center,
-            self.glyph_spacing,
-        ));
-
-        sketch.translate(0., 2. * Unit::Cm);
-        origin_cross(sketch);
-        sketch.add_paths(vsvg::text::text_line(
-            "Hello World",
-            &font,
-            self.font_size,
-            vsvg::text::TextAlign::Right,
+            self.text_align,
             self.glyph_spacing,
         ));
 
@@ -74,52 +58,7 @@ impl App for TextSketch {
             self.paragraph_text.as_str(),
             &font,
             self.font_size,
-            vsvg::text::ParagraphAlign::Left,
-            self.glyph_spacing,
-            self.text_width,
-        ));
-
-        sketch.translate(0., 6. * Unit::Cm);
-        origin_cross(sketch);
-        sketch.push_matrix_and(|sketch| {
-            sketch.translate(self.text_width, 0.);
-            origin_cross(sketch);
-        });
-        sketch.add_paths(vsvg::text::text_paragraph(
-            self.paragraph_text.as_str(),
-            &font,
-            self.font_size,
-            vsvg::text::ParagraphAlign::Center,
-            self.glyph_spacing,
-            self.text_width,
-        ));
-
-        sketch.translate(0., 6. * Unit::Cm);
-        origin_cross(sketch);
-        sketch.push_matrix_and(|sketch| {
-            sketch.translate(self.text_width, 0.);
-            origin_cross(sketch);
-        });
-        sketch.add_paths(vsvg::text::text_paragraph(
-            self.paragraph_text.as_str(),
-            &font,
-            self.font_size,
-            vsvg::text::ParagraphAlign::Right,
-            self.glyph_spacing,
-            self.text_width,
-        ));
-
-        sketch.translate(0., 6. * Unit::Cm);
-        origin_cross(sketch);
-        sketch.push_matrix_and(|sketch| {
-            sketch.translate(self.text_width, 0.);
-            origin_cross(sketch);
-        });
-        sketch.add_paths(vsvg::text::text_paragraph(
-            self.paragraph_text.as_str(),
-            &font,
-            self.font_size,
-            vsvg::text::ParagraphAlign::Justified,
+            self.paragraph_align,
             self.glyph_spacing,
             self.text_width,
         ));

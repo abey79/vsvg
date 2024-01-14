@@ -23,15 +23,19 @@ pub trait Font {
     fn height(&self) -> f64;
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "whiskers-widgets", derive(whiskers_widgets::Widget))]
 pub enum TextAlign {
+    #[default]
     Left,
     Center,
     Right,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "whiskers-widgets", derive(whiskers_widgets::Widget))]
 pub enum ParagraphAlign {
+    #[default]
     Left,
     Center,
     Right,
