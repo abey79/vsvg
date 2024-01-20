@@ -1,5 +1,6 @@
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
+use rand_distr::{Distribution, WeightedAliasIndex};
 use std::ops::Range;
 use vsvg::Point;
 
@@ -54,6 +55,19 @@ impl Context {
         });
 
         choices.as_ref().get(index).unwrap()
+    }
+
+    /// Helper function to return a random item from a slice
+    /// of tuples with a probability weight and an item.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the slice is empty
+    pub fn rng_weighted_choice<'a, T>(&mut self, choices: &'a impl AsRef<[(f64, T)]>) -> &'a T {
+        let weights: Vec<f64> = choices.as_ref().iter().map(|choice| choice.0).collect();
+        let dist = WeightedAliasIndex::new(weights).unwrap();
+
+        &choices.as_ref().get(dist.sample(&mut self.rng)).unwrap().1
     }
 
     /// Helper function to return a random vsvg Point
