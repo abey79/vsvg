@@ -2,7 +2,7 @@
 name = "whiskers-widgets"
 description = "Dynamic UI sub-system for whiskers"
 authors = ["Antoine Beyeler"]
-version = "0.4.0-alpha.0"
+version = "0.4.0-rc.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
