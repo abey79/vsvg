@@ -1,6 +1,101 @@
-# Unreleased
+# 0.4.0 - The Too Late for Genuary Release
 
-TODO
+Released 2024-01-21
+
+## Highlights
+
+### Parameter persistence and sketch breaking changes
+
+Sketch parameter are now persisted across sketch launch, which dramatically improves the QoL when iterating on sketch code. A new "Reset" button sets all parameters to the sketch default. This also lays the groundwork for a future configuration management feature.
+
+Two breaking changes were introduced to accommodate for this.
+
+1) Use `MySketch::runner().run()` instead of `Runner::new(MySketch::default()).run()` in the main function.
+2) Use the `#[sketch_app]` and `#[sketch_widget]` attributes instead of the `Sketch`, resp. `Widget` derive macros. These new attribute direct take care of deriving the now-required `serde::Serialize` and `serde::Deserialize` using the `whiskers`-exported `serde` crate.
+
+Example:
+```rust
+use whiskers::prelude::*;
+
+#[sketch_app]
+#[derive(Default)]
+struct HelloWorldSketch {
+    width: f64,
+    height: f64,
+}
+
+impl App for HelloWorldSketch {
+    fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
+        /* sketch code here */
+        Ok(())
+    }
+}
+
+fn main() -> Result {
+    HelloWorldSketch::runner()
+        .with_page_size_options(PageSize::A5H)
+        .run()
+}
+```
+
+### Other highlights
+
+- It's now possible to override pen width and opacity in the viewer.
+- The viewer now persists the antialiasing setting (note: persistence happens on a per-binary basis, so the AA setting must be set e.g. for each different sketch).
+- You can use custom `enum` types as sketch parameter (use the new `#[sketch_widget]` attribute as noted above).
+- `vsvg` introduce a new `Length` type which combines a float and a `Unit`. `whiskers` supports them, and, when used as sketch parameter, provides a nice UI where both the value and the unit can be changed.
+- `msvg` now sorts files "correctly" when they are numbered, and has a much nicer CLI experience.
+- It's now possible to directly "draw" into a `vsvg::Layer` using the APIs from the `vsvg::Draw` trait.
+- Both `vsvg` and `vsvg-viewer` now cleanly re-export key dependencies.
+
+
+## `whiskers` crates
+
+- **BREAKING:** Persist sketch parameters across app relaunch [#94](https://github.com/abey79/vsvg/pull/94)
+- **BREAKING:** Add a button to reset the sketch parameters to their default [#91](https://github.com/abey79/vsvg/pull/91)
+- Add support for custom `enum` as sketch parameter [#107](https://github.com/abey79/vsvg/pull/107)
+- Add support for `vsvg::Unit` and `vsvg::Length` as sketch parameters [#95](https://github.com/abey79/vsvg/pull/95)
+
+- Add `Context::rng_weighted_choice()` helper function [#102](https://github.com/abey79/vsvg/pull/102) (thanks [@afternoon2](https://github.com/afternoon2)!)
+- Make `Runner::new()` private and update docs accordingly [#96](https://github.com/abey79/vsvg/pull/96)
+- Split whiskers widgets in their own `whiskers-widgets` crate [#108](https://github.com/abey79/vsvg/pull/108)
+- Add `particle` example based on `geos` [#105](https://github.com/abey79/vsvg/pull/105)
+- Fix `README.md` code example to use `SketchApp::runner()` instead of now private `Runner::new()` [#103](https://github.com/abey79/vsvg/pull/103) (thanks [@reidab](https://github.com/reidab)!)
+
+## `msvg` CLI
+
+- Sort files in natural order rather than in lexicographical order [#104](https://github.com/abey79/vsvg/pull/104) (thanks [@danieledapo](https://github.com/danieledapo)!)
+- Use `clap` for `msvg` for a nicer CLI experience [#83](https://github.com/abey79/vsvg/pull/83)
+
+## `vsvg` crate
+
+- **BREAKING:** Improve `Unit` and introduce `Length` [#88](https://github.com/abey79/vsvg/pull/88)
+- Implement the `Draw` trait for `Layer` [#111](https://github.com/abey79/vsvg/pull/111)
+- Re-export core `vsvg` dependencies [#113](https://github.com/abey79/vsvg/pull/113)
+- Fix unescaped `<dc:source>` content in SVG output [#116](https://github.com/abey79/vsvg/pull/116)
+
+## `vsvg-viewer` crate
+
+- Add options to override pen width and opacity [#89](https://github.com/abey79/vsvg/pull/89)
+- Persist antialias setting across app relaunch [#90](https://github.com/abey79/vsvg/pull/90)
+- Add `on_exit()` hook to the `ViewerApp` trait [#106](https://github.com/abey79/vsvg/pull/106) (thanks [@danieledapo](https://github.com/danieledapo)!)
+- Re-export core `vsvg-viewer` dependencies [#115](https://github.com/abey79/vsvg/pull/115) (thanks [@danieledapo](https://github.com/danieledapo)!)
+
+## Common
+
+- Run documentation tests [#92](https://github.com/abey79/vsvg/pull/92)
+- Update rust toolchain to 1.75.0 [#82](https://github.com/abey79/vsvg/pull/82)
+- Update egui to 0.25.0 [#118](https://github.com/abey79/vsvg/pull/118)
+- Update `cargo dist` to 0.8.0 [#117](https://github.com/abey79/vsvg/pull/117)
+- Fix web demo publishing action [`5f42b4a`](https://github.com/abey79/vsvg/commit/5f42b4aaf4bece6aa914fe3f1037a11a139feb98)
+- `changelog.py`: highlight breaking changes and generate list of contributors [#93](https://github.com/abey79/vsvg/pull/93)
+
+## Contributors
+
+[<img src="https://wsrv.nl/?url=github.com/afternoon2.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="afternoon2" />](https://github.com/afternoon2) [<img src="https://wsrv.nl/?url=github.com/danieledapo.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="danieledapo" />](https://github.com/danieledapo) [<img src="https://wsrv.nl/?url=github.com/reidab.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="reidab" />](https://github.com/reidab)
+
+**Full Changelog**: https://github.com/abey79/vsvg/compare/v0.3.0...v0.4.0
+
 
 # 0.3.0 - New `msvg` CLI, better `whiskers`, and more
 
