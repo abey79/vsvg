@@ -29,6 +29,7 @@ convert_case.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rfd = { workspace = true, default_features = false, features = [
+    "async-std",
     "xdg-portal",
 ] }
 open.workspace = true
