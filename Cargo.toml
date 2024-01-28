@@ -37,8 +37,8 @@ eframe = { version = "0.25", default-features = false, features = [
 ] }
 egui = "0.25.0"
 env_logger = "0.10.0"
-geo = "0.27.0"  # for point interop only
-geos = "8.3.0"
+geo = "0.27"  # for point interop only
+geos = "8.3"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
 glam = "0"  # for point interop only
 indexmap = "2.0.2"
