@@ -7,10 +7,7 @@ use kurbo::{BezPath, PathEl};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::{error::Error, fs, path};
-use usvg::{
-    tiny_skia_path::PathSegment, utils::view_box_to_transform, NodeExt, Transform, Tree,
-    TreeParsing,
-};
+use usvg::{tiny_skia_path::PathSegment, Transform, Tree, TreeParsing, TreePostProc};
 
 impl IntoBezPath for usvg::tiny_skia_path::Path {
     fn into_bezpath(self) -> BezPath {
@@ -32,10 +29,10 @@ impl IntoBezPath for usvg::tiny_skia_path::Path {
 
 impl Path {
     #[must_use]
-    fn from_usvg(svg_path: &usvg::Path, transform: &Transform) -> Self {
+    fn from_usvg(svg_path: &usvg::Path, viewbox_transform: &Transform) -> Self {
         let mut skia_path = (*svg_path.data).clone();
-        skia_path = skia_path.transform(*transform).unwrap();
-        skia_path = skia_path.transform(svg_path.transform).unwrap();
+        skia_path = skia_path.transform(svg_path.abs_transform).unwrap();
+        skia_path = skia_path.transform(*viewbox_transform).unwrap();
 
         let mut res = Self {
             data: skia_path.into_bezpath(),
@@ -59,19 +56,15 @@ impl Path {
     }
 }
 
-fn parse_group(group: &usvg::Node, transform: &Transform, layer: &mut Layer) {
-    group.children().for_each(|node| {
-        let child_transform = transform.pre_concat(node.transform());
-
-        match *node.borrow() {
-            usvg::NodeKind::Path(ref path) => {
-                layer.paths.push(Path::from_usvg(path, &child_transform));
-            }
-            usvg::NodeKind::Group(_) => {
-                parse_group(&node, &child_transform, layer);
-            }
-            _ => {}
+fn parse_group(group: &usvg::Group, layer: &mut Layer, viewbox_transform: &Transform) {
+    group.children.iter().for_each(|node| match node {
+        usvg::Node::Path(path) => {
+            layer.paths.push(Path::from_usvg(path, viewbox_transform));
         }
+        usvg::Node::Group(group) => {
+            parse_group(group, layer, viewbox_transform);
+        }
+        _ => {}
     });
 }
 
@@ -135,7 +128,7 @@ impl Document {
     pub fn from_string(svg: &str, single_layer: bool) -> Result<Self, Box<dyn Error>> {
         let preprocessed_svg;
 
-        let tree = Tree::from_str(
+        let mut tree = Tree::from_str(
             if single_layer {
                 svg
             } else {
@@ -145,17 +138,25 @@ impl Document {
             &usvg::Options::default(),
         )?;
 
+        // preprocess the tree (this propagate all transforms to path, but _not_ the viewPort
+        // transform
+        //TODO(#121): add an option to enable flattening text!
+        tree.postprocess(
+            usvg::PostProcessingSteps::default(),
+            &usvg::fontdb::Database::new(),
+        );
+
         let viewbox_transform =
-            view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
+            usvg::utils::view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
 
         // add frame for the page
         let (w, h) = (f64::from(tree.size.width()), f64::from(tree.size.height()));
         let mut doc = Document::new_with_page_size(PageSize::new(w, h));
 
         if single_layer {
-            doc.load_tree(&tree, viewbox_transform);
+            doc.load_tree(&tree, &viewbox_transform);
         } else {
-            doc.load_tree_multilayer(&tree, viewbox_transform);
+            doc.load_tree_multilayer(&tree, &viewbox_transform);
         }
 
         doc.crop(0., 0., w, h);
@@ -163,17 +164,15 @@ impl Document {
     }
 
     /// Load a [Tree] into this document. All content is added to layer 0.
-    fn load_tree(&mut self, tree: &Tree, viewbox_transform: Transform) {
+    fn load_tree(&mut self, tree: &Tree, viewbox_transform: &Transform) {
         let layer = self.get_mut(0);
-        for child in tree.root.children() {
-            let transform = viewbox_transform.pre_concat(child.transform());
-
-            match *child.borrow() {
-                usvg::NodeKind::Group(_) => {
-                    parse_group(&child, &transform, layer);
+        for child in &tree.root.children {
+            match child {
+                usvg::Node::Group(group) => {
+                    parse_group(group, layer, viewbox_transform);
                 }
-                usvg::NodeKind::Path(ref path) => {
-                    layer.paths.push(Path::from_usvg(path, &transform));
+                usvg::Node::Path(path) => {
+                    layer.paths.push(Path::from_usvg(path, viewbox_transform));
                 }
                 _ => {}
             }
@@ -183,13 +182,11 @@ impl Document {
     /// Load a [Tree] into this document, splitting the content into multiple layers.
     ///
     /// See [`Document::from_string`] for more details on layer handling.
-    fn load_tree_multilayer(&mut self, tree: &Tree, viewbox_transform: Transform) {
+    fn load_tree_multilayer(&mut self, tree: &Tree, viewbox_transform: &Transform) {
         let mut top_level_index = 0;
-        for child in tree.root.children() {
-            let transform = viewbox_transform.pre_concat(child.transform());
-
-            match *child.borrow() {
-                usvg::NodeKind::Group(ref group_data) => {
+        for child in &tree.root.children {
+            match child {
+                usvg::Node::Group(group_data) => {
                     let group_info = GroupInfo::decode(&group_data.id);
                     let layer_id;
                     let layer_name;
@@ -230,14 +227,14 @@ impl Document {
                     }
 
                     let layer = self.get_mut(layer_id.unwrap_or(top_level_index));
-                    parse_group(&child, &transform, layer);
+                    parse_group(group_data, layer, viewbox_transform);
 
                     layer.metadata_mut().name = layer_name;
                 }
-                usvg::NodeKind::Path(ref path) => {
+                usvg::Node::Path(path) => {
                     self.get_mut(0)
                         .paths
-                        .push(Path::from_usvg(path, &transform));
+                        .push(Path::from_usvg(path, viewbox_transform));
                 }
                 _ => {}
             }
