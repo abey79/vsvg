@@ -1,6 +1,7 @@
 mod animation;
 mod info;
 mod layout;
+mod optimization;
 mod page_size;
 #[cfg(not(target_arch = "wasm32"))]
 mod save_ui_native;
@@ -19,6 +20,7 @@ use convert_case::Casing;
 use eframe::Storage;
 pub use info::InfoOptions;
 pub use layout::LayoutOptions;
+pub use optimization::OptimizationOptions;
 pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
 use vsvg::Document;
@@ -54,6 +56,9 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Options and UI for the animation panel.
     animation_options: AnimationOptions,
 
+    /// Options and UI for the optimization panel.
+    optimization_options: OptimizationOptions,
+
     /// Options and UI for save panel.
     save_ui: SaveUI,
 
@@ -87,6 +92,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
             page_size_options: PageSizeOptions::default(),
             layout_options: LayoutOptions::default(),
             animation_options: AnimationOptions::default(),
+            optimization_options: OptimizationOptions::default(),
             save_ui,
             seed: 0,
             _phantom: std::marker::PhantomData,
@@ -139,6 +145,15 @@ impl<A: crate::SketchApp> Runner<'_, A> {
     pub fn with_animation_options(self, options: impl Into<AnimationOptions>) -> Self {
         Self {
             animation_options: options.into(),
+            ..self
+        }
+    }
+
+    /// Sets the default optimization options.
+    #[must_use]
+    pub fn with_optimization_options(self, options: impl Into<OptimizationOptions>) -> Self {
+        Self {
+            optimization_options: options.into(),
             ..self
         }
     }
@@ -261,9 +276,13 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                                 self.dirty();
                             }
 
+                            self.optimization_options.ui(ui);
+
                             self.seed_ui(ui);
 
-                            self.save_ui.ui(ui, self.last_document.clone());
+                            self.save_ui.ui(ui, self.last_document.clone(), |document| {
+                                self.optimization_options.apply(document);
+                            });
 
                             whiskers_widgets::collapsing_header(
                                 ui,
@@ -365,6 +384,10 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
         if let Some(animation_options) = eframe::get_value(storage, "whiskers-animation") {
             self.animation_options = animation_options;
         }
+
+        if let Some(optimization_options) = eframe::get_value(storage, "whiskers-optimization") {
+            self.optimization_options = optimization_options;
+        }
     }
 
     fn save(&self, storage: &mut dyn Storage) {
@@ -373,5 +396,6 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
         eframe::set_value(storage, "whiskers-layout-options", &self.layout_options);
         eframe::set_value(storage, "whiskers-page-size", &self.page_size_options);
         eframe::set_value(storage, "whiskers-animation", &self.animation_options);
+        eframe::set_value(storage, "whiskers-optimization", &self.optimization_options);
     }
 }

@@ -14,18 +14,20 @@ categories = ["command-line-utilities", "graphics", "visualization"]
 vsvg = { workspace = true, features = ["geo", "whiskers-widgets", "egui"] }
 vsvg-viewer = { workspace = true, optional = true }
 whiskers-widgets.workspace = true
+
+anyhow.workspace = true
+convert_case.workspace = true
+eframe.workspace = true
+egui.workspace = true
+getrandom.workspace = true
+kurbo.workspace = true
+itertools.workspace = true
 log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 rand_distr.workspace = true
-getrandom.workspace = true
-kurbo.workspace = true
-anyhow.workspace = true
-egui.workspace = true
-eframe.workspace = true
 serde.workspace = true
 web-time.workspace = true
-convert_case.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rfd = { workspace = true, default_features = false, features = [
