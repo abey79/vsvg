@@ -17,6 +17,7 @@ pub use ::serde;
 pub use anyhow;
 pub use egui;
 pub use rand::prelude::*;
+pub use vsvg::exports::kurbo;
 pub use vsvg_viewer;
 
 #[cfg(target_arch = "wasm32")]
