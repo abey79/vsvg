@@ -32,19 +32,11 @@ impl Default for OptimizationOptions {
 impl Display for OptimizationOptions {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let strs = [
-            if self.sort_paths {
-                Some("Sort Paths")
-            } else {
-                None
-            },
-            if self.allow_paths_flip {
-                Some("Flip OK")
-            } else {
-                None
-            },
+            self.sort_paths.then_some("sort paths"),
+            self.allow_paths_flip.then_some("flip ok"),
         ];
 
-        write!(f, "{}", strs.into_iter().filter_map(|s| s).join(", "))
+        write!(f, "{}", strs.into_iter().flatten().join(", "))
     }
 }
 
