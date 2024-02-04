@@ -46,7 +46,12 @@ impl SaveUI {
             .filter(|p| p.is_dir());
     }
 
-    pub(super) fn ui(&mut self, ui: &mut egui::Ui, document: Option<Arc<Document>>) {
+    pub(super) fn ui(
+        &mut self,
+        ui: &mut egui::Ui,
+        document: Option<Arc<Document>>,
+        optimize_fn: impl FnOnce(&mut Document),
+    ) {
         collapsing_header(ui, "Save", "", true, |ui| {
             ui.spacing_mut().text_edit_width = 250.0;
 
@@ -121,6 +126,9 @@ impl SaveUI {
                             .clicked()
                         {
                             if let Some(document) = document {
+                                let mut document = (*document).clone();
+                                optimize_fn(&mut document);
+
                                 if let Some(path) = self.get_output_path() {
                                     self.last_error = Some(document.to_svg_file(&path).map(|()| {
                                         path.file_name().map_or("<unknown>".to_string(), |s| {
