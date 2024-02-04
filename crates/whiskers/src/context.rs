@@ -43,6 +43,23 @@ impl Context {
         self.rng.gen_bool(0.5)
     }
 
+    /// Helper function to generate a random boolean value with a given probability of being true
+    pub fn rng_weighted_bool(&mut self, prob_true: f64) -> bool {
+        self.rng.gen_bool(prob_true)
+    }
+
+    /// Helper function to generate a random boolean value with a probability of being true given by the `num`/`denom`
+    /// ratio.
+    ///
+    /// This function always returns `false` if `denom` is 0.
+    pub fn rng_ratio_bool(&mut self, num: u32, denom: u32) -> bool {
+        if denom == 0 {
+            false
+        } else {
+            self.rng.gen_ratio(num, denom)
+        }
+    }
+
     /// Helper function to return a random item from a slice
     ///
     /// # Panics
