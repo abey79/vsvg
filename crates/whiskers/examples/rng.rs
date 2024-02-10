@@ -26,7 +26,6 @@ impl App for RngSketch {
         let w = sketch.width();
         let h = sketch.height();
 
-        let all_colors = COLORS.to_vec();
         let weighted_colors = vec![
             (20.0, Color::RED),
             (10.0, Color::YELLOW),
@@ -36,6 +35,7 @@ impl App for RngSketch {
             (20.0, Color::BLUE),
             (10.0, Color::LIGHT_BLUE),
         ];
+        let all_colors = COLORS.to_vec();
         let chosen_color = if self.choose_color_with_weight {
             ctx.rng_weighted_choice(&weighted_colors)
         } else {
@@ -65,6 +65,7 @@ impl App for RngSketch {
 
 fn main() -> Result {
     RngSketch::runner()
+        .with_debug_options(DebugOptions::default().label("Features"))
         .with_random_seed()
         .with_page_size_options(PageSize::A5H)
         .run()

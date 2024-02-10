@@ -1,4 +1,5 @@
 mod animation;
+mod debug;
 mod info;
 mod layout;
 mod optimization;
@@ -17,6 +18,7 @@ use std::sync::Arc;
 use crate::Sketch;
 pub use animation::AnimationOptions;
 use convert_case::Casing;
+pub use debug::DebugOptions;
 use eframe::Storage;
 pub use info::InfoOptions;
 pub use layout::LayoutOptions;
@@ -59,6 +61,9 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Options and UI for the optimization panel.
     optimization_options: OptimizationOptions,
 
+    /// Options and UI for the debug panel
+    debug_options: DebugOptions,
+
     /// Options and UI for save panel.
     save_ui: SaveUI,
 
@@ -93,6 +98,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
             layout_options: LayoutOptions::default(),
             animation_options: AnimationOptions::default(),
             optimization_options: OptimizationOptions::default(),
+            debug_options: DebugOptions::default(),
             save_ui,
             seed: 0,
             _phantom: std::marker::PhantomData,
@@ -154,6 +160,15 @@ impl<A: crate::SketchApp> Runner<'_, A> {
     pub fn with_optimization_options(self, options: impl Into<OptimizationOptions>) -> Self {
         Self {
             optimization_options: options.into(),
+            ..self
+        }
+    }
+
+    #[must_use]
+    /// Sets the default debug options
+    pub fn with_debug_options(self, options: impl Into<DebugOptions>) -> Self {
+        Self {
+            debug_options: options.into(),
             ..self
         }
     }
@@ -276,6 +291,8 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                                 self.dirty();
                             }
 
+                            self.debug_options.ui(ui);
+
                             self.optimization_options.ui(ui);
 
                             self.seed_ui(ui);
@@ -319,6 +336,7 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                 rng: rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(self.seed)),
                 time: self.animation_options.time,
                 loop_time: self.animation_options.loop_time,
+                debug_options: &mut self.debug_options,
             };
 
             let mut sketch = Sketch::new();
