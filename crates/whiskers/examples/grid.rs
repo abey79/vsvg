@@ -41,7 +41,7 @@ impl Default for GridSketch {
 }
 
 impl App for GridSketch {
-    fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
+    fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(5.0);
 
         let grid = if self.is_canvas_sizing {
@@ -65,9 +65,6 @@ impl App for GridSketch {
                 // when added to a sketch, a [`GridCell`] draws a rectangle at its location
                 sketch.add_path(cell);
             });
-
-        ctx.debug("Columns", format!("{}", self.columns));
-        ctx.debug("Rows", format!("{}", self.rows));
 
         Ok(())
     }
