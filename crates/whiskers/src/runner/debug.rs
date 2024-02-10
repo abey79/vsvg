@@ -33,16 +33,16 @@ impl DebugOptions {
 
 impl DebugOptions {
     pub(crate) fn ui(&mut self, ui: &mut egui::Ui) {
-        // if !self.params.is_empty() {
-        collapsing_header(ui, self.label.as_ref().unwrap(), "", true, |ui| {
-            self.params.iter().for_each(|param| {
-                let (key, value) = param;
-                ui.horizontal(|ui| {
-                    ui.label(format!("{}:", key.as_str()));
-                    ui.label(value.as_str());
+        if !self.params.is_empty() {
+            collapsing_header(ui, self.label.as_ref().unwrap(), "", true, |ui| {
+                self.params.iter().for_each(|param| {
+                    let (key, value) = param;
+                    ui.horizontal(|ui| {
+                        ui.label(format!("{}:", key.as_str()));
+                        ui.label(value.as_str());
+                    });
                 });
             });
-        });
-        // }
+        }
     }
 }
