@@ -26,8 +26,9 @@ impl DebugOptions {
     }
 
     /// adds new parameter to the section
-    pub fn add_parameter(&mut self, parameter: (String, String)) {
-        self.params.insert(parameter.0, parameter.1);
+    pub fn add_parameter(&mut self, parameter: (impl AsRef<str>, impl AsRef<str>)) {
+        self.params
+            .insert(parameter.0.as_ref().into(), parameter.1.as_ref().into());
     }
 }
 
