@@ -89,7 +89,7 @@ This is the result:
 - [ ] Export to other format through templating (HPGL, g-code, etc. — for now, please use [*vpype*](https://github.com/abey79/vpype)).
 - [ ] ... (*please complete this list*)
 
-On top of all that, you can import other rust packages for features such as noise and boolean operations, for which you can use `noise-rs` and `geo` respectively (see examples `noise` and `astroids`)..
+On top of all that, you can import other rust packages for features such as noise and boolean operations, for which you can use `noise-rs` and `geo` respectively (see examples `noise` and `astroids`).
 
 ## Isn't that *vsketch*?
 
