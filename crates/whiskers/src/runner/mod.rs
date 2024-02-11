@@ -291,8 +291,6 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                                 self.dirty();
                             }
 
-                            self.debug_options.ui(ui);
-
                             self.optimization_options.ui(ui);
 
                             self.seed_ui(ui);
@@ -323,6 +321,8 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                                     self.set_dirty(changed);
                                 },
                             );
+
+                            self.debug_options.ui(ui);
                         })
                     });
             });
