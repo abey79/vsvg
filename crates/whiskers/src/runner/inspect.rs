@@ -11,7 +11,7 @@ pub struct InspectVariables {
 impl Default for InspectVariables {
     fn default() -> Self {
         Self {
-            label: Some(String::from("Debug")),
+            label: Some(String::from("Inspect")),
             params: BTreeMap::new(),
         }
     }
