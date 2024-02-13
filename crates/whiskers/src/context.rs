@@ -4,7 +4,7 @@ use rand_distr::{Distribution, WeightedAliasIndex};
 use std::{fmt::Debug, ops::Range};
 use vsvg::Point;
 
-use crate::runner::DebugOptions;
+use crate::runner::InspectVariables;
 
 /// Context passed to [`crate::App::update`].
 pub struct Context<'a> {
@@ -18,7 +18,7 @@ pub struct Context<'a> {
     pub loop_time: f64,
 
     /// Debug options instance for adding debug parameters
-    pub debug_options: &'a mut DebugOptions,
+    pub inspect_variables: &'a mut InspectVariables,
 }
 
 impl<'a> Context<'a> {
@@ -100,9 +100,9 @@ impl<'a> Context<'a> {
         Point::new(x, y)
     }
 
-    /// Helper function to display a debug parameter in the Debug options UI
-    pub fn debug<T: Debug>(&mut self, key: impl AsRef<str>, value: T) {
-        self.debug_options
+    /// Helper function to display an inspect parameter in the InspectVariables UI
+    pub fn inspect<T: Debug>(&mut self, key: impl AsRef<str>, value: T) {
+        self.inspect_variables
             .add_parameter((key.as_ref().to_owned(), format!("{:?}", value)));
     }
 }
