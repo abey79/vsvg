@@ -100,9 +100,9 @@ impl<'a> Context<'a> {
         Point::new(x, y)
     }
 
-    /// Helper function to display an inspect parameter in the InspectVariables UI
-    pub fn inspect<T: Debug>(&mut self, key: impl AsRef<str>, value: T) {
+    /// Helper function to display an inspect parameter in the inspect variables UI
+    pub fn inspect(&mut self, key: impl AsRef<str>, value: impl Debug) {
         self.inspect_variables
-            .add_parameter((key.as_ref().to_owned(), format!("{:?}", value)));
+            .add_parameter(&(key.as_ref().to_owned(), format!("{value:?}")));
     }
 }
