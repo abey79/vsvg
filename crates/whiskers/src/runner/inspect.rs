@@ -25,6 +25,10 @@ impl InspectVariables {
         self
     }
 
+    pub fn clear(&mut self) {
+        self.params.clear();
+    }
+
     /// adds new parameter to the section
     pub fn add_parameter(&mut self, parameter: &(impl AsRef<str>, impl AsRef<str>)) {
         self.params

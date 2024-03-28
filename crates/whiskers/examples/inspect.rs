@@ -7,6 +7,8 @@ struct InspectSketch {
     width: f64,
     #[param(slider, min = 20.0, max = 400.0)]
     height: f64,
+
+    debug: bool,
 }
 
 impl Default for InspectSketch {
@@ -14,6 +16,8 @@ impl Default for InspectSketch {
         Self {
             width: 130.0,
             height: 130.0,
+
+            debug: true,
         }
     }
 }
@@ -24,7 +28,10 @@ impl App for InspectSketch {
         sketch.color(Color::RED);
         sketch.rect(0.0, 0.0, self.width, self.height);
 
-        ctx.inspect("Square area", (self.width * self.height).round());
+        if self.debug {
+            ctx.inspect("Square area", (self.width * self.height).round());
+            ctx.inspect("Max dimension", self.width.max(self.height));
+        }
 
         Ok(())
     }

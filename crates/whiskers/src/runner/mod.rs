@@ -71,7 +71,6 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Random seed used to generate the sketch.
     seed: u32,
 
-    // ========== time stuff
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
@@ -323,6 +322,7 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
 
             ctx.request_repaint();
 
+            self.inspect_variables.clear();
             let mut context = crate::context::Context {
                 rng: rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(self.seed)),
                 time: self.animation_options.time,
