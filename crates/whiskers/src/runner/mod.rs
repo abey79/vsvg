@@ -1,5 +1,6 @@
 mod animation;
 mod info;
+mod inspect;
 mod layout;
 mod optimization;
 mod page_size;
@@ -19,6 +20,7 @@ pub use animation::AnimationOptions;
 use convert_case::Casing;
 use eframe::Storage;
 pub use info::InfoOptions;
+pub use inspect::InspectVariables;
 pub use layout::LayoutOptions;
 pub use optimization::OptimizationOptions;
 pub use page_size::PageSizeOptions;
@@ -59,6 +61,9 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Options and UI for the optimization panel.
     optimization_options: OptimizationOptions,
 
+    /// Options and UI for the debug panel
+    inspect_variables: InspectVariables,
+
     /// Options and UI for save panel.
     save_ui: SaveUI,
 
@@ -66,7 +71,6 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Random seed used to generate the sketch.
     seed: u32,
 
-    // ========== time stuff
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
@@ -93,6 +97,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
             layout_options: LayoutOptions::default(),
             animation_options: AnimationOptions::default(),
             optimization_options: OptimizationOptions::default(),
+            inspect_variables: InspectVariables::default(),
             save_ui,
             seed: 0,
             _phantom: std::marker::PhantomData,
@@ -306,6 +311,8 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                                     self.set_dirty(changed);
                                 },
                             );
+
+                            self.inspect_variables.ui(ui);
                         })
                     });
             });
@@ -315,10 +322,12 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
 
             ctx.request_repaint();
 
+            self.inspect_variables.clear();
             let mut context = crate::context::Context {
                 rng: rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(self.seed)),
                 time: self.animation_options.time,
                 loop_time: self.animation_options.loop_time,
+                inspect_variables: &mut self.inspect_variables,
             };
 
             let mut sketch = Sketch::new();

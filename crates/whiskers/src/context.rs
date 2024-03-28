@@ -1,11 +1,13 @@
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
-use std::ops::Range;
+use std::{fmt::Debug, ops::Range};
 use vsvg::Point;
 
+use crate::runner::InspectVariables;
+
 /// Context passed to [`crate::App::update`].
-pub struct Context {
+pub struct Context<'a> {
     /// Random number generator pre-seeded by the UI.
     pub rng: rand_chacha::ChaCha8Rng,
 
@@ -14,9 +16,12 @@ pub struct Context {
 
     /// The loop time value controlled by the UI.
     pub loop_time: f64,
+
+    /// Debug options instance for adding debug parameters
+    pub inspect_variables: &'a mut InspectVariables,
 }
 
-impl Context {
+impl<'a> Context<'a> {
     /// Time parameter, normalized by the loop time.
     ///
     /// Always returns 0.0 if the loop time is set to 0.0.
@@ -65,7 +70,7 @@ impl Context {
     /// # Panics
     ///
     /// Panics if the slice is empty.
-    pub fn rng_choice<'a, T>(&mut self, choices: &'a impl AsRef<[T]>) -> &'a T {
+    pub fn rng_choice<'b, T>(&mut self, choices: &'b impl AsRef<[T]>) -> &'b T {
         let index = self.rng_range(Range {
             start: 0usize,
             end: choices.as_ref().len(),
@@ -80,7 +85,7 @@ impl Context {
     /// # Panics
     ///
     /// Panics if the slice is empty
-    pub fn rng_weighted_choice<'a, T>(&mut self, choices: &'a impl AsRef<[(f64, T)]>) -> &'a T {
+    pub fn rng_weighted_choice<'b, T>(&mut self, choices: &'b impl AsRef<[(f64, T)]>) -> &'b T {
         let weights: Vec<f64> = choices.as_ref().iter().map(|choice| choice.0).collect();
         let dist = WeightedAliasIndex::new(weights).unwrap();
 
@@ -93,5 +98,11 @@ impl Context {
         let y = self.rng_range(y_range);
 
         Point::new(x, y)
+    }
+
+    /// Helper function to display an inspect parameter in the inspect variables UI
+    pub fn inspect(&mut self, key: impl AsRef<str>, value: impl Debug) {
+        self.inspect_variables
+            .add_parameter(&(key.as_ref().to_owned(), format!("{value:?}")));
     }
 }
