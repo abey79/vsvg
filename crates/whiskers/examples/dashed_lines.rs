@@ -1,3 +1,5 @@
+//! This example shows how to use [`kurbo::dash`] to create dashed lines in a sketch.
+
 use vsvg::PathDataTrait;
 use whiskers::prelude::*;
 
@@ -6,7 +8,7 @@ struct DashedLinesSketch {
     #[param(slider, min = 0.0, max = 10.0)]
     offset: Length,
 
-    //TODO: this really needs the vector feature!
+    //TODO: this really needs the vector feature for arbitrary dash patterns
     #[param(slider, logarithmic, min = 0.01, max = 10.0)]
     dash_1: Length,
     #[param(slider, logarithmic, min = 0.01, max = 10.0)]

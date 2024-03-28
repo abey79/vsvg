@@ -2253,9 +2253,9 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
-version = "0.10.4"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1618d4ebd923e97d67e7cd363d80aef35fe961005cbbbb3d2dad8bdd1bc63440"
+checksum = "6e5aa9f0f96a938266bdb12928a67169e8d22c6a786fda8ed984b85e6ba93c3c"
 dependencies = [
  "arrayvec",
  "smallvec",
@@ -4182,7 +4182,7 @@ dependencies = [
  "glam",
  "indexmap",
  "kdtree",
- "kurbo 0.10.4",
+ "kurbo 0.11.0",
  "lazy_static",
  "log",
  "lyon_geom",
@@ -4210,7 +4210,7 @@ dependencies = [
  "dhat",
  "eframe",
  "egui",
- "kurbo 0.10.4",
+ "kurbo 0.11.0",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "serde",
@@ -4231,7 +4231,7 @@ dependencies = [
  "egui",
  "env_logger",
  "js-sys",
- "kurbo 0.10.4",
+ "kurbo 0.11.0",
  "log",
  "pollster",
  "puffin",
@@ -4603,7 +4603,7 @@ dependencies = [
  "getrandom 0.2.12",
  "itertools 0.12.0",
  "js-sys",
- "kurbo 0.10.4",
+ "kurbo 0.11.0",
  "log",
  "noise",
  "open",
