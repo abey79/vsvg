@@ -168,10 +168,7 @@ impl SaveUI {
     }
 
     fn get_output_path(&self) -> Option<PathBuf> {
-        let Some(target_dir) = &self.destination_dir else {
-            return None;
-        };
-
+        let target_dir = self.destination_dir.as_ref()?;
         let mut idx = 0;
         loop {
             let path = target_dir
