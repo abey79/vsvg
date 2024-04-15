@@ -1,5 +1,6 @@
 use vsvg::{IntoBezPathTolerance, Point};
 
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Orientation {
     Flat,
     Pointy,
@@ -20,6 +21,7 @@ pub(crate) enum Orientation {
 ///     .center(Point::new(21.0, 37.0))
 ///     .size(129.0);
 /// ```
+#[derive(Clone, Debug, PartialEq)]
 pub struct HexGridCell {
     /// Center point of the grid cell
     pub center: Point,
