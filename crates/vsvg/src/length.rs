@@ -1,8 +1,20 @@
+use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 use num_traits::{AsPrimitive, Float};
+use rand::distributions::uniform::{SampleBorrow, SampleUniform, UniformSampler};
+use rand::Rng;
 
-use crate::Unit;
+use crate::{Unit, UnitError};
+
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum LengthError {
+    #[error("Could not parse number: {0}")]
+    FloatParseError(#[from] std::num::ParseFloatError),
+    #[error("Could not parse unit: {0}")]
+    UnitParseError(#[from] UnitError),
+}
 
 /// A physical length, described by a value and a [`Unit`].
 ///
@@ -83,6 +95,12 @@ impl Default for Length {
     }
 }
 
+impl PartialOrd for Length {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.to_px::<f64>().partial_cmp(&other.to_px())
+    }
+}
+
 impl Display for Length {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.value.fmt(f)?;
@@ -136,6 +154,26 @@ impl Length {
             value: self.unit.convert_to(&unit, self.value),
             unit,
         }
+    }
+}
+impl FromStr for Length {
+    type Err = LengthError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim();
+        let number_str = s.trim_end_matches(|c: char| c.is_alphabetic());
+        let unit_str = &s[number_str.len()..];
+
+        // remove whitespace between number and unit
+        let number_str = number_str.trim();
+
+        let unit = if unit_str.is_empty() {
+            Unit::Px
+        } else {
+            unit_str.parse::<Unit>()?
+        };
+
+        Ok(Self::new(number_str.parse::<f64>()?, unit))
     }
 }
 
@@ -213,7 +251,7 @@ impl<F: Float + AsPrimitive<f64>> std::ops::Sub<F> for Length {
 }
 
 impl<F: Float + AsPrimitive<f64>> std::ops::Mul<F> for Length {
-    type Output = Length;
+    type Output = Self;
 
     fn mul(self, rhs: F) -> Self::Output {
         Self {
@@ -224,7 +262,7 @@ impl<F: Float + AsPrimitive<f64>> std::ops::Mul<F> for Length {
 }
 
 impl<F: Float + AsPrimitive<f64>> std::ops::Div<F> for Length {
-    type Output = Length;
+    type Output = Self;
 
     fn div(self, rhs: F) -> Self::Output {
         Self {
@@ -277,3 +315,78 @@ macro_rules! length_trait_impl {
 
 length_trait_impl!(f32);
 length_trait_impl!(f64);
+
+// ==========================================
+// `rand` support
+
+pub struct LengthSampler {
+    sampler: rand::distributions::uniform::UniformFloat<f64>,
+    unit: Unit,
+}
+
+impl UniformSampler for LengthSampler {
+    type X = Length;
+
+    fn new<B1, B2>(low: B1, high: B2) -> Self
+    where
+        B1: SampleBorrow<Self::X> + Sized,
+        B2: SampleBorrow<Self::X> + Sized,
+    {
+        let unit = low.borrow().unit;
+        let low = low.borrow().value;
+        let high = high.borrow().convert_to(unit).value;
+
+        Self {
+            sampler: rand::distributions::uniform::UniformFloat::new(low, high),
+            unit,
+        }
+    }
+
+    fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
+    where
+        B1: SampleBorrow<Self::X> + Sized,
+        B2: SampleBorrow<Self::X> + Sized,
+    {
+        let unit = low.borrow().unit;
+        let low = low.borrow().value;
+        let high = high.borrow().convert_to(unit).value;
+
+        Self {
+            sampler: rand::distributions::uniform::UniformFloat::new_inclusive(low, high),
+            unit,
+        }
+    }
+
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
+        Self::X::new(self.sampler.sample(rng), self.unit)
+    }
+}
+
+impl SampleUniform for Length {
+    type Sampler = LengthSampler;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_length_from_str() {
+        assert_eq!("1.0px".parse::<Length>().unwrap(), 1.0 * Unit::Px);
+        assert_eq!("1.0in".parse::<Length>().unwrap(), 1.0 * Unit::In);
+        assert_eq!("1.0 ft".parse::<Length>().unwrap(), 1.0 * Unit::Ft);
+        assert_eq!("1.0yd".parse::<Length>().unwrap(), 1.0 * Unit::Yd);
+        assert_eq!("1.0mi".parse::<Length>().unwrap(), 1.0 * Unit::Mi);
+        assert_eq!("1.mm".parse::<Length>().unwrap(), 1.0 * Unit::Mm);
+        assert_eq!("1.0    cm".parse::<Length>().unwrap(), 1.0 * Unit::Cm);
+        assert_eq!("1m".parse::<Length>().unwrap(), 1.0 * Unit::M);
+        assert_eq!("1.0km".parse::<Length>().unwrap(), 1.0 * Unit::Km);
+        assert_eq!("1.0pc".parse::<Length>().unwrap(), 1.0 * Unit::Pc);
+        assert_eq!("1.0pt".parse::<Length>().unwrap(), 1.0 * Unit::Pt);
+
+        // test various float formats
+        assert_eq!("1.0".parse::<Length>().unwrap(), 1.0 * Unit::Px);
+        assert_eq!("1.".parse::<Length>().unwrap(), 1.0 * Unit::Px);
+        assert_eq!(".9e-4m".parse::<Length>().unwrap(), 0.9e-4 * Unit::M);
+    }
+}

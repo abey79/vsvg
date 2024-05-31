@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 use num_traits::{AsPrimitive, Float};
 
@@ -37,8 +38,8 @@ pub enum UnitError {
 /// assert_eq!(Unit::Cm.to_str(), "cm");
 /// assert_eq!(Unit::Yd.to_str(), "yd");
 ///
-/// assert_eq!(Unit::try_from("m"), Ok(Unit::M));
-/// assert_eq!(Unit::try_from("kilometre"), Ok(Unit::Km));
+/// assert_eq!("m".parse::<Unit>(), Ok(Unit::M));
+/// assert_eq!("kilometre".parse::<Unit>(), Ok(Unit::Km));
 /// ```
 #[derive(Clone, Copy, Default, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Unit {
@@ -145,10 +146,10 @@ impl Unit {
     }
 }
 
-impl TryFrom<&str> for Unit {
-    type Error = UnitError;
+impl FromStr for Unit {
+    type Err = UnitError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value.to_lowercase().as_str() {
             "px" | "pixel" => Ok(Unit::Px),
             "in" | "inch" => Ok(Unit::In),

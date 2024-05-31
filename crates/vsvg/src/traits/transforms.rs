@@ -54,36 +54,25 @@ pub trait Transforms: Sized {
 
     /// Rotate the geometry by `theta` radians around the origin.
     #[inline]
-    fn rotate(&mut self, theta: f64) -> &mut Self {
-        self.transform(&Affine::rotate(theta));
+    fn rotate(&mut self, theta: impl Into<f64>) -> &mut Self {
+        self.transform(&Affine::rotate(theta.into()));
         self
-    }
-
-    /// Rotate the geometry by `theta` degrees around the origin.
-    #[inline]
-    fn rotate_deg(&mut self, theta: f64) -> &mut Self {
-        self.rotate(theta.to_radians())
     }
 
     /// Rotate the geometry by `theta` radians around the point `(cx, cy)`.
     #[inline]
-    fn rotate_around(&mut self, theta: f64, cx: impl Into<f64>, cy: impl Into<f64>) -> &mut Self {
-        let (cx, cy) = (cx.into(), cy.into());
-        let transform =
-            Affine::translate((cx, cy)) * Affine::rotate(theta) * Affine::translate((-cx, -cy));
-        self.transform(&transform);
-        self
-    }
-
-    /// Rotate the geometry by `theta` degrees around the point `(cx, cy)`.
-    #[inline]
-    fn rotate_around_deg(
+    fn rotate_around(
         &mut self,
-        theta: f64,
+        theta: impl Into<f64>,
         cx: impl Into<f64>,
         cy: impl Into<f64>,
     ) -> &mut Self {
-        self.rotate_around(theta.to_radians(), cx.into(), cy.into())
+        let (cx, cy) = (cx.into(), cy.into());
+        let transform = Affine::translate((cx, cy))
+            * Affine::rotate(theta.into())
+            * Affine::translate((-cx, -cy));
+        self.transform(&transform);
+        self
     }
 
     /// Skew the geometry by `kx` and `ky` radians around the origin.
