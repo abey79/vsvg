@@ -75,7 +75,18 @@ impl Document {
     }
 
     /// Crops the contents to the bounds provided.
-    pub fn crop(&mut self, x_min: f64, y_min: f64, x_max: f64, y_max: f64) {
+    pub fn crop(
+        &mut self,
+        x_min: impl Into<f64>,
+        y_min: impl Into<f64>,
+        x_max: impl Into<f64>,
+        y_max: impl Into<f64>,
+    ) {
+        let x_min = x_min.into();
+        let y_min = y_min.into();
+        let x_max = x_max.into();
+        let y_max = y_max.into();
+
         self.layers.iter_mut().for_each(|(_, layer)| {
             layer.crop(x_min, y_min, x_max, y_max);
         });

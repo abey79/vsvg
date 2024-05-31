@@ -6,6 +6,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
+mod angle;
 mod catmull_rom;
 mod color;
 mod crop;
@@ -26,10 +27,9 @@ mod unit;
 #[cfg(feature = "whiskers-widgets")]
 pub mod widgets;
 
-pub use crate::svg::*;
-pub use color::*;
-
+pub use angle::*;
 pub use catmull_rom::*;
+pub use color::*;
 pub use crop::*;
 pub use document::*;
 pub use layer::*;
@@ -40,6 +40,7 @@ pub use page_size::*;
 pub use path::*;
 pub use path_index::*;
 pub use stats::*;
+pub use svg::*;
 pub use traits::*;
 pub use unit::*;
 

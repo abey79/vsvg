@@ -10,16 +10,16 @@ pub struct WhiskersDemoSketch {
     row_count: u32,
 
     #[param(slider, min = 0., max = 10.)]
-    offset_cm: f64,
+    offset: Length,
 
     #[param(slider, min = 0., max = 10.)]
-    box_size_cm: f64,
+    box_size: Length,
 
-    #[param(slider, min = 0., max = 90.)]
-    rand_angle_deg: f64,
+    #[param(slider, deg, min = 0., max = 90.)]
+    rand_angle: Angle,
 
     #[param(slider, min = 0., max = 3.)]
-    rand_offset_cm: f64,
+    rand_offset: Length,
 
     #[param(slider, min = 0., max = 10.)]
     stroke_width: f64,
@@ -30,10 +30,10 @@ impl Default for WhiskersDemoSketch {
         Self {
             col_count: 12,
             row_count: 24,
-            offset_cm: 1.,
-            box_size_cm: 1.,
-            rand_angle_deg: 45.,
-            rand_offset_cm: 0.3,
+            offset: 1.0 * Unit::Cm,
+            box_size: 1.0 * Unit::Cm,
+            rand_angle: Angle::from_deg(45.),
+            rand_offset: 0.3 * Unit::Cm,
             stroke_width: 1.0,
         }
     }
@@ -41,22 +41,22 @@ impl Default for WhiskersDemoSketch {
 
 impl App for WhiskersDemoSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.scale(Unit::Cm).stroke_width(self.stroke_width);
+        sketch.stroke_width(self.stroke_width);
 
         for (i, j) in iproduct!(0..self.col_count, 0..self.row_count) {
             sketch.push_matrix_and(|sketch| {
-                sketch.translate(i as f64 * self.offset_cm, j as f64 * self.offset_cm);
+                sketch.translate(i as f64 * self.offset, j as f64 * self.offset);
 
-                let max_angle = self.rand_angle_deg * (j as f64 / self.row_count as f64);
-                let max_offset = self.rand_offset_cm * (j as f64 / self.row_count as f64);
+                let max_angle = self.rand_angle * (j as f64 / self.row_count as f64);
+                let max_offset = self.rand_offset * (j as f64 / self.row_count as f64);
 
                 sketch
-                    .rotate_deg(ctx.rng_range(-max_angle..max_angle))
+                    .rotate(ctx.rng_range(-max_angle..max_angle))
                     .translate(
                         ctx.rng_range(-max_offset..max_offset),
                         ctx.rng_range(-max_offset..max_offset),
                     )
-                    .rect(0., 0., self.box_size_cm, self.box_size_cm);
+                    .rect(0., 0., self.box_size, self.box_size);
             });
         }
 

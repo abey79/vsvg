@@ -24,6 +24,7 @@ lyon_geom.workspace = true
 num-traits.workspace = true
 puffin = { workspace = true, optional = true }
 quick-xml.workspace = true
+rand.workspace = true
 rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
@@ -39,11 +40,10 @@ egui = { workspace = true, optional = true }
 
 # optional dependencies, mainly for Point interop.
 geo = { workspace = true, optional = true }
-glam = { workspace = true,  optional = true }
+glam = { workspace = true, optional = true }
 
 [dev-dependencies]
 approx.workspace = true
-rand.workspace = true
 rand_chacha.workspace = true
 getrandom.workspace = true
 
