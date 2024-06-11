@@ -13,8 +13,8 @@ categories = ["graphics", "visualization"]
 
 [dependencies]
 anyhow.workspace = true
-bytemuck = {version = "1.13.1",  features = [ "derive" ]}
-cgmath = "0.18.0"
+bytemuck = {workspace = true,  features = [ "derive" ]}
+cgmath.workspace = true
 eframe.workspace = true
 egui.workspace = true
 kurbo.workspace = true
@@ -27,11 +27,11 @@ vsvg = { workspace = true, features = ["egui"] }
 wgpu.workspace = true
 
 [dev-dependencies]  # mostly for examples
-env_logger = "0.10.0"
-pollster = "0.3.0"
+env_logger.workspace = true
+pollster.workspace = true
 rand.workspace = true
-raw-window-handle = "0.5.2"
-tracing-subscriber = "0.3.16"
+raw-window-handle.workspace = true
+tracing-subscriber.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion.workspace = true
@@ -39,7 +39,7 @@ winit.workspace = true
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-js-sys = "0.3.64"
+js-sys.workspace = true
 wasm-bindgen.workspace = true
 wasm-bindgen-futures.workspace = true
 

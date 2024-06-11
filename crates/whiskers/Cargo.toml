@@ -14,32 +14,35 @@ categories = ["command-line-utilities", "graphics", "visualization"]
 vsvg = { workspace = true, features = ["geo", "whiskers-widgets", "egui"] }
 vsvg-viewer = { workspace = true, optional = true }
 whiskers-widgets.workspace = true
+
+anyhow.workspace = true
+convert_case.workspace = true
+eframe.workspace = true
+egui.workspace = true
+getrandom.workspace = true
+kurbo.workspace = true
+itertools.workspace = true
 log.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 rand_distr.workspace = true
-getrandom.workspace = true
-kurbo.workspace = true
-anyhow.workspace = true
-egui.workspace = true
-eframe.workspace = true
 serde.workspace = true
 web-time.workspace = true
-convert_case.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rfd = { version = "0.12.0", default_features = false, features = [
+rfd = { workspace = true, default_features = false, features = [
+    "async-std",
     "xdg-portal",
 ] }
-open = "5.0.0"
+open.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true
-js-sys = "0.3.64"
+js-sys.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
-version = "0.3.64"
+workspace = true
 features = [
     "Blob",
     "BlobPropertyBag",
@@ -55,13 +58,13 @@ features = [
 [dev-dependencies]
 geo.workspace = true
 itertools.workspace = true
-noise = "0.8.2"
+noise.workspace = true
 rayon.workspace = true
-voronoice = "0.2.0"
+voronoice.workspace = true
 
 # for particle.rs example
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-geos = "8.3.0"
+geos.workspace = true
 
 [features]
 default = ["viewer"]
