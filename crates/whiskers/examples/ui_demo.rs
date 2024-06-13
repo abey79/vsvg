@@ -59,6 +59,14 @@ struct UiDemoSketch {
 
     #[skip]
     incompatible: IncompatibleStruct,
+
+    // lists of simple types are supported
+    //
+    // Note: the `inner` attribute is used to specify attributes for the inner type (here `f64`)
+    #[param(inner(slider, min = 0.0, max = 10.))]
+    list_of_simple_type: Vec<f64>,
+
+    custom_struct_list: Vec<CustomStruct>,
 }
 
 // If a type doesn't implement [`Widget`], it can still be used, but `#[skip]` must be used. The
@@ -77,7 +85,7 @@ struct IncompatibleStruct {
 #[sketch_widget]
 #[derive(Default)]
 struct CustomStruct {
-    #[param(min = 0.0, max = 1.0)]
+    #[param(min = 0.0, max = 10.0)]
     some_float: f64,
 
     #[param(slider, min = 0.0, max = self.some_float)]

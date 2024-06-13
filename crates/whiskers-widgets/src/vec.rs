@@ -31,21 +31,46 @@ where
 
         let inner_use_grid = <T as WidgetMapper<T>>::Type::use_grid();
 
-        //TODO: meaningful summary
-        crate::collapsing_header(ui, label, "", true, |ui| {
-            if inner_use_grid {
-                egui::Grid::new(label).num_columns(2).show(ui, |ui| {
-                    for (i, item) in value.iter_mut().enumerate() {
-                        let item_label = format!("[{i}]:");
-                        changed |= self.inner.ui(ui, &item_label, item);
-                        ui.end_row();
-                    }
-                });
-            } else {
-                for (i, item) in value.iter_mut().enumerate() {
-                    let item_label = format!("[{i}]:");
-                    changed |= self.inner.ui(ui, &item_label, item);
+        let summary = format!(
+            "{} item{}",
+            value.len(),
+            if value.len() > 1 { "s" } else { "" }
+        );
+        crate::collapsing_header(ui, label, summary, true, |ui| {
+            if !value.is_empty() {
+                let mut items_to_delete = Vec::new();
+                egui::Grid::new(label)
+                    .num_columns(if inner_use_grid { 3 } else { 2 })
+                    .show(ui, |ui| {
+                        for (i, item) in value.iter_mut().enumerate() {
+                            let item_label = format!("[{i}]:");
+
+                            if inner_use_grid {
+                                changed |= self.inner.ui(ui, &item_label, item);
+                            } else {
+                                ui.vertical(|ui| {
+                                    changed |= self.inner.ui(ui, &item_label, item);
+                                });
+                            }
+
+                            ui.horizontal_top(|ui| {
+                                if ui.button("–").clicked() {
+                                    items_to_delete.push(i);
+                                }
+                            });
+                            ui.end_row();
+                        }
+                    });
+
+                for item in items_to_delete.iter().rev() {
+                    value.remove(*item);
+                    changed = true;
                 }
+            }
+
+            if ui.button("+").clicked() {
+                value.push(T::default());
+                changed = true;
             }
         });
 

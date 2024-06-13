@@ -1,4 +1,5 @@
-//! This example shows how to use [`kurbo::dash`] to create dashed lines in a sketch.
+//! This example shows how to use [`kurbo::dash`] to create dashed lines in a sketch and
+//! demonstrates the use of `Vec<_>` sketch parameters.
 
 use vsvg::PathDataTrait;
 use whiskers::prelude::*;
@@ -8,19 +9,15 @@ struct DashedLinesSketch {
     #[param(slider, min = 0.0, max = 10.0)]
     offset: Length,
 
-    //TODO: this really needs the vector feature for arbitrary dash patterns
-    #[param(slider, logarithmic, min = 0.01, max = 10.0)]
-    dash_1: Length,
-    #[param(slider, logarithmic, min = 0.01, max = 10.0)]
-    dash_2: Length,
+    #[param(inner(slider, logarithmic, min = 0.01, max = 10.0))]
+    dashes: Vec<Length>,
 }
 
 impl Default for DashedLinesSketch {
     fn default() -> Self {
         Self {
             offset: 0.0 * Unit::Mm,
-            dash_1: 0.5 * Unit::Mm,
-            dash_2: 1.0 * Unit::Mm,
+            dashes: vec![0.5 * Unit::Mm, 1.0 * Unit::Mm],
         }
     }
 }
@@ -57,10 +54,17 @@ impl DashedLinesSketch {
             sketch.circle(end.x(), end.y(), 1.0);
         }
 
+        let dashes_px = self.dashes.iter().map(|d| d.to_px()).collect::<Vec<_>>();
+
+        // kurbo::dash() requires at least one, non-zero dash length
+        if dashes_px.is_empty() || dashes_px.contains(&0.0) {
+            return;
+        }
+
         let dashed: kurbo::BezPath = kurbo::dash(
             path.into_bezpath().into_iter(),
             self.offset.to_px(),
-            &[self.dash_1.to_px(), self.dash_2.to_px()],
+            &dashes_px,
         )
         .collect();
 

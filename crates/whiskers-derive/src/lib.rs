@@ -492,17 +492,15 @@ fn chained_call_for_attrs(attrs: &[Attribute]) -> proc_macro2::TokenStream {
                     .#ident(#expr)
                 });
             }
-        } else {
-            if inner {
-                chained_calls.extend(quote! {
-                    .inner(|obj| obj.#ident(true))
+        } else if inner {
+            chained_calls.extend(quote! {
+                .inner(|obj| obj.#ident(true))
 
-                });
-            } else {
-                chained_calls.extend(quote! {
-                    .#ident(true)
-                });
-            }
+            });
+        } else {
+            chained_calls.extend(quote! {
+                .#ident(true)
+            });
         }
 
         Ok(())
