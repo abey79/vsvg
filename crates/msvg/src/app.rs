@@ -49,7 +49,7 @@ struct FileNameOverlay {
 impl FileNameOverlay {
     pub fn show(&mut self, file_name: &str) {
         self.should_show = true;
-        self.file_name = file_name.to_owned();
+        file_name.clone_into(&mut self.file_name);
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, rect: &egui::Rect) {
