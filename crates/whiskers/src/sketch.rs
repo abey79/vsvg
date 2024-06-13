@@ -1,4 +1,3 @@
-//!
 use kurbo::Affine;
 use vsvg::{
     Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path, PathMetadata,

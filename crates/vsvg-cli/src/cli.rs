@@ -27,12 +27,6 @@ impl Display for CliError {
 
 impl Error for CliError {}
 
-trait ArgCreator {
-    type T: CommandArg;
-
-    fn create_arg(&self, arg: &mut Arg);
-}
-
 #[derive(Debug)]
 pub(crate) struct State {
     pub document: Document,
