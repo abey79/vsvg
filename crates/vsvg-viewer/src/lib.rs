@@ -27,6 +27,7 @@ pub mod exports {
 }
 
 /// Viewer app for [`show()`] and [`show_tolerance()`].
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 struct ShowViewerApp {
     document: Arc<vsvg::Document>,
     tolerance: f64,
