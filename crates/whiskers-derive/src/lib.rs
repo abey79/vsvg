@@ -473,27 +473,46 @@ fn chained_call_for_attrs(attrs: &[Attribute]) -> proc_macro2::TokenStream {
 
     let mut chained_calls = proc_macro2::TokenStream::new();
 
-    if let Some(param_attr) = param_attr {
-        let res = param_attr.parse_nested_meta(|meta| {
-            let ident = meta.path.get_ident().expect("expected ident");
-            let value = meta.value();
+    let mut add_chained_call = |meta: syn::meta::ParseNestedMeta, inner: bool| -> syn::Result<()> {
+        let ident = meta.path.get_ident().expect("expected ident");
+        let value = meta.value();
 
-            if value.is_ok() {
-                let mut expr: Expr = meta.input.parse()?;
+        if value.is_ok() {
+            let mut expr: Expr = meta.input.parse()?;
 
-                // replaces occurrences of self with obj
-                ReplaceSelf.visit_expr_mut(&mut expr);
+            // replaces occurrences of self with obj
+            ReplaceSelf.visit_expr_mut(&mut expr);
 
+            if inner {
+                chained_calls.extend(quote! {
+                    .inner(|obj| obj.#ident(#expr))
+                })
+            } else {
                 chained_calls.extend(quote! {
                     .#ident(#expr)
                 });
-            } else {
-                chained_calls.extend(quote! {
-                    .#ident(true)
-                });
             }
+        } else if inner {
+            chained_calls.extend(quote! {
+                .inner(|obj| obj.#ident(true))
 
-            Ok(())
+            });
+        } else {
+            chained_calls.extend(quote! {
+                .#ident(true)
+            });
+        }
+
+        Ok(())
+    };
+
+    if let Some(param_attr) = param_attr {
+        let res = param_attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("inner") {
+                meta.parse_nested_meta(|meta| add_chained_call(meta, true))
+            } else {
+                add_chained_call(meta, false)
+            }
         });
 
         match res {

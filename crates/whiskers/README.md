@@ -6,10 +6,11 @@
 [![GitHub](https://img.shields.io/github/license/abey79/vsvg)](https://github.com/abey79/vsvg/blob/master/LICENSE)
 
 
-_👉 Try the [**live demo**](https://bylr.info/vsvg/)!_
+*whiskers* is a Rust interactive sketch environment for plotter generative art, with a [Processing](https://processing.org) inspired API.
 
+_👉 Try the [**live demo**](http://whisk.rs/)!_
 
-*whiskers* is a [Processing](https://processing.org)-like interactive sketch environment and API built over [*vsvg*](../vsvg/README.md) and [*vsvg-viewer*](../vsvg-viewer/README.md). It's similar to *vsketch*, but faster, web-ready, and with much stronger foundations.
+It's similar to [vsketch](https://github.com/abey79/vsketch), but faster, web-ready, and with [*vsvg*](../vsvg/README.md) as a much stronger foundation.
 
 <img width="1062" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/57ea7a5e-1c46-4a86-8155-2b0a217e6817">
 
@@ -48,6 +49,7 @@ impl App for HelloWorldSketch {
         sketch.color(Color::DARK_RED).stroke_width(3.0);
 
         // the `Sketch` API is a delight to work with
+        // this is where the drawing happens:
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)
             .rect(0., 0., self.width, self.height);
@@ -67,34 +69,35 @@ This is the result:
 
 <img width="985" alt="image" src="https://github.com/abey79/vsvg/assets/49431240/2a7f8cac-0206-44c6-b471-296f1487fc26">
 
-
-*whiskers* is part of the [*vsvg* project](https://github.com/abey79/vsvg).
-
 ## Features
 
-- [x] Interactive UI automatically built based on the sketch `struct`'s fields.
-- [x] Sketch parameter UI highly customisable using `#[param(...)]` attributes (see e.g. `asteroid` example).
-- [x] Sketch parameter UI easily extendable for custom data types (see e.g. `custom_ui` example).
-- [x] Page size management UI.
+*whiskers* is a work in progress, but currently features:
+
+- [x] Interactive and highly customisable interactive UI.
 - [x] Export to SVG.
-- [x] Support for curves (including quadratic Béziers, cubic Bézier, Catmull-Rom splines—circles, ellipses and arcs are supported but internally converted to cubic Bézier).
-- [x] Time parameter management UI (for animated sketches).
+- [x] Drawing with lines, shapes, svg paths.
+- [x] Support for curves: quadratic Béziers, cubic Bézier, Catmull-Rom splines—circles. (Ellipses and arcs are supported but internally converted to cubic Bézier.)
+- [x] Transformations such as translations, rotations, scaling.
+- [x] Pen settings such as line width, color, opacity, layers.
+- [x] Grid helpers for rectangular or hexagonal grid based sketches.
+- [x] Animated sketches support.
 - [x] Random Number Generator UI with seed control (see e.g. `asteroid` example).
 - [x] Integrated profiler (based on [puffin](https://github.com/EmbarkStudios/puffin)).
-- [x] `Grid` helper for grid-based sketches.
-- [x] `HexGrid` helper for hexagonal-grid-based sketches
+- [x] Web assembly compatibility, export your sketch UI for browsers ([demo](http://whisk.rs/))
+- [x] Support for inspect variables in the UI (such as randomly generated features of the artwork or debug values)
 - [ ] Configuration handling (save/restore config, etc.).
 - [ ] Compiled sketches are *also* a flexible CLI utility with the capability to batch generate sketch outputs with parameter ranges.
 - [ ] Export to other format through templating (HPGL, g-code, etc. — for now, please use [*vpype*](https://github.com/abey79/vpype)).
 - [ ] ... (*please complete this list*)
 
+On top of all that, you can import other rust packages for features such as noise and boolean operations, for which you can use `noise-rs` and `geo` respectively (see examples `noise` and `astroids`).
 
 ## Isn't that *vsketch*?
 
 Compared to [*vsketch*](https://github.com/abey79/vsketch), *whiskers* offers the following advantages:
 
 - It's in Rust, so it's faaast! 🚀
-- Sketches can be compiled to WebAssembly and published on the Web (try it [here](https://bylr.info/vsvg/)).
+- Sketches can be compiled to WebAssembly and published on the Web (try it [here](http://whisk.rs/)).
 - It's built on a stack (mainly [egui](https://egui.rs) and [wgpu](https://wgpu.rs)) that's *much* faster and easier to work with.
 
 On the other hand:
@@ -139,3 +142,7 @@ fn main() -> Result {
 ```
 
 If the `viewer` feature of *whiskers is enabled (which it is by default), the sketch can be displayed using the basic viewer using `sketch.show()`.
+
+## Call to action
+
+This project is at an early the stage and needs your contribution. Please get in touch via [discussions on GitHub](https://github.com/abey79/vsvg/discussions) or the [DrawingBots’s Discord server](https://discord.com/invite/XHP3dBg) if you feel like helping!

@@ -6,6 +6,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
+mod angle;
 mod catmull_rom;
 mod color;
 mod crop;
@@ -27,10 +28,9 @@ mod unit;
 #[cfg(feature = "whiskers-widgets")]
 pub mod widgets;
 
-pub use crate::svg::*;
-pub use color::*;
-
+pub use angle::*;
 pub use catmull_rom::*;
+pub use color::*;
 pub use crop::*;
 pub use document::*;
 pub use layer::*;
@@ -41,22 +41,28 @@ pub use page_size::*;
 pub use path::*;
 pub use path_index::*;
 pub use stats::*;
+pub use svg::*;
 pub use traits::*;
 pub use unit::*;
 
-// re-export for the `trace` macro
-#[cfg(feature = "puffin")]
-pub use puffin;
-
-// re-export
-#[cfg(feature = "geo")]
-pub use ::geo;
+/// Export of core dependencies.
+pub mod exports {
+    #[cfg(feature = "egui")]
+    pub use ::egui;
+    #[cfg(feature = "geo")]
+    pub use ::geo;
+    pub use ::kurbo;
+    #[cfg(feature = "puffin")]
+    pub use ::puffin;
+    pub use ::serde;
+    pub use ::usvg;
+}
 
 #[macro_export]
 macro_rules! trace_function {
     () => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_function!();
+        $crate::exports::puffin::profile_function!();
     };
 }
 
@@ -64,10 +70,10 @@ macro_rules! trace_function {
 macro_rules! trace_scope {
     ($id:expr) => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_scope!($id);
+        $crate::exports::puffin::profile_scope!($id);
     };
     ($id:expr, $data:expr) => {
         #[cfg(feature = "puffin")]
-        $crate::puffin::profile_scope!($id, $data);
+        $crate::exports::puffin::profile_scope!($id, $data);
     };
 }

@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use vsvg::DocumentTrait;
+use vsvg::{Document, DocumentTrait};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{Blob, BlobPropertyBag, Url};
 use whiskers_widgets::collapsing_header;
@@ -26,7 +26,12 @@ impl Default for SaveUI {
 }
 
 impl SaveUI {
-    pub(super) fn ui(&mut self, ui: &mut egui::Ui, document: Option<Arc<vsvg::Document>>) {
+    pub(super) fn ui(
+        &mut self,
+        ui: &mut egui::Ui,
+        document: Option<Arc<vsvg::Document>>,
+        optimize_fn: impl FnOnce(&mut Document),
+    ) {
         collapsing_header(ui, "Save", "", true, |ui| {
             ui.spacing_mut().text_edit_width = 250.0;
 
@@ -45,7 +50,10 @@ impl SaveUI {
                             .clicked()
                         {
                             if let Some(document) = document {
-                                let res = save_and_download(&self.base_name, document.as_ref());
+                                let mut document = (*document).clone();
+                                optimize_fn(&mut document);
+
+                                let res = save_and_download(&self.base_name, &document);
                                 self.last_error = Some(res);
                             }
                         }

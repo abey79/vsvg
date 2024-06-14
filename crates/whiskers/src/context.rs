@@ -1,10 +1,13 @@
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
-use std::ops::Range;
+use rand_distr::{Distribution, WeightedAliasIndex};
+use std::{fmt::Debug, ops::Range};
 use vsvg::Point;
 
+use crate::runner::InspectVariables;
+
 /// Context passed to [`crate::App::update`].
-pub struct Context {
+pub struct Context<'a> {
     /// Random number generator pre-seeded by the UI.
     pub rng: rand_chacha::ChaCha8Rng,
 
@@ -13,9 +16,12 @@ pub struct Context {
 
     /// The loop time value controlled by the UI.
     pub loop_time: f64,
+
+    /// Debug options instance for adding debug parameters
+    pub inspect_variables: &'a mut InspectVariables,
 }
 
-impl Context {
+impl<'a> Context<'a> {
     /// Time parameter, normalized by the loop time.
     ///
     /// Always returns 0.0 if the loop time is set to 0.0.
@@ -42,12 +48,29 @@ impl Context {
         self.rng.gen_bool(0.5)
     }
 
+    /// Helper function to generate a random boolean value with a given probability of being true
+    pub fn rng_weighted_bool(&mut self, prob_true: f64) -> bool {
+        self.rng.gen_bool(prob_true)
+    }
+
+    /// Helper function to generate a random boolean value with a probability of being true given by the `num`/`denom`
+    /// ratio.
+    ///
+    /// This function always returns `false` if `denom` is 0.
+    pub fn rng_ratio_bool(&mut self, num: u32, denom: u32) -> bool {
+        if denom == 0 {
+            false
+        } else {
+            self.rng.gen_ratio(num, denom)
+        }
+    }
+
     /// Helper function to return a random item from a slice
     ///
     /// # Panics
     ///
     /// Panics if the slice is empty.
-    pub fn rng_choice<'a, T>(&mut self, choices: &'a impl AsRef<[T]>) -> &'a T {
+    pub fn rng_choice<'b, T>(&mut self, choices: &'b impl AsRef<[T]>) -> &'b T {
         let index = self.rng_range(Range {
             start: 0usize,
             end: choices.as_ref().len(),
@@ -56,11 +79,30 @@ impl Context {
         choices.as_ref().get(index).unwrap()
     }
 
+    /// Helper function to return a random item from a slice
+    /// of tuples with a probability weight and an item.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the slice is empty
+    pub fn rng_weighted_choice<'b, T>(&mut self, choices: &'b impl AsRef<[(f64, T)]>) -> &'b T {
+        let weights: Vec<f64> = choices.as_ref().iter().map(|choice| choice.0).collect();
+        let dist = WeightedAliasIndex::new(weights).unwrap();
+
+        &choices.as_ref().get(dist.sample(&mut self.rng)).unwrap().1
+    }
+
     /// Helper function to return a random vsvg Point
     pub fn rng_point(&mut self, x_range: Range<f64>, y_range: Range<f64>) -> Point {
         let x = self.rng_range(x_range);
         let y = self.rng_range(y_range);
 
         Point::new(x, y)
+    }
+
+    /// Helper function to display an inspect parameter in the inspect variables UI
+    pub fn inspect(&mut self, key: impl AsRef<str>, value: impl Debug) {
+        self.inspect_variables
+            .add_parameter(&(key.as_ref().to_owned(), format!("{value:?}")));
     }
 }

@@ -19,7 +19,15 @@ pub use viewer::Viewer;
 
 pub use crate::document_widget::DocumentWidget;
 
+/// Export of core dependencies in addition to what vsvg already re-exports.
+pub mod exports {
+    pub use ::eframe;
+    pub use ::egui;
+    pub use ::wgpu;
+}
+
 /// Viewer app for [`show()`] and [`show_tolerance()`].
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 struct ShowViewerApp {
     document: Arc<vsvg::Document>,
     tolerance: f64,

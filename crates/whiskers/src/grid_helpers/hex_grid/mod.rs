@@ -77,7 +77,8 @@ impl HexGrid {
     /// Overrides grid's current horizontal and vertical spacing values.
     /// By default, grid instance will have zero spacing on both axes.
     #[must_use]
-    pub fn spacing(mut self, value: f64) -> Self {
+    pub fn spacing(mut self, value: impl Into<f64>) -> Self {
+        let value = value.into();
         let triangle_h = 0.5 * 3.0_f64.sqrt();
         self.gutter = match self.orientation {
             Orientation::Flat => [value * triangle_h, value],
@@ -88,22 +89,22 @@ impl HexGrid {
 
     /// Overrides grid's current horizontal spacing value.
     #[must_use]
-    pub fn horizontal_spacing(mut self, value: f64) -> Self {
-        self.gutter[0] = value;
+    pub fn horizontal_spacing(mut self, value: impl Into<f64>) -> Self {
+        self.gutter[0] = value.into();
         self
     }
 
     /// Overrides grid's current vertical spacing value.
     #[must_use]
-    pub fn vertical_spacing(mut self, value: f64) -> Self {
-        self.gutter[1] = value;
+    pub fn vertical_spacing(mut self, value: impl Into<f64>) -> Self {
+        self.gutter[1] = value.into();
         self
     }
 
     /// Overrides grid's current cell size (the radius of hexagon's outer circle)
     #[must_use]
-    pub fn cell_size(mut self, value: f64) -> Self {
-        self.cell_size = value;
+    pub fn cell_size(mut self, value: impl Into<f64>) -> Self {
+        self.cell_size = value.into();
         self
     }
 

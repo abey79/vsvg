@@ -2,7 +2,7 @@
 name = "vsvg"
 description = "Core library for pen-plotter graphics."
 authors = ["Antoine Beyeler"]
-version = "0.4.0-alpha.0"
+version = "0.5.0-alpha.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
@@ -12,26 +12,27 @@ categories = ["graphics", "visualization"]
 
 [dependencies]
 anyhow.workspace = true
-arrayvec = "0.7.2"
-base64 = "0.21.4"
-bitvec = "1.0.1"
-indexmap = { version = "2.0.2", features = ["rayon"] }
-kdtree = "0.7.0"
+arrayvec.workspace = true
+base64.workspace = true
+bitvec.workspace = true
+indexmap = { workspace = true, features = ["rayon"] }
+kdtree.workspace = true
 kurbo.workspace = true
-lazy_static = "1.4.0"
+lazy_static.workspace = true
 log.workspace = true
-lyon_geom = "1.0.4"
+lyon_geom.workspace = true
 num-traits.workspace = true
 puffin = { workspace = true, optional = true }
-quick-xml = "0.30.0"
+quick-xml.workspace = true
+rand.workspace = true
 rayon.workspace = true
-regex = "1.7.1"
+regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-svg = "0.14.0"
+svg.workspace = true
 thiserror.workspace = true
-time = { version = "0.3.20", features = ["formatting"] }
-usvg = "0.35.0"
+time = { workspace = true, features = ["formatting"] }
+usvg.workspace = true
 
 # optional support for whiskers widgets
 whiskers-widgets = { workspace = true, optional = true }
@@ -39,11 +40,10 @@ egui = { workspace = true, optional = true }
 
 # optional dependencies, mainly for Point interop.
 geo = { workspace = true, optional = true }
-glam = { version = "0", optional = true }
+glam = { workspace = true, optional = true }
 
 [dev-dependencies]
-approx = "0.5.1"
-rand.workspace = true
+approx.workspace = true
 rand_chacha.workspace = true
 getrandom.workspace = true
 

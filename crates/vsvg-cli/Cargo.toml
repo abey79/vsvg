@@ -2,7 +2,7 @@
 name = "vsvg-cli"
 description = "An experimental CLI SVG manipulation and viewer tool for plotter users."
 authors = ["Antoine Beyeler"]
-version = "0.4.0-alpha.0"
+version = "0.5.0-alpha.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
@@ -27,14 +27,14 @@ vsvg = { workspace = true, features = ["egui"] }
 vsvg-viewer.workspace = true
 
 clap = { workspace = true, features = ["cargo"] }
-dhat = { version = "0.3.2", optional = true } # for heap profiling
+dhat = { workspace = true,  optional = true } # for heap profiling
 eframe.workspace = true
 egui.workspace = true
 kurbo.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 serde.workspace = true
-tracing-subscriber = "0.3.16"
+tracing-subscriber.workspace = true
 
 
 # for dhat-heap!!

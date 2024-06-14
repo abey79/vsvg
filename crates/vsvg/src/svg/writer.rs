@@ -156,7 +156,7 @@ pub(crate) fn document_to_svg_doc<
 
     if let Some(source) = document.metadata().source.as_ref() {
         let mut dc_source = svg::node::element::Element::new("dc:source");
-        dc_source.append(svg::node::Text::new(source));
+        dc_source.append(svg::node::Text::new(quick_xml::escape::escape(source)));
         cc.append(dc_source);
     }
     let mut rdf = svg::node::element::Element::new("rdf:RDF");
@@ -196,5 +196,15 @@ mod tests {
         let svg = doc.to_svg_string().unwrap();
 
         assert!(svg.contains("path d=\"M10,0 L20,0\""));
+    }
+
+    #[test]
+    fn test_svg_source_escale() {
+        let mut doc = Document::default();
+        doc.metadata_mut().source = Some("<hello>".to_owned());
+
+        let svg = doc.to_svg_string().unwrap();
+        assert!(svg.contains("&lt;hello&gt;"));
+        assert!(!svg.contains("<hello>"));
     }
 }

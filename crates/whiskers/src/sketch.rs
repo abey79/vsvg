@@ -1,4 +1,3 @@
-//!
 use kurbo::Affine;
 use vsvg::{
     Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path, PathMetadata,
@@ -24,7 +23,7 @@ use vsvg::{
 /// In addition to the basic, primitive draw calls, the [`vsvg::Draw`] trait also provides a more
 /// flexible [`vsvg::Draw::add_path`] function that accepts any type which implements the
 /// [`IntoBezPathTolerance`] trait. This currently includes many types from the [`::kurbo`] and
-/// [`vsvg::geo`] crates.
+/// [`vsvg::exports::geo`] crates.
 ///
 /// # Transformations
 ///
@@ -93,7 +92,7 @@ use vsvg::{
 ///         .scale(2.0 * Unit::Cm)
 ///         .translate(10.0, 10.0)
 ///         .circle(0.0, 0.0, 3.0)
-///         .rotate_deg(45.0)
+///         .rotate(Angle::from_deg(45.0))
 ///         .rect(0.0, 0.0, 6.5, 0.5)
 ///         .show()?
 ///         .save("circle.svg")?;

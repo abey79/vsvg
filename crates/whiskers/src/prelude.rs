@@ -3,7 +3,8 @@ pub use crate::{
     LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp,
 };
 pub use vsvg::{
-    Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms, Unit,
+    Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms,
+    Unit,
 };
 pub use whiskers_widgets;
 pub use whiskers_widgets::Widget as _;
@@ -17,6 +18,7 @@ pub use ::serde;
 pub use anyhow;
 pub use egui;
 pub use rand::prelude::*;
+pub use vsvg::exports::kurbo;
 pub use vsvg_viewer;
 
 #[cfg(target_arch = "wasm32")]

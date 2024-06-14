@@ -110,12 +110,12 @@ pub trait Draw {
         y: impl Into<f64>,
         rx: impl Into<f64>,
         ry: impl Into<f64>,
-        x_rot: f64,
+        x_rot: impl Into<f64>,
     ) -> &mut Self {
         self.add_path(kurbo::Ellipse::new(
             (x.into(), y.into()),
             (rx.into(), ry.into()),
-            x_rot,
+            x_rot.into(),
         ))
     }
 

@@ -2,7 +2,7 @@
 name = "whiskers-derive"
 description = "Procedural macro crate for whiskers."
 authors = ["Antoine Beyeler"]
-version = "0.4.0-alpha.0"
+version = "0.5.0-alpha.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
@@ -13,7 +13,7 @@ license = "MIT"
 proc-macro = true
 
 [dependencies]
-syn = { version = "2.0.37", features = ["full", "visit-mut"] }
-quote = "1.0.33"
-proc-macro2 = "1.0.67"
+syn = { workspace = true, features = ["full", "visit-mut"] }
+quote.workspace = true
+proc-macro2.workspace = true
 convert_case.workspace = true
