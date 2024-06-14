@@ -103,11 +103,13 @@ mod bool;
 mod numeric;
 mod string;
 mod ui;
+mod vec;
 
 pub use bool::*;
 pub use numeric::*;
 pub use string::*;
 pub use ui::*;
+pub use vec::*;
 
 // reexport whiskers-derive macros
 pub use whiskers_derive::{sketch_app, sketch_widget, Sketch, Widget};
