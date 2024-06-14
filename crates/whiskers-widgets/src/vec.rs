@@ -6,7 +6,7 @@ pub struct VecWidget<T>
 where
     T: WidgetMapper<T> + Default,
 {
-    inner: <T as WidgetMapper<T>>::Type,
+    inner: T::Type,
 }
 
 impl<T> VecWidget<T>

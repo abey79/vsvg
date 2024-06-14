@@ -155,7 +155,7 @@ pub trait Widget<T> {
 /// Do not implement this trait manually, instead use the [`crate::register_widget_ui!`] macro.
 pub trait WidgetMapper<T> {
     /// [`Widget`] type associated with the sketch parameter type `T`.
-    type Type: Widget<T> + Default;
+    type Type: Widget<T>;
 }
 
 /// Registers a given [`Widget`] type for given sketch parameter type.
