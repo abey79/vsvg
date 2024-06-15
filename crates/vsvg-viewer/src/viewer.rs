@@ -2,8 +2,9 @@ use crate::frame_history::FrameHistory;
 use eframe::Frame;
 use egui::{Color32, Ui};
 
-use crate::document_widget::DocumentWidget;
-use crate::ViewerApp;
+#[cfg(puffin)]
+use crate::profiler::Profiler;
+use crate::{document_widget::DocumentWidget, ViewerApp};
 
 const VSVG_VIEWER_STATE_STORAGE_KEY: &str = "vsvg-viewer-state";
 const VSVG_VIEWER_ANTIALIAS_STORAGE_KEY: &str = "vsvg-viewer-aa";
@@ -33,6 +34,9 @@ pub struct Viewer {
     frame_history: FrameHistory,
 
     viewer_app: Box<dyn ViewerApp>,
+
+    #[cfg(puffin)]
+    profiler: crate::profiler::Profiler,
 }
 
 impl Viewer {
@@ -65,6 +69,8 @@ impl Viewer {
             document_widget,
             frame_history: FrameHistory::default(),
             viewer_app,
+            #[cfg(puffin)]
+            profiler: Profiler::default(),
         })
     }
 
@@ -93,9 +99,9 @@ impl Viewer {
                 ui.close_menu();
             }
 
-            #[cfg(feature = "puffin")]
+            #[cfg(puffin)]
             if ui.button("Show profiler window").clicked() {
-                puffin::set_scopes_on(true);
+                self.profiler.start();
                 ui.close_menu();
             }
 
@@ -151,7 +157,6 @@ impl eframe::App for Viewer {
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
         #[cfg(feature = "puffin")]
         {
-            puffin_egui::show_viewport_if_enabled(ctx);
             puffin::GlobalProfiler::lock().new_frame();
         }
 
