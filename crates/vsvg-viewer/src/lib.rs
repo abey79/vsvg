@@ -8,6 +8,8 @@ mod document_widget;
 mod engine;
 mod frame_history;
 mod painters;
+#[cfg(puffin)]
+mod profiler;
 mod render_data;
 pub mod viewer;
 #[cfg(target_arch = "wasm32")]

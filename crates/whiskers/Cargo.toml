@@ -31,8 +31,8 @@ web-time.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rfd = { workspace = true, default_features = false, features = [
-    "async-std",
-    "xdg-portal",
+  "async-std",
+  "xdg-portal",
 ] }
 open.workspace = true
 
@@ -44,14 +44,14 @@ js-sys.workspace = true
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
 workspace = true
 features = [
-    "Blob",
-    "BlobPropertyBag",
-    "console",
-    "Document",
-    "Element",
-    "HtmlElement",
-    "Url",
-    "Window",
+  "Blob",
+  "BlobPropertyBag",
+  "console",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "Url",
+  "Window",
 ]
 
 # for examples
@@ -67,6 +67,6 @@ voronoice.workspace = true
 geos.workspace = true
 
 [features]
-default = ["viewer"]
+default = ["viewer", "puffin"]
 viewer = ["dep:vsvg-viewer"]
 puffin = ["vsvg/puffin", "vsvg-viewer/puffin"]
