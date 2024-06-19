@@ -111,6 +111,7 @@ pub(crate) fn preprocess_inkscape_layer(xml: &str) -> Result<String, InkscapeExt
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     loop {
         match reader.read_event() {
+            // handle groups
             Ok(Event::Start(e)) if e.name().as_ref() == b"g" => {
                 let mut elem = BytesStart::new("g");
                 let mut group_info = GroupInfo::default();
@@ -141,7 +142,6 @@ pub(crate) fn preprocess_inkscape_layer(xml: &str) -> Result<String, InkscapeExt
                 writer.write_event(Event::Start(elem))?;
             }
             Ok(Event::Eof) => break,
-            // we can either move or borrow the event to write, depending on your use-case
             Ok(e) => writer.write_event(e)?,
             Err(e) => return Err(e.into()),
         }

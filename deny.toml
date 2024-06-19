@@ -103,18 +103,19 @@ unlicensed = "deny"
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
     "Apache-2.0 WITH LLVM-exception", # https://spdx.org/licenses/LLVM-exception.html
-    "Apache-2.0",                     # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
-    "BSD-2-Clause",                   # https://tldrlegal.com/license/bsd-2-clause-license-(freebsd)
-    "BSD-3-Clause",                   # https://tldrlegal.com/license/bsd-3-clause-license-(revised)
-    "BSL-1.0",                        # https://tldrlegal.com/license/boost-software-license-1.0-explained
-    "CC0-1.0",                        # https://creativecommons.org/publicdomain/zero/1.0/
-    "ISC",                            # https://tldrlegal.com/license/-isc-license
-    "LicenseRef-UFL-1.0",             # https://tldrlegal.com/license/ubuntu-font-license,-1.0 - no official SPDX, see https://github.com/emilk/egui/issues/2321
-    "MIT",                            # https://tldrlegal.com/license/mit-license
-    "MPL-2.0",                        # https://www.mozilla.org/en-US/MPL/2.0/FAQ/ - see Q11. Used by webpki-roots on Linux.
-    "OFL-1.1",                        # https://spdx.org/licenses/OFL-1.1.html
-    "Unicode-DFS-2016",               # https://spdx.org/licenses/Unicode-DFS-2016.html
-    "Zlib",                           # https://tldrlegal.com/license/zlib-libpng-license-(zlib)
+    "Apache-2.0", # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
+    "BSD-2-Clause", # https://tldrlegal.com/license/bsd-2-clause-license-(freebsd)
+    "BSD-3-Clause", # https://tldrlegal.com/license/bsd-3-clause-license-(revised)
+    "BSL-1.0", # https://tldrlegal.com/license/boost-software-license-1.0-explained
+    "CC0-1.0", # https://creativecommons.org/publicdomain/zero/1.0/
+    "ISC", # https://tldrlegal.com/license/-isc-license
+    "LicenseRef-UFL-1.0", # https://tldrlegal.com/license/ubuntu-font-license,-1.0 - no official SPDX, see https://github.com/emilk/egui/issues/2321
+    "MIT", # https://tldrlegal.com/license/mit-license
+    "MPL-2.0", # https://www.mozilla.org/en-US/MPL/2.0/FAQ/ - see Q11. Used by webpki-roots on Linux.
+    "OFL-1.1", # https://spdx.org/licenses/OFL-1.1.html
+    "Unicode-3.0",
+    "Unicode-DFS-2016", # https://spdx.org/licenses/Unicode-DFS-2016.html
+    "Zlib", # https://tldrlegal.com/license/zlib-libpng-license-(zlib)
 ]
 # List of explicitly disallowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
@@ -148,26 +149,6 @@ exceptions = [
     # list
     #{ allow = ["Zlib"], name = "adler32", version = "*" },
 ]
-
-# Some crates don't have (easily) machine readable licensing information,
-# adding a clarification entry for it allows you to manually specify the
-# licensing information
-#[[licenses.clarify]]
-# The name of the crate the clarification applies to
-#name = "ring"
-# The optional version constraint for the crate
-#version = "*"
-# The SPDX expression for the license requirements of the crate
-#expression = "MIT AND ISC AND OpenSSL"
-# One or more files in the crate's source used as the "source of truth" for
-# the license expression. If the contents match, the clarification will be used
-# when running the license check, otherwise the clarification will be ignored
-# and the crate will be checked normally, which may produce warnings or errors
-# depending on the rest of your configuration
-#license-files = [
-    # Each entry is a crate relative path, and the (opaque) hash of its contents
-    #{ path = "LICENSE", hash = 0xbd0eed23 }
-#]
 
 [licenses.private]
 # If true, ignores workspace crates that aren't published, or are only
@@ -253,10 +234,9 @@ skip = [
 skip-tree = [
     #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
     { name = "egui-winit" },
-    { name = "voronoice" },  # dev dep only, 2y-old
-    { name = "svgtypes" },   # until kurbo is updated
-    { name = "geo" },        # dev dep only
-    { name = "criterion" },  # old itertools
+    { name = "voronoice" }, # dev dep only, 2y-old
+    { name = "geo" }, # dev dep only
+    { name = "roxmltree" }, # double dependency within usvg 0.42.0, hopefully fixed by next version
 ]
 
 # This section is considered when running `cargo deny check sources`.
