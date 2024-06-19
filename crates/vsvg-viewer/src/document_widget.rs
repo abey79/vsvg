@@ -1,6 +1,6 @@
 use crate::engine::{DisplayMode, DisplayOptions, Engine, ViewerOptions};
 use eframe::egui_wgpu;
-use eframe::egui_wgpu::CallbackResources;
+use eframe::egui_wgpu::{CallbackResources, ScreenDescriptor};
 use eframe::epaint::PaintCallbackInfo;
 use egui::{Pos2, Rect, Sense, Ui};
 use std::sync::{Arc, Mutex};
@@ -137,7 +137,7 @@ impl DocumentWidget {
         self.offset -= response.drag_delta() / self.scale;
         if let Some(mut pos) = response.hover_pos() {
             response.ctx.input(|i| {
-                self.offset -= i.scroll_delta / self.scale;
+                self.offset -= i.raw_scroll_delta / self.scale;
                 self.scale *= i.zoom_delta();
             });
 
@@ -409,6 +409,7 @@ impl egui_wgpu::CallbackTrait for DocumentWidgetCallback {
         &self,
         device: &Device,
         queue: &Queue,
+        _screen_descriptor: &ScreenDescriptor,
         _egui_encoder: &mut CommandEncoder,
         callback_resources: &mut CallbackResources,
     ) -> Vec<CommandBuffer> {

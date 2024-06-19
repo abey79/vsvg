@@ -140,10 +140,6 @@ impl Viewer {
             )
             .on_hover_text("Show an overlay on all interactive widgets")
             .changed();
-        any_clicked |= ui
-            .checkbox(&mut debug.show_blocking_widget, "Show blocking widgets")
-            .on_hover_text("Show what widget blocks the interaction of another widget")
-            .changed();
 
         if any_clicked {
             let mut style = (*ui.ctx().style()).clone();
@@ -190,7 +186,7 @@ impl eframe::App for Viewer {
             .expect("ViewerApp failed!!!");
 
         let panel_frame = egui::Frame::central_panel(&ctx.style())
-            .inner_margin(egui::style::Margin::same(0.))
+            .inner_margin(egui::Margin::same(0.))
             .fill(Color32::from_rgb(242, 242, 242));
 
         egui::CentralPanel::default()

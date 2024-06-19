@@ -28,7 +28,7 @@ clap = "4.4.12"
 convert_case = "0.6.0"
 criterion = "0.5.1"
 dhat = "0.3.2"  # for heap profiling
-eframe = { version = "0.25", default-features = false, features = [
+eframe = { version = "0.27.2", default-features = false, features = [
   "accesskit",
   "default_fonts",
   "persistence",
@@ -36,7 +36,7 @@ eframe = { version = "0.25", default-features = false, features = [
   "wayland",
   "x11",
 ] }
-egui = "0.25.0"
+egui = "0.27.2"
 env_logger = "0.10.0"
 geo = "0.27"  # for point interop only
 geos = "8.3"
@@ -79,7 +79,7 @@ wasm-bindgen = "0.2.92" # sync with CI!!
 wasm-bindgen-futures = "0.4.42"
 web-time = "0.2"  # sync with egui-winit
 web-sys = "0.3.64"
-wgpu = { version = "0.18", default-features = false, features = ["webgl"] } # sync with egui-wgpu
+wgpu = { version = "0.19.1", default-features = false, features = ["webgl"] } # sync with egui-wgpu
 winit = "0.29" # sync with egui-winit
 
 # Config for 'cargo dist'
