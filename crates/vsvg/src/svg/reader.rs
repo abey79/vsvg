@@ -7,7 +7,7 @@ use kurbo::{BezPath, PathEl};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::{error::Error, fs, path};
-use usvg::{tiny_skia_path::PathSegment, Transform, Tree, TreeParsing, TreePostProc};
+use usvg::{tiny_skia_path::PathSegment, Tree};
 
 impl IntoBezPath for usvg::tiny_skia_path::Path {
     fn into_bezpath(self) -> BezPath {
@@ -29,10 +29,9 @@ impl IntoBezPath for usvg::tiny_skia_path::Path {
 
 impl Path {
     #[must_use]
-    fn from_usvg(svg_path: &usvg::Path, viewbox_transform: &Transform) -> Self {
-        let mut skia_path = (*svg_path.data).clone();
-        skia_path = skia_path.transform(svg_path.abs_transform).unwrap();
-        skia_path = skia_path.transform(*viewbox_transform).unwrap();
+    fn from_usvg(svg_path: &usvg::Path) -> Self {
+        let mut skia_path = (*svg_path.data()).clone();
+        skia_path = skia_path.transform(svg_path.abs_transform()).unwrap();
 
         let mut res = Self {
             data: skia_path.into_bezpath(),
@@ -40,29 +39,29 @@ impl Path {
         };
 
         // extract metadata
-        if let Some(stroke) = &svg_path.stroke {
-            if let usvg::Paint::Color(c) = stroke.paint {
+        if let Some(stroke) = &svg_path.stroke() {
+            if let usvg::Paint::Color(c) = stroke.paint() {
                 res.metadata_mut().color = Color {
                     r: c.red,
                     g: c.green,
                     b: c.blue,
-                    a: stroke.opacity.to_u8(),
+                    a: stroke.opacity().to_u8(),
                 };
             }
-            res.metadata_mut().stroke_width = f64::from(stroke.width.get());
+            res.metadata_mut().stroke_width = f64::from(stroke.width().get());
         }
 
         res
     }
 }
 
-fn parse_group(group: &usvg::Group, layer: &mut Layer, viewbox_transform: &Transform) {
-    group.children.iter().for_each(|node| match node {
+fn parse_group(group: &usvg::Group, layer: &mut Layer) {
+    group.children().iter().for_each(|node| match node {
         usvg::Node::Path(path) => {
-            layer.paths.push(Path::from_usvg(path, viewbox_transform));
+            layer.paths.push(Path::from_usvg(path));
         }
         usvg::Node::Group(group) => {
-            parse_group(group, layer, viewbox_transform);
+            parse_group(group, layer);
         }
         _ => {}
     });
@@ -128,7 +127,7 @@ impl Document {
     pub fn from_string(svg: &str, single_layer: bool) -> Result<Self, Box<dyn Error>> {
         let preprocessed_svg;
 
-        let mut tree = Tree::from_str(
+        let tree = Tree::from_str(
             if single_layer {
                 svg
             } else {
@@ -138,25 +137,17 @@ impl Document {
             &usvg::Options::default(),
         )?;
 
-        // preprocess the tree (this propagate all transforms to path, but _not_ the viewPort
-        // transform
-        //TODO(#121): add an option to enable flattening text!
-        tree.postprocess(
-            usvg::PostProcessingSteps::default(),
-            &usvg::fontdb::Database::new(),
-        );
-
-        let viewbox_transform =
-            usvg::utils::view_box_to_transform(tree.view_box.rect, tree.view_box.aspect, tree.size);
-
         // add frame for the page
-        let (w, h) = (f64::from(tree.size.width()), f64::from(tree.size.height()));
+        let (w, h) = (
+            f64::from(tree.size().width()),
+            f64::from(tree.size().height()),
+        );
         let mut doc = Document::new_with_page_size(PageSize::new(w, h));
 
         if single_layer {
-            doc.load_tree(&tree, &viewbox_transform);
+            doc.load_tree(&tree);
         } else {
-            doc.load_tree_multilayer(&tree, &viewbox_transform);
+            doc.load_tree_multilayer(&tree);
         }
 
         doc.crop(0., 0., w, h);
@@ -164,15 +155,15 @@ impl Document {
     }
 
     /// Load a [Tree] into this document. All content is added to layer 0.
-    fn load_tree(&mut self, tree: &Tree, viewbox_transform: &Transform) {
+    fn load_tree(&mut self, tree: &Tree) {
         let layer = self.get_mut(0);
-        for child in &tree.root.children {
+        for child in tree.root().children() {
             match child {
                 usvg::Node::Group(group) => {
-                    parse_group(group, layer, viewbox_transform);
+                    parse_group(group, layer);
                 }
                 usvg::Node::Path(path) => {
-                    layer.paths.push(Path::from_usvg(path, viewbox_transform));
+                    layer.paths.push(Path::from_usvg(path));
                 }
                 _ => {}
             }
@@ -182,12 +173,27 @@ impl Document {
     /// Load a [Tree] into this document, splitting the content into multiple layers.
     ///
     /// See [`Document::from_string`] for more details on layer handling.
-    fn load_tree_multilayer(&mut self, tree: &Tree, viewbox_transform: &Transform) {
+    fn load_tree_multilayer(&mut self, tree: &Tree) {
         let mut top_level_index = 0;
-        for child in &tree.root.children {
+        let root_group = tree.root();
+
+        // Check if the top-level group is a virtual group created by usvg, for example to implement
+        // the `viewBox` transform. Due to the preprocessing step, no `<g>` from the input ever has
+        // an empty ID, so we can safely assume that an empty ID means this is a virtual group.
+        let group_to_parse = if let [usvg::Node::Group(group)] = root_group.children() {
+            if group.id().is_empty() {
+                group
+            } else {
+                root_group
+            }
+        } else {
+            root_group
+        };
+
+        for child in group_to_parse.children() {
             match child {
                 usvg::Node::Group(group_data) => {
-                    let group_info = GroupInfo::decode(&group_data.id);
+                    let group_info = GroupInfo::decode(group_data.id());
                     let layer_id;
                     let layer_name;
                     match group_info {
@@ -227,14 +233,12 @@ impl Document {
                     }
 
                     let layer = self.get_mut(layer_id.unwrap_or(top_level_index));
-                    parse_group(group_data, layer, viewbox_transform);
+                    parse_group(group_data, layer);
 
                     layer.metadata_mut().name = layer_name;
                 }
                 usvg::Node::Path(path) => {
-                    self.get_mut(0)
-                        .paths
-                        .push(Path::from_usvg(path, viewbox_transform));
+                    self.get_mut(0).paths.push(Path::from_usvg(path));
                 }
                 _ => {}
             }
