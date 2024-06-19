@@ -58,10 +58,10 @@ impl Path {
 fn parse_group(group: &usvg::Group, layer: &mut Layer) {
     group.children().iter().for_each(|node| match node {
         usvg::Node::Path(path) => {
-            layer.paths.push(Path::from_usvg(&path));
+            layer.paths.push(Path::from_usvg(path));
         }
         usvg::Node::Group(group) => {
-            parse_group(&group, layer);
+            parse_group(group, layer);
         }
         _ => {}
     });
@@ -160,10 +160,10 @@ impl Document {
         for child in tree.root().children() {
             match child {
                 usvg::Node::Group(group) => {
-                    parse_group(&group, layer);
+                    parse_group(group, layer);
                 }
                 usvg::Node::Path(path) => {
-                    layer.paths.push(Path::from_usvg(&path));
+                    layer.paths.push(Path::from_usvg(path));
                 }
                 _ => {}
             }
@@ -182,7 +182,7 @@ impl Document {
         // an empty ID, so we can safely assume that an empty ID means this is a virtual group.
         let group_to_parse = if let [usvg::Node::Group(group)] = root_group.children() {
             if group.id().is_empty() {
-                &group
+                group
             } else {
                 root_group
             }
@@ -193,7 +193,7 @@ impl Document {
         for child in group_to_parse.children() {
             match child {
                 usvg::Node::Group(group_data) => {
-                    let group_info = GroupInfo::decode(&group_data.id());
+                    let group_info = GroupInfo::decode(group_data.id());
                     let layer_id;
                     let layer_name;
                     match group_info {
@@ -233,12 +233,12 @@ impl Document {
                     }
 
                     let layer = self.get_mut(layer_id.unwrap_or(top_level_index));
-                    parse_group(&group_data, layer);
+                    parse_group(group_data, layer);
 
                     layer.metadata_mut().name = layer_name;
                 }
                 usvg::Node::Path(path) => {
-                    self.get_mut(0).paths.push(Path::from_usvg(&path));
+                    self.get_mut(0).paths.push(Path::from_usvg(path));
                 }
                 _ => {}
             }
