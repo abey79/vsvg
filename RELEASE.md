@@ -3,7 +3,7 @@
 - Create branch `release/0.x.y` and related PR, use "release" label
 - Update `CHANGELOG.md`, use "Unreleased" heading unless final release, copy-paste-edit from:
   ```
-  python scripts/changelog --commit-range v0.X-1.Y-1..HEAD
+  python scripts/changelog.py --commit-range v{$PREV}..HEAD
   ```
 - Bump version to `-rc.Z`:
   ```

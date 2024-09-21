@@ -1,3 +1,46 @@
+# Unreleased - The Way Overdue Release
+
+Released 2024-09-21
+
+## `whiskers` crates
+
+- Add `ctx.rng_{weighted|ratio}_bool()` helper functions [#124](https://github.com/abey79/vsvg/pull/124)
+- Add basic support for file optimization before export [#125](https://github.com/abey79/vsvg/pull/125)
+- Improve whiskers `README.md` [#131](https://github.com/abey79/vsvg/pull/131) (thanks [@hapiel](https://github.com/hapiel)!)
+- Add `kurbo` to whiskers' prelude [#133](https://github.com/abey79/vsvg/pull/133)
+- Improve `HexGrid` API to support `Length` parameters [#134](https://github.com/abey79/vsvg/pull/134)
+- Add "Inspect" section to display debug values [#132](https://github.com/abey79/vsvg/pull/132) (thanks [@afternoon2](https://github.com/afternoon2)!)
+- Add example of making dashed lines with `kurbo::dash` [#135](https://github.com/abey79/vsvg/pull/135)
+- Fix cloning the hex grid cell [#139](https://github.com/abey79/vsvg/pull/139) (thanks [@afternoon2](https://github.com/afternoon2)!)
+- Add support for `Vec<T>` sketch parameters [#141](https://github.com/abey79/vsvg/pull/141)
+
+
+## `vsvg` crate
+
+- **BREAKING:** Add `Angle` helper and improve related APIs [#140](https://github.com/abey79/vsvg/pull/140)
+- Update usvg to 0.42.0 [#145](https://github.com/abey79/vsvg/pull/145)
+
+
+## Common
+
+- Clean `Cargo.toml`s and update dependencies [#122](https://github.com/abey79/vsvg/pull/122)
+- Bump rust toolchain to 1.79.0 [#138](https://github.com/abey79/vsvg/pull/138), [#142](https://github.com/abey79/vsvg/pull/142)
+- Use external puffin viewer instead of integrating `puffin_egui` [#143](https://github.com/abey79/vsvg/pull/143)
+- Update egui to 0.27.2 [#144](https://github.com/abey79/vsvg/pull/144)
+
+
+## Web Demos
+
+- Update `wasm-bindgen` and sync version with CI [#137](https://github.com/abey79/vsvg/pull/137)
+
+
+## Contributors
+
+[<img src="https://wsrv.nl/?url=github.com/afternoon2.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="afternoon2" />](https://github.com/afternoon2) [<img src="https://wsrv.nl/?url=github.com/hapiel.png?w=64&h=64&mask=circle&fit=cover&maxage=1w" width="32" height="32" alt="hapiel" />](https://github.com/hapiel)
+
+**Full Changelog**: https://github.com/abey79/vsvg/compare/v0.4.0...HEAD
+
+
 # 0.4.0 - The Too Late for Genuary Release
 
 Released 2024-01-21
