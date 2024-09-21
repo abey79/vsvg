@@ -2632,7 +2632,7 @@ checksum = "9bec4598fddb13cc7b528819e697852653252b760f1228b7642679bf2ff2cd07"
 
 [[package]]
 name = "msvg"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "camino",
@@ -4415,7 +4415,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
@@ -4451,7 +4451,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg-cli"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "clap",
  "dhat",
@@ -4468,7 +4468,7 @@ dependencies = [
 
 [[package]]
 name = "vsvg-viewer"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4842,7 +4842,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "convert_case",
@@ -4875,7 +4875,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers-derive"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -4885,7 +4885,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers-web-demo"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "itertools 0.12.1",
  "whiskers",
@@ -4893,7 +4893,7 @@ dependencies = [
 
 [[package]]
 name = "whiskers-widgets"
-version = "0.5.0-rc.0"
+version = "0.5.0"
 dependencies = [
  "egui",
  "serde",
