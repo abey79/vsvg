@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "crates/*"
+    "crates/*"
 ]
 resolver = "2"
 
@@ -29,12 +29,12 @@ convert_case = "0.6.0"
 criterion = "0.5.1"
 dhat = "0.3.2"  # for heap profiling
 eframe = { version = "0.27.2", default-features = false, features = [
-  "accesskit",
-  "default_fonts",
-  "persistence",
-  "wgpu",
-  "wayland",
-  "x11",
+    "accesskit",
+    "default_fonts",
+    "persistence",
+    "wgpu",
+    "wayland",
+    "x11",
 ] }
 egui = "0.27.2"
 env_logger = "0.10.0"
@@ -75,7 +75,7 @@ time = "0.3.20"
 tracing-subscriber = "0.3.16"
 usvg = "0.42.0"
 voronoice = "0.2.0"
-wasm-bindgen = "0.2.92" # sync with CI!!
+wasm-bindgen = "0.2.93" # sync with CI!!
 wasm-bindgen-futures = "0.4.42"
 web-time = "0.2"  # sync with egui-winit
 web-sys = "0.3.64"
