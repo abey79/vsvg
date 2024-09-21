@@ -23,16 +23,17 @@
   - <https://docs.rs/vsvg-viewer/>
 - Finalise `CHANGELOG.md` with proper heading
 - Bump version to `0.X.0`, tag `v0.X.0` and push tag
+- Publish to <https://crates.io>
 - Check GH Release
-- Bump version to next alpha
 - Squash-merge the release PR, undelete the branch
+- Bump version to next alpha on `master`
 
 
 ## Patch release
 
 (WIP)
 
-- Cherry-pick commits on the release branch (starting from the tagged commit)
+- Cherry-pick commits on the release branch
 - Update CHANGELOG.md
 - (optional) RC
 - Bump version to `0.${X}.${Y}`, tag `v0.X.Y` and push tag
