@@ -1,18 +1,24 @@
-# Unreleased - The Way Overdue Release
+# 0.5.0 - The Way Overdue Release
 
 Released 2024-09-21
 
+## Highlights
+
+This release primarily focuses on a bunch of new `whiskers` features–see below. Here are my favorites:
+- You can now have `Vec<T>` sketch parameters. The corresponding UI will list items and let you add/remove elements. This works with arbitrary (supported) types, so you can have `Vec`s of complex `struct`/`enum` types, which can be really powerful! The new `dashed_lines` example uses this feature to define arbitrary dashed patterns.
+- You can use `ctx.inspect()` to display anything (which `impl Debug`) in a new "Inspect" section of the UI. Very convenient to visualize internal algorithm values!
+
 ## `whiskers` crates
 
-- Add `ctx.rng_{weighted|ratio}_bool()` helper functions [#124](https://github.com/abey79/vsvg/pull/124)
-- Add basic support for file optimization before export [#125](https://github.com/abey79/vsvg/pull/125)
-- Improve whiskers `README.md` [#131](https://github.com/abey79/vsvg/pull/131) (thanks [@hapiel](https://github.com/hapiel)!)
-- Add `kurbo` to whiskers' prelude [#133](https://github.com/abey79/vsvg/pull/133)
-- Improve `HexGrid` API to support `Length` parameters [#134](https://github.com/abey79/vsvg/pull/134)
-- Add "Inspect" section to display debug values [#132](https://github.com/abey79/vsvg/pull/132) (thanks [@afternoon2](https://github.com/afternoon2)!)
-- Add example of making dashed lines with `kurbo::dash` [#135](https://github.com/abey79/vsvg/pull/135)
-- Fix cloning the hex grid cell [#139](https://github.com/abey79/vsvg/pull/139) (thanks [@afternoon2](https://github.com/afternoon2)!)
 - Add support for `Vec<T>` sketch parameters [#141](https://github.com/abey79/vsvg/pull/141)
+- Improve `HexGrid` API to support `Length` parameters [#134](https://github.com/abey79/vsvg/pull/134)
+- Add `ctx.rng_{weighted|ratio}_bool()` helper functions [#124](https://github.com/abey79/vsvg/pull/124)
+- Add "Inspect" section to display debug values [#132](https://github.com/abey79/vsvg/pull/132) (thanks [@afternoon2](https://github.com/afternoon2)!)
+- Add basic support for file optimization before export [#125](https://github.com/abey79/vsvg/pull/125)
+- Add example of making dashed lines with `kurbo::dash` [#135](https://github.com/abey79/vsvg/pull/135)
+- Add `kurbo` to whiskers' prelude [#133](https://github.com/abey79/vsvg/pull/133)
+- Improve whiskers `README.md` [#131](https://github.com/abey79/vsvg/pull/131) (thanks [@hapiel](https://github.com/hapiel)!)
+- Fix cloning the hex grid cell [#139](https://github.com/abey79/vsvg/pull/139) (thanks [@afternoon2](https://github.com/afternoon2)!)
 
 
 ## `vsvg` crate
@@ -23,10 +29,10 @@ Released 2024-09-21
 
 ## Common
 
-- Clean `Cargo.toml`s and update dependencies [#122](https://github.com/abey79/vsvg/pull/122)
 - Bump rust toolchain to 1.79.0 [#138](https://github.com/abey79/vsvg/pull/138), [#142](https://github.com/abey79/vsvg/pull/142)
-- Use external puffin viewer instead of integrating `puffin_egui` [#143](https://github.com/abey79/vsvg/pull/143)
 - Update egui to 0.27.2 [#144](https://github.com/abey79/vsvg/pull/144)
+- Use external puffin viewer instead of integrating `puffin_egui` [#143](https://github.com/abey79/vsvg/pull/143)
+- Clean `Cargo.toml`s and update dependencies [#122](https://github.com/abey79/vsvg/pull/122)
 
 
 ## Web Demos
