@@ -2,7 +2,7 @@
 name = "vsvg"
 description = "Core library for pen-plotter graphics."
 authors = ["Antoine Beyeler"]
-version = "0.5.0-alpha.0"
+version = "0.5.0-rc.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"

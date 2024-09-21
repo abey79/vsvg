@@ -2,7 +2,7 @@
 name = "whiskers"
 authors = ["Antoine Beyeler"]
 description = "Processing-like, interactive sketching environment for plotter generative art."
-version = "0.5.0-alpha.0"
+version = "0.5.0-rc.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/abey79/vsvg"
