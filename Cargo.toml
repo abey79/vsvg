@@ -17,7 +17,7 @@ whiskers-widgets = { path = "crates/whiskers-widgets", version = "=0.6.0-alpha.0
 anyhow = "1"
 approx = "0.5.1"
 arrayvec = "0.7.2"
-base64 = "0.21.4"
+base64 = "0.22.1"
 bitvec = "1.0.1"
 bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
 bytemuck = "1.13.1"
@@ -37,20 +37,20 @@ eframe = { version = "0.27.2", default-features = false, features = [
     "x11",
 ] }
 egui = "0.27.2"
-env_logger = "0.10.0"
-geo = "0.27"  # for point interop only
-geos = "8.3"
+env_logger = "0.11.5"
+geo = "0.28.0"  # for point interop only
+geos = "9.0.0"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
 glam = "0"  # for point interop only
 indexmap = "2.0.2"
-itertools = "0.12.0"
+itertools = "0.13.0"
 js-sys = "0.3.64"
 kdtree = "0.7.0"
 kurbo = "0.11"
 lazy_static = "1.4.0"
 log = "0.4.20"
 lyon_geom = "1.0.4"
-noise = "0.8.2"
+noise = "0.9.0"
 num-traits = "0.2.17"
 pollster = "0.3.0"
 puffin = "0.19.0"
@@ -65,10 +65,10 @@ rand_distr = "0.4.3"
 rayon = "1.8.0"
 raw-window-handle = "0.5"  # sync with eframe
 regex = "1.7.1"
-rfd = { version = "0.13", default-features = false }
+rfd = { version = "0.15.0", default-features = false }
 serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1.0.107"
-svg = "0.15"
+svg = "0.17.0"
 syn = "2.0"
 thiserror = "1.0.49"
 time = "0.3.20"
