@@ -77,7 +77,7 @@ impl whiskers_widgets::Widget<crate::Length> for LengthWidget {
                 }
                 ui.add(slider).changed()
             } else {
-                let mut drag_value = egui::DragValue::new(&mut value.value).clamp_range(range);
+                let mut drag_value = egui::DragValue::new(&mut value.value).range(range);
                 if let Some(step) = self.step {
                     drag_value = drag_value.speed(step);
                 }

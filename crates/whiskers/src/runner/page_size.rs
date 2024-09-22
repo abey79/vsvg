@@ -89,14 +89,14 @@ impl PageSizeOptions {
                     ui.add(
                         egui::DragValue::new(&mut w)
                             .speed(1.0)
-                            .clamp_range(0.0..=f64::MAX),
+                            .range(0.0..=f64::MAX),
                     );
 
                     ui.label("x");
                     ui.add(
                         egui::DragValue::new(&mut h)
                             .speed(1.0)
-                            .clamp_range(0.0..=f64::MAX),
+                            .range(0.0..=f64::MAX),
                     );
 
                     let orig_unit = unit;

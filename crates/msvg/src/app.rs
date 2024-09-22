@@ -96,7 +96,7 @@ impl FileNameOverlay {
                     .fg_stroke
                     .color
                     .gamma_multiply(opacity);
-                ui.add(egui::Label::new(&self.file_name).truncate(true))
+                ui.add(egui::Label::new(&self.file_name).truncate())
             });
     }
 }
