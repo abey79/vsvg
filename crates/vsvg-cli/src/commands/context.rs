@@ -6,10 +6,10 @@ use crate::commands::{make_command_parser, Command, DynCommand, State};
 
 pub(crate) fn parser() -> impl Parser<DynCommand> {
     let layer = make_command_parser(layer());
-    construct!([layer]).group_help("Context commands:")
+    construct!([layer]).group_help("Context:")
 }
 
-/// Controls which layer(s) to operate on¨
+/// Select which layer(s) to operate on
 ///
 ///
 /// This command sets the target layer(s) on which subsequent command will operate. Without

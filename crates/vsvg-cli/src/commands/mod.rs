@@ -1,12 +1,16 @@
-use crate::draw_state::{DrawState, LayerDrawer};
-use bpaf::Parser;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
+
+use bpaf::Parser;
+
 use vsvg::{Document, DocumentTrait, Layer, LayerID};
+
+use crate::draw_state::{DrawState, LayerDrawer};
 
 pub(crate) mod context;
 pub(crate) mod draw;
 pub(crate) mod io;
+pub(crate) mod layers;
 pub(crate) mod ops;
 pub(crate) mod transforms;
 pub(crate) mod utils;
@@ -17,25 +21,18 @@ pub(crate) enum CommandError {
     ExpectSingleLayer,
 }
 
+#[derive(Default, Debug)]
 pub(crate) struct State {
     pub document: Document,
     pub draw_state: DrawState,
-    //pub draw_layer: LayerID,
+
     /// Current layer context.
     ///
-    /// All layers active when empty.
+    /// When empty, all layers are active.
     pub layer_context: BTreeSet<LayerID>,
 }
 
 impl State {
-    // pub(crate) fn draw(&mut self) -> Result<LayerDrawer, CommandError> {
-    //
-    //     LayerDrawer {
-    //         state: &self.draw_state,
-    //         layer: self.document.get_mut(self.draw_layer),
-    //     }
-    // }
-
     fn check_single_layer<R>(
         &mut self,
         func: impl FnOnce(&mut Self, LayerID) -> anyhow::Result<R>,
@@ -53,11 +50,46 @@ impl State {
         func(self, layer_id)
     }
 
-    pub(crate) fn single_layer<R>(
+    //TODO: revive if needed
+    // pub(crate) fn single_layer<R>(
+    //     &mut self,
+    //     func: impl FnOnce(&mut Layer, LayerID) -> anyhow::Result<R>,
+    // ) -> anyhow::Result<R> {
+    //     self.check_single_layer(|state, layer_id| func(state.document.get_mut(layer_id), layer_id))
+    // }
+
+    /// Get the selected layers.
+    pub(crate) fn layers(&self) -> Vec<LayerID> {
+        if self.layer_context.is_empty() {
+            self.document.layers().keys().copied().collect()
+        } else {
+            self.layer_context.iter().copied().collect()
+        }
+    }
+
+    //TODO: this creates selected layer than don't exists, not always desirable!
+    pub(crate) fn iter_layers(&mut self) -> impl Iterator<Item = (&mut Layer, LayerID)> + '_ {
+        self.document
+            .layers_mut()
+            .iter_mut()
+            .filter_map(|(id, layer)| {
+                if self.layer_context.is_empty() || self.layer_context.contains(id) {
+                    Some((layer, *id))
+                } else {
+                    None
+                }
+            })
+    }
+
+    pub(crate) fn for_layer(
         &mut self,
-        func: impl FnOnce(&mut Layer, LayerID) -> anyhow::Result<R>,
-    ) -> anyhow::Result<R> {
-        self.check_single_layer(|state, layer_id| func(state.document.get_mut(layer_id), layer_id))
+        mut func: impl FnMut(&mut Layer, LayerID) -> anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
+        for (layer, layer_id) in self.iter_layers() {
+            func(layer, layer_id)?;
+        }
+
+        Ok(())
     }
 
     pub(crate) fn draw<R>(
@@ -73,17 +105,6 @@ impl State {
     }
 }
 
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            //draw_layer: 1,
-            draw_state: DrawState::default(),
-            document: Document::default(),
-            layer_context: BTreeSet::new(),
-        }
-    }
-}
-
 pub(crate) trait Command: Debug {
     fn execute(&self, state: &mut State) -> anyhow::Result<()>;
 }
@@ -91,7 +112,7 @@ pub(crate) trait Command: Debug {
 /// Parser for one or more command.
 pub(crate) type DynCommand = Box<dyn Command>;
 
-/// Transform a concrete [`Command`] parser into a genric [`DynCommand`] parser.
+/// Transform a concrete [`Command`] parser into a generic [`DynCommand`] parser.
 pub(crate) fn make_command_parser<T: Command + 'static>(
     parser: impl Parser<T>,
 ) -> impl Parser<DynCommand> {

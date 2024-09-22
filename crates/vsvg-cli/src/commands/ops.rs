@@ -6,9 +6,11 @@ use crate::commands::{make_command_parser, Command, DynCommand, State};
 
 pub(crate) fn parser() -> impl Parser<DynCommand> {
     let crop = make_command_parser(crop());
-    construct!([crop]).group_help("Crop commands:")
+    let line_sort = make_command_parser(line_sort());
+    construct!([crop, line_sort]).group_help("Operations:")
 }
 
+/// Crop geometries of the selected layer(s) to the provided bounds
 #[derive(Clone, Debug, Bpaf)]
 #[bpaf(command, adjacent)]
 struct Crop {
@@ -41,7 +43,31 @@ impl Command for Crop {
             (self.x + self.dx, self.y + self.dy)
         };
 
-        state.document.crop(self.x, self.y, x_max, y_max);
-        Ok(())
+        state.for_layer(|layer, _| {
+            layer.crop(self.x, self.y, x_max, y_max);
+            Ok(())
+        })
     }
 }
+
+/// Sort paths within the selected layer(s) to minimize pen-up distance
+#[derive(Clone, Debug, Bpaf)]
+#[bpaf(command("linesort"), adjacent)]
+struct LineSort {
+    /// Do not allow flipping the path direction.
+    #[bpaf(short, long)]
+    no_flip: bool,
+}
+
+impl Command for LineSort {
+    fn execute(&self, state: &mut State) -> anyhow::Result<()> {
+        state.for_layer(|layer, _| {
+            layer.sort(!self.no_flip);
+            Ok(())
+        })
+    }
+}
+
+//TODO: linemerge
+//TODO: linesimplify
+//TODO: flatten

@@ -1,6 +1,5 @@
+use crate::commands::{context, draw, io, layers, ops, transforms, DynCommand, State};
 use bpaf::{construct, short, OptionParser, Parser};
-
-use crate::commands::{context, draw, io, ops, transforms, DynCommand, State};
 
 struct Options {
     verbose: bool,
@@ -12,9 +11,10 @@ fn command() -> impl Parser<DynCommand> {
     let context = context::parser();
     let draw = draw::parser();
     let io = io::parser();
+    let layers = layers::parser();
     let ops = ops::parser();
     let transform = transforms::parser();
-    construct!([context, io, ops, transform, draw])
+    construct!([context, io, layers, ops, transform, draw])
 }
 
 /// Parser for the top-level options.
