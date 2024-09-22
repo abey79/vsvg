@@ -249,8 +249,8 @@ impl<'a> ListItem<'a> {
     /// Notes:
     /// - If buttons are used, the item will allocate the full available width of the parent. If the
     ///   enclosing UI adapts to the childrens width, it will unnecessarily grow. If buttons aren't
-    ///   used, the item will only allocate the width needed for the text and icons if any.
-    /// - A right to left layout is used, so the right-most button must be added first.
+    ///   used, the item will only allocate the width needed for the text and icons, if any.
+    /// - A right-to-left layout is used, so the right-most button must be added first.
     #[must_use]
     #[inline]
     pub fn with_buttons(mut self, buttons: impl FnOnce(&mut Ui) -> Response + 'a) -> Self {
@@ -425,7 +425,7 @@ impl<'a> ListItem<'a> {
             {
                 if let Some(buttons) = self.buttons_fn {
                     let mut ui =
-                        ui.child_ui(rect, egui::Layout::right_to_left(egui::Align::Center));
+                        ui.child_ui(rect, egui::Layout::right_to_left(egui::Align::Center), None);
                     Some(buttons(&mut ui))
                 } else {
                     None
@@ -454,6 +454,7 @@ impl<'a> ListItem<'a> {
             response.widget_info(|| {
                 egui::WidgetInfo::selected(
                     egui::WidgetType::SelectableLabel,
+                    self.active,
                     self.selected,
                     galley.text(),
                 )

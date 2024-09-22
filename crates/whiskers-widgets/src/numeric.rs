@@ -69,7 +69,7 @@ impl<T: Numeric> super::Widget<T> for NumericWidget<T> {
             }
             ui.add(slider).changed()
         } else {
-            let mut drag_value = egui::DragValue::new(value).clamp_range(range);
+            let mut drag_value = egui::DragValue::new(value).range(range);
             if let Some(step) = self.step {
                 drag_value = drag_value.speed(step.to_f64());
             }

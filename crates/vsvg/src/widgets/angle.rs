@@ -78,7 +78,7 @@ impl whiskers_widgets::Widget<Angle> for AngleWidget {
                 }
                 ui.add(slider).changed()
             } else {
-                let mut drag_value = egui::DragValue::new(&mut angle_value).clamp_range(range);
+                let mut drag_value = egui::DragValue::new(&mut angle_value).range(range);
                 if let Some(step) = self.step {
                     drag_value = drag_value.speed(step);
                 }

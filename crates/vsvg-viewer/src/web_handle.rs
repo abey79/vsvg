@@ -18,10 +18,10 @@ impl WebHandle {
                 canvas_id,
                 eframe::WebOptions::default(),
                 Box::new(|cc| {
-                    Box::new(
+                    Ok(Box::new(
                         crate::viewer::Viewer::new(cc, Box::new(app))
                             .expect("what could possibly go wrong?"),
-                    )
+                    ))
                 }),
             )
             .await

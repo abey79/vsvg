@@ -3,6 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::let_underscore_untyped)]
+#![allow(clippy::default_trait_access)]
 
 mod document_widget;
 mod engine;
@@ -77,7 +78,7 @@ pub fn show_tolerance(document: Arc<vsvg::Document>, tolerance: f64) -> anyhow::
             };
             cc.egui_ctx.set_style(style);
 
-            Box::new(
+            Ok(Box::new(
                 Viewer::new(
                     cc,
                     Box::new(ShowViewerApp {
@@ -86,7 +87,7 @@ pub fn show_tolerance(document: Arc<vsvg::Document>, tolerance: f64) -> anyhow::
                     }),
                 )
                 .expect("viewer requires wgpu backend"),
-            )
+            ))
         }),
     )?;
 
@@ -176,7 +177,9 @@ pub fn show_with_viewer_app(viewer_app: impl ViewerApp + 'static) -> anyhow::Res
             };
             cc.egui_ctx.set_style(style);
 
-            Box::new(Viewer::new(cc, viewer_app).expect("viewer requires wgpu backend"))
+            Ok(Box::new(
+                Viewer::new(cc, viewer_app).expect("viewer requires wgpu backend"),
+            ))
         }),
     )?;
 

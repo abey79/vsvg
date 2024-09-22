@@ -44,7 +44,7 @@ impl InfoOptions {
         collapsing_header(ui, "Info", "", true, |ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
             if let Some(description) = &self.description {
-                ui.add(egui::Label::new(description.clone()).wrap(true));
+                ui.add(egui::Label::new(description.clone()).wrap());
             }
 
             if let Some(author) = &self.author {

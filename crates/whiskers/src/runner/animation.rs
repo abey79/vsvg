@@ -70,7 +70,7 @@ impl AnimationOptions {
                         !self.playing,
                         egui::DragValue::new(&mut self.time)
                             .speed(0.1)
-                            .clamp_range(0.0..=max_time)
+                            .range(0.0..=max_time)
                             .suffix(" s"),
                     )
                     .changed();
@@ -82,7 +82,7 @@ impl AnimationOptions {
                     self.is_looping,
                     egui::DragValue::new(&mut self.loop_time)
                         .speed(0.1)
-                        .clamp_range(0.0..=f64::MAX)
+                        .range(0.0..=f64::MAX)
                         .suffix(" s"),
                 );
             });
