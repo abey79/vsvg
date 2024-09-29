@@ -127,6 +127,7 @@ impl PointPainter {
                     depth_stencil: None,
                     multisample: wgpu::MultisampleState::default(),
                     multiview: None,
+                    cache: None,
                 });
 
         Self { render_pipeline }
@@ -136,11 +137,11 @@ impl PointPainter {
 impl Painter for PointPainter {
     type Data = PointPainterData;
 
-    fn draw<'a>(
-        &'a self,
-        rpass: &mut RenderPass<'a>,
-        camera_bind_group: &'a wgpu::BindGroup,
-        data: &'a Self::Data,
+    fn draw(
+        &self,
+        rpass: &mut RenderPass<'static>,
+        camera_bind_group: &wgpu::BindGroup,
+        data: &Self::Data,
     ) {
         rpass.set_pipeline(&self.render_pipeline);
         rpass.set_bind_group(0, camera_bind_group, &[]);

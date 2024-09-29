@@ -27,6 +27,9 @@ pub mod exports {
     pub use ::eframe;
     pub use ::egui;
     pub use ::wgpu;
+
+    #[cfg(target_arch = "wasm32")]
+    pub use ::web_sys;
 }
 
 /// Viewer app for [`show()`] and [`show_tolerance()`].

@@ -237,6 +237,7 @@ impl LinePainter {
                     depth_stencil: None,
                     multisample: wgpu::MultisampleState::default(),
                     multiview: None,
+                    cache: None,
                 });
 
         Self { render_pipeline }
@@ -246,11 +247,11 @@ impl LinePainter {
 impl Painter for LinePainter {
     type Data = LinePainterData;
 
-    fn draw<'a>(
-        &'a self,
-        rpass: &mut RenderPass<'a>,
-        camera_bind_group: &'a wgpu::BindGroup,
-        data: &'a LinePainterData,
+    fn draw(
+        &self,
+        rpass: &mut RenderPass<'static>,
+        camera_bind_group: &wgpu::BindGroup,
+        data: &LinePainterData,
     ) {
         rpass.set_pipeline(&self.render_pipeline);
         rpass.set_bind_group(0, camera_bind_group, &[]);

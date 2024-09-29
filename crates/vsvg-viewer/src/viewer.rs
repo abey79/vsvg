@@ -36,7 +36,7 @@ pub struct Viewer {
     viewer_app: Box<dyn ViewerApp>,
 
     #[cfg(puffin)]
-    profiler: crate::profiler::Profiler,
+    profiler: Profiler,
 }
 
 impl Viewer {

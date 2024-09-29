@@ -262,7 +262,7 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
                 ui.visuals_mut().collapsing_header_frame = true;
 
                 egui::ScrollArea::vertical()
-                    .id_source("side_bar_scroll")
+                    .id_salt("side_bar_scroll")
                     .show(ui, |ui| {
                         // let the UI breeze a little bit
 

@@ -424,8 +424,11 @@ impl<'a> ListItem<'a> {
                     .hovered()
             {
                 if let Some(buttons) = self.buttons_fn {
-                    let mut ui =
-                        ui.child_ui(rect, egui::Layout::right_to_left(egui::Align::Center), None);
+                    let mut ui = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(rect)
+                            .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                    );
                     Some(buttons(&mut ui))
                 } else {
                     None
