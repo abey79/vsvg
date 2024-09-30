@@ -24,6 +24,7 @@ puffin_http = { workspace = true, optional = true }
 rayon.workspace = true
 serde.workspace = true
 vsvg = { workspace = true, features = ["egui"] }
+web-sys.workspace = true
 wgpu.workspace = true
 
 [dev-dependencies]  # mostly for examples

@@ -151,7 +151,7 @@ macro_rules! wasm_sketch {
         #[wasm_bindgen::prelude::wasm_bindgen]
         pub async fn start(
             handle: &vsvg_viewer::web_handle::WebHandle,
-            canvas_id: &str,
+            canvas_id: vsvg_viewer::exports::web_sys::HtmlCanvasElement,
         ) -> std::result::Result<(), wasm_bindgen::JsValue> {
             handle.start(canvas_id, $t).await
         }

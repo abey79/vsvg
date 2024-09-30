@@ -425,11 +425,11 @@ impl egui_wgpu::CallbackTrait for DocumentWidgetCallback {
         Vec::new()
     }
 
-    fn paint<'a>(
-        &'a self,
+    fn paint(
+        &self,
         _info: PaintCallbackInfo,
-        render_pass: &mut RenderPass<'a>,
-        callback_resources: &'a CallbackResources,
+        render_pass: &mut RenderPass<'static>,
+        callback_resources: &CallbackResources,
     ) {
         vsvg::trace_scope!("wgpu paint callback");
 

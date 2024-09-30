@@ -10,7 +10,7 @@ pub struct WebHandle {
 impl WebHandle {
     pub async fn start(
         &self,
-        canvas_id: &str,
+        canvas_id: web_sys::HtmlCanvasElement,
         app: impl crate::ViewerApp + 'static,
     ) -> Result<(), JsValue> {
         self.runner
@@ -47,14 +47,6 @@ impl WebHandle {
     pub fn destroy(&self) {
         self.runner.destroy();
     }
-
-    // /// Example on how to call into your app from JavaScript.
-    // #[wasm_bindgen]
-    // pub fn example(&self) {
-    //     if let Some(_app) = self.runner.app_mut::<WrapApp>() {
-    //         // _app.example();
-    //     }
-    // }
 
     /// The JavaScript can check whether your app has crashed:
     #[must_use]

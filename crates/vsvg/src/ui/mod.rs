@@ -18,7 +18,7 @@ pub fn unit_combo_box(
     unit_choices: &[crate::Unit],
 ) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_source(id_source)
+    egui::ComboBox::from_id_salt(id_source)
         .selected_text(unit.to_str())
         .width(50.)
         .show_ui(ui, |ui| {

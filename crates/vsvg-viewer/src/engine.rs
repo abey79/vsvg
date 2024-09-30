@@ -142,12 +142,12 @@ impl LayerPainters {
         }
     }
 
-    fn paint<'rp>(
-        &'rp self,
-        layer_data: &'rp LayerRenderData,
+    fn paint(
+        &self,
+        layer_data: &LayerRenderData,
         display_options: DisplayOptions,
-        render_objects: &'rp EngineRenderObjects,
-        render_pass: &mut wgpu::RenderPass<'rp>,
+        render_objects: &EngineRenderObjects,
+        render_pass: &mut wgpu::RenderPass<'static>,
     ) {
         vsvg::trace_function!();
 
@@ -365,7 +365,7 @@ impl Engine {
         }
     }
 
-    pub(super) fn paint<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
+    pub(super) fn paint(&self, render_pass: &mut wgpu::RenderPass<'static>) {
         vsvg::trace_function!();
 
         if let Some(page_size_painter_data) = &self.page_size_painter_data {

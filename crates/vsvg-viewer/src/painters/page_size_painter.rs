@@ -61,11 +61,11 @@ impl PageSizePainter {
 impl Painter for PageSizePainter {
     type Data = PageSizePainterData;
 
-    fn draw<'a>(
-        &'a self,
-        rpass: &mut RenderPass<'a>,
-        camera_bind_group: &'a BindGroup,
-        data: &'a Self::Data,
+    fn draw(
+        &self,
+        rpass: &mut RenderPass<'static>,
+        camera_bind_group: &BindGroup,
+        data: &Self::Data,
     ) {
         self.background_and_shadow_painter
             .draw(rpass, camera_bind_group, &data.shadow);
