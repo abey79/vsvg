@@ -19,6 +19,34 @@ impl Transforms for BezPath {
     }
 }
 
+impl Transforms for Vec<BezPath> {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
+        self.iter_mut().for_each(|path| {
+            path.transform(affine);
+        });
+        self
+    }
+}
+
+// used by text module
+impl Transforms for Vec<Vec<BezPath>> {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
+        self.iter_mut().for_each(|path| {
+            path.transform(affine);
+        });
+        self
+    }
+}
+
+impl Transforms for &mut [BezPath] {
+    fn transform(&mut self, affine: &Affine) -> &mut Self {
+        self.iter_mut().for_each(|item| {
+            item.transform(affine);
+        });
+        self
+    }
+}
+
 impl PathDataTrait for BezPath {
     fn bounds(&self) -> kurbo::Rect {
         kurbo::Shape::bounding_box(self)
