@@ -26,14 +26,17 @@ path = "src/main.rs"
 vsvg = { workspace = true, features = ["egui"] }
 vsvg-viewer.workspace = true
 
+anyhow = { workspace = true, features = ["backtrace"] }
+bpaf = { workspace = true, features = ["derive", "autocomplete", "dull-color"] }
 clap = { workspace = true, features = ["cargo"] }
-dhat = { workspace = true,  optional = true } # for heap profiling
+dhat = { workspace = true, optional = true } # for heap profiling
 eframe.workspace = true
 egui.workspace = true
 kurbo.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 serde.workspace = true
+thiserror = { workspace = true }
 tracing-subscriber.workspace = true
 
 
