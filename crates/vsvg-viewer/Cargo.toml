@@ -49,4 +49,4 @@ wasm-bindgen-futures.workspace = true
 
 
 [features]
-puffin = ["dep:puffin", "dep:puffin_http", "vsvg/puffin", "egui/puffin", "eframe/puffin"]
+puffin = ["dep:puffin", "dep:puffin_http", "vsvg/puffin"]
