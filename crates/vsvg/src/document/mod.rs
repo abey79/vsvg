@@ -21,6 +21,14 @@ pub trait DocumentTrait<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait>:
 
     fn layers_mut(&mut self) -> &mut BTreeMap<LayerID, L>;
 
+    fn clear(&mut self) {
+        self.layers_mut().clear();
+    }
+
+    fn remove(&mut self, id: LayerID) {
+        self.layers_mut().remove(&id);
+    }
+
     fn metadata(&self) -> &DocumentMetadata;
 
     fn metadata_mut(&mut self) -> &mut DocumentMetadata;

@@ -19,6 +19,7 @@ approx = "0.5.1"
 arrayvec = "0.7.2"
 base64 = "0.22.1"
 bitvec = "1.0.1"
+bpaf = "0.9"
 bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
 bytemuck = "1.13.1"
 camino = "1.1.0"
