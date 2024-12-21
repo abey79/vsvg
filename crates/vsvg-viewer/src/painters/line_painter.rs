@@ -396,8 +396,8 @@ impl Painter for LinePainter {
         rpass.set_bind_group(0, camera_bind_group, &[]);
 
         let offset = size_of::<Vertex>() as u64;
-        rpass.set_vertex_buffer(0, data.points_buffer.slice((0 * offset)..));
-        rpass.set_vertex_buffer(1, data.points_buffer.slice((1 * offset)..));
+        rpass.set_vertex_buffer(0, data.points_buffer.slice(..));
+        rpass.set_vertex_buffer(1, data.points_buffer.slice(offset..));
         rpass.set_vertex_buffer(2, data.points_buffer.slice((2 * offset)..));
         rpass.set_vertex_buffer(3, data.points_buffer.slice((3 * offset)..));
 
