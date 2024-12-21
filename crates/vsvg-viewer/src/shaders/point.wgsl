@@ -75,9 +75,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return in.color;
     } else if (distance < in.w2 + aa) {
         var alpha = (distance - in.w2) / aa;
-        alpha = smoothstep(1.0, 0.0, alpha);
+
+        // spec requires first arg to be lower than second
+        alpha = 1.0 - smoothstep(0.0, 1.0, alpha);
         return vec4<f32>(in.color.rgb, in.color.a * alpha);
     } else {
         discard;
     }
+
+    // should never happen, appease Chrome and/or the spec
+    return vec4<f32>(0.0, 0.0, 0.0, 0.0);
 }
