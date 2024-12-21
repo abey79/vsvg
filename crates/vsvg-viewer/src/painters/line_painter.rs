@@ -359,13 +359,13 @@ impl LinePainter {
                     layout: Some(&pipeline_layout),
                     vertex: wgpu::VertexState {
                         module: &shader,
-                        entry_point: "vs_main",
+                        entry_point: Some("vs_main"),
                         compilation_options: Default::default(),
                         buffers: &buffer_layouts,
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader,
-                        entry_point: "fs_main",
+                        entry_point: Some("fs_main"),
                         compilation_options: Default::default(),
                         targets: &[Some(target)],
                     }),
@@ -392,6 +392,11 @@ impl Painter for LinePainter {
         camera_bind_group: &wgpu::BindGroup,
         data: &LinePainterData,
     ) {
+        // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
+        if data.points_buffer.size() == 0 {
+            return;
+        }
+
         rpass.set_pipeline(&self.render_pipeline);
         rpass.set_bind_group(0, camera_bind_group, &[]);
 

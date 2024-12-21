@@ -11,7 +11,6 @@ license = "MIT"
 categories = ["graphics", "visualization"]
 
 [dependencies]
-anyhow.workspace = true
 arrayvec.workspace = true
 base64.workspace = true
 bitvec.workspace = true
@@ -19,10 +18,10 @@ indexmap = { workspace = true, features = ["rayon"] }
 kdtree.workspace = true
 kurbo.workspace = true
 lazy_static.workspace = true
-log.workspace = true
 lyon_geom.workspace = true
 num-traits.workspace = true
 puffin = { workspace = true, optional = true }
+profiling.workspace = true
 quick-xml.workspace = true
 rand.workspace = true
 rayon.workspace = true
@@ -52,7 +51,7 @@ criterion.workspace = true
 
 [features]
 default = ["geo"]
-puffin = ["dep:puffin"]
+puffin = ["dep:puffin", "profiling/profile-with-puffin"]
 whiskers-widgets = ["dep:whiskers-widgets", "dep:egui"]
 egui = ["dep:egui"]
 
@@ -63,3 +62,6 @@ harness = false
 [[bench]]
 name = "bench_flatten"
 harness = false
+
+[package.metadata.cargo-machete]
+ignored = ["profiling"]
