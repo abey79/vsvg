@@ -110,3 +110,4 @@ lto = "thin"
 
 [patch.crates-io]
 # geo = { path = "../geo/geo" }
+wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "b92e624358164590e8efc8fb4e784d031ac3ef5e" }
