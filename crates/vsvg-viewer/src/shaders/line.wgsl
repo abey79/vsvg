@@ -6,15 +6,16 @@ struct CameraUniform {
 };
 
 @group(0) @binding(0) var<uniform> camera: CameraUniform;
+
+// Vertex data.
+//
+// This buffer contains all the line vertices with the starting and ending vertices duplicated (or wrapped, for closed
+// lines). The lenght of this array is `instance_count` + 4.
 @group(1) @binding(0) var<storage, read> points: array<vec2<f32>>;
 
 struct InstanceInput {
-    @location(0) p0: vec2<f32>,
-    @location(1) p1: vec2<f32>,
-    @location(2) p2: vec2<f32>,
-    @location(3) p3: vec2<f32>,
-    @location(4) color: u32,
-    @location(5) width: f32,
+    @location(0) color: u32,
+    @location(1) width: f32,
 };
 
 struct VertexOutput {
@@ -80,12 +81,7 @@ fn vs_main(
 
     let w2 = instance.width/2. + (camera.anti_alias / camera.scale) / 2.;
 
-
-//    let p0 = instance.p0;
-//    let p1 = instance.p1;
-//    let p2 = instance.p2;
-//    let p3 = instance.p3;
-
+    // sliding window over the points buffer
     let p0 = points[in_instance_index + 0];
     let p1 = points[in_instance_index + 1];
     let p2 = points[in_instance_index + 2];
