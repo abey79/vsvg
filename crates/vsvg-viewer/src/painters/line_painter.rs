@@ -186,7 +186,7 @@ impl LinePainterData {
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Point instance buffer"),
                     contents: bytemuck::cast_slice(vertices.as_slice()),
-                    usage: wgpu::BufferUsages::VERTEX,
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
                 });
 
         // prepare color buffer
@@ -282,6 +282,7 @@ impl LinePainterData {
 ///
 /// See module documentation for details.
 pub(crate) struct LinePainter {
+    points_bind_group_layout: wgpu::BindGroupLayout,
     render_pipeline: RenderPipeline,
 }
 
@@ -320,6 +321,23 @@ impl LinePainter {
             attributes: &vertex_attrib_color_width,
         });
 
+        let points_bind_group_layout =
+            render_objects
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    }],
+                    label: Some("point_bind_group_layout"),
+                });
+
         let shader = render_objects
             .device
             .create_shader_module(include_wgsl!("../shaders/line.wgsl"));
@@ -329,7 +347,10 @@ impl LinePainter {
                 .device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: None,
-                    bind_group_layouts: &[&render_objects.camera_bind_group_layout],
+                    bind_group_layouts: &[
+                        &render_objects.camera_bind_group_layout,
+                        &points_bind_group_layout,
+                    ],
                     push_constant_ranges: &[],
                 });
 
@@ -379,7 +400,12 @@ impl LinePainter {
                     cache: None,
                 });
 
-        Self { render_pipeline }
+        /////////
+
+        Self {
+            points_bind_group_layout,
+            render_pipeline,
+        }
     }
 }
 
@@ -389,7 +415,7 @@ impl Painter for LinePainter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &wgpu::BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &LinePainterData,
     ) {
         // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
@@ -398,7 +424,24 @@ impl Painter for LinePainter {
         }
 
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_bind_group(0, &render_objects.camera_bind_group, &[]);
+
+        //////
+        //TODO: this could be done once
+
+        let points_bind_group =
+            render_objects
+                .device
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &self.points_bind_group_layout,
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: data.points_buffer.as_entire_binding(),
+                    }],
+                    label: Some("point_bind_group"),
+                });
+
+        rpass.set_bind_group(1, &points_bind_group, &[]);
 
         let offset = size_of::<Vertex>() as u64;
         rpass.set_vertex_buffer(0, data.points_buffer.slice(..));

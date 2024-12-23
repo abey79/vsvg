@@ -6,6 +6,7 @@ struct CameraUniform {
 };
 
 @group(0) @binding(0) var<uniform> camera: CameraUniform;
+@group(1) @binding(0) var<storage, read> points: array<vec2<f32>>;
 
 struct InstanceInput {
     @location(0) p0: vec2<f32>,
@@ -79,27 +80,39 @@ fn vs_main(
 
     let w2 = instance.width/2. + (camera.anti_alias / camera.scale) / 2.;
 
-    let d = distance(instance.p1, instance.p2);
-    let v = normalize(instance.p2 - instance.p1);
+
+//    let p0 = instance.p0;
+//    let p1 = instance.p1;
+//    let p2 = instance.p2;
+//    let p3 = instance.p3;
+
+    let p0 = points[in_instance_index + 0];
+    let p1 = points[in_instance_index + 1];
+    let p2 = points[in_instance_index + 2];
+    let p3 = points[in_instance_index + 3];
+
+
+    let d = distance(p1, p2);
+    let v = normalize(p2 - p1);
     let n = vec2<f32>(-v.y, v.x);
 
     var vertex: vec2<f32>;
     var tex_coords: vec2<f32>;
     switch (in_vertex_index) {
         case 0u: {
-            vertex = instance.p1 + w2 * (-v - n);
+            vertex = p1 + w2 * (-v - n);
             tex_coords = vec2<f32>(-w2, -w2);
         }
         case 1u: {
-            vertex = instance.p1 + w2 * (-v + n);
+            vertex = p1 + w2 * (-v + n);
             tex_coords = vec2<f32>(-w2, w2);
         }
         case 2u: {
-            vertex = instance.p2 + w2 * (v - n);
+            vertex = p2 + w2 * (v - n);
             tex_coords = vec2<f32>(d + w2, -w2);
         }
         default: { // case 3u
-            vertex = instance.p2 + w2 * (v + n);
+            vertex = p2 + w2 * (v + n);
             tex_coords = vec2<f32>(d + w2, w2);
         }
     }
@@ -117,9 +130,9 @@ fn vs_main(
         out.distance = d;
 
         // compute miter points
-        let critical_length_mid = length(instance.p2 - instance.p1 + w2 * n);
-        let m0 = compute_miter(instance.p0, instance.p1, n, critical_length_mid, w2);
-        let m2 = compute_miter(instance.p2, instance.p3, n, critical_length_mid, w2);
+        let critical_length_mid = length(p2 - p1 + w2 * n);
+        let m0 = compute_miter(p0, p1, n, critical_length_mid, w2);
+        let m2 = compute_miter(p2, p3, n, critical_length_mid, w2);
         out.color = color;
         out.width = instance.width;
 
