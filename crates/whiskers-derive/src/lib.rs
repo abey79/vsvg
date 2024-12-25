@@ -18,7 +18,7 @@ fn label_from_ident(ident: &Ident) -> String {
 /// This is equivalent to:
 /// ```ignore
 /// #[derive(Sketch, serde::Serialize, serde::Deserialize)]
-/// #[serde(crate = "::whiskers::prelude::serde")]
+/// #[serde(crate = "::whiskers::exports::serde")]
 /// ```
 #[proc_macro_attribute]
 pub fn sketch_app(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -38,7 +38,7 @@ pub fn sketch_app(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// This is equivalent to:
 /// ```ignore
 /// #[derive(Widget, serde::Serialize, serde::Deserialize)]
-/// #[serde(crate = "::whiskers_widgets::exports::serde")]
+/// #[serde(crate = "::whiskers::exports::serde")]
 /// ```
 #[proc_macro_attribute]
 pub fn sketch_widget(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -67,7 +67,7 @@ pub fn sketch_derive(input: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(quote! {
-        impl whiskers_widgets::WidgetApp for #name {
+        impl ::whiskers::prelude::whiskers_widgets::WidgetApp for #name {
             fn name(&self) -> String {
                 stringify!(#name).to_string()
             }
@@ -104,9 +104,9 @@ fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStr
         #[derive(Default)]
         pub struct #widget_name;
 
-        impl whiskers_widgets::Widget<#name> for #widget_name {
+        impl ::whiskers::prelude::whiskers_widgets::Widget<#name> for #widget_name {
             fn ui(&self, ui: &mut ::whiskers::exports::egui::Ui, label: &str, value: &mut #name) -> bool {
-                ::whiskers_widgets::collapsing_header(ui, label.trim_end_matches(':'), "", true, |ui|{
+                ::whiskers::prelude::whiskers_widgets::collapsing_header(ui, label.trim_end_matches(':'), "", true, |ui|{
                         #fields_ui
                     })
                     .unwrap_or(false)
@@ -117,7 +117,7 @@ fn process_struct(fields: Fields, name: &Ident, widget_name: &Ident) -> TokenStr
             }
         }
 
-        impl whiskers_widgets::WidgetMapper<#name> for #name {
+        impl ::whiskers::prelude::whiskers_widgets::WidgetMapper<#name> for #name {
             type Type = #widget_name;
         }
     })
@@ -262,7 +262,7 @@ fn process_enum(
             #[derive(Default)]
             pub struct #widget_name;
 
-            impl whiskers_widgets::Widget<#name> for #widget_name {
+            impl ::whiskers::prelude::whiskers_widgets::Widget<#name> for #widget_name {
                 fn ui(&self, ui: &mut ::whiskers::exports::egui::Ui, label: &str, value: &mut #name) -> bool {
                     #pre_combo_code
 
@@ -279,7 +279,7 @@ fn process_enum(
                 }
             }
 
-            impl whiskers_widgets::WidgetMapper<#name> for #name {
+            impl ::whiskers::prelude::whiskers_widgets::WidgetMapper<#name> for #name {
                 type Type = #widget_name;
             }
         };
@@ -355,7 +355,7 @@ fn process_enum(
                     #(
                         (
                             &mut |ui| {
-                                <#field_types as whiskers_widgets::WidgetMapper<#field_types>>::Type::default()
+                                <#field_types as ::whiskers::prelude::whiskers_widgets::WidgetMapper<#field_types>>::Type::default()
                                     #chained_calls
                                     .ui(
                                         ui,
@@ -363,7 +363,7 @@ fn process_enum(
                                         #field_names,
                                     )
                             },
-                            &<#field_types as whiskers_widgets::WidgetMapper<#field_types>>::Type::use_grid,
+                            &<#field_types as ::whiskers::prelude::whiskers_widgets::WidgetMapper<#field_types>>::Type::use_grid,
                         )
                     ),*
                 }
@@ -390,7 +390,7 @@ fn process_enum(
         #[derive(Default)]
         pub struct #widget_name;
 
-        impl whiskers_widgets::Widget<#name> for #widget_name {
+        impl ::whiskers::prelude::whiskers_widgets::Widget<#name> for #widget_name {
             fn ui(&self, ui: &mut ::whiskers::exports::egui::Ui, label: &str, value: &mut #name) -> bool {
 
                 // draw the UI for a bunch of fields, swapping the grid on and off based on grid support
@@ -417,7 +417,7 @@ fn process_enum(
                     }
                 }
 
-                let (header_changed, body_changed) = ::whiskers_widgets::enum_collapsing_header(
+                let (header_changed, body_changed) = ::whiskers::prelude::whiskers_widgets::enum_collapsing_header(
                     ui,
                     label,
                     value,
@@ -459,7 +459,7 @@ fn process_enum(
             }
         }
 
-        impl whiskers_widgets::WidgetMapper<#name> for #name {
+        impl ::whiskers::prelude::whiskers_widgets::WidgetMapper<#name> for #name {
             type Type = #widget_name;
         }
     })
@@ -562,12 +562,12 @@ fn process_fields(
         output.extend(quote! {
             (
                 &|ui, obj| {
-                    <#field_type as whiskers_widgets::WidgetMapper<#field_type>>::Type::default()
+                    <#field_type as ::whiskers::prelude::whiskers_widgets::WidgetMapper<#field_type>>::Type::default()
                         #chained_call
                         .ui(ui, #formatted_label, &mut obj.#field_access)
 
                 },
-                &<#field_type as whiskers_widgets::WidgetMapper<#field_type>>::Type::use_grid,
+                &<#field_type as ::whiskers::prelude::whiskers_widgets::WidgetMapper<#field_type>>::Type::use_grid,
             ),
         });
     }
