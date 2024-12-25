@@ -14,9 +14,8 @@ pub use whiskers_widgets::{sketch_app, sketch_widget, Sketch, Widget}; // bring 
 pub use vsvg_viewer::show;
 
 // re-exports
-pub use ::serde;
+pub use crate::exports::{egui, serde};
 pub use anyhow;
-pub use egui;
 pub use rand::prelude::*;
 pub use vsvg::exports::kurbo;
 pub use vsvg_viewer;

@@ -4656,7 +4656,6 @@ name = "whiskers-widgets"
 version = "0.6.0-alpha.0"
 dependencies = [
  "egui",
- "serde",
  "whiskers-derive",
 ]
 
