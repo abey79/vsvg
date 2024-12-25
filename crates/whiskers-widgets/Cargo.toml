@@ -14,4 +14,4 @@ license = "MIT"
 whiskers-derive.workspace = true
 
 egui.workspace = true
-serde.workspace = true
+

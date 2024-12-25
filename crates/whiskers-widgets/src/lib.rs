@@ -114,12 +114,6 @@ pub use vec::*;
 // reexport whiskers-derive macros
 pub use whiskers_derive::{sketch_app, sketch_widget, Sketch, Widget};
 
-/// Exported dependencies, for use by whiskers_derive
-pub mod exports {
-    pub use egui;
-    pub use serde;
-}
-
 pub trait WidgetApp {
     /// The name of the sketch, used the window title, the default output file name, and persistent
     /// settings.
