@@ -94,36 +94,10 @@
 //! compliant with the [WebGPU spec](https://gpuweb.github.io/gpuweb/#dictdef-gpuvertexbufferlayout).
 //! As such, it is rejected by (recent versions of) Chrome and wgpu/metal since (23.0.0).
 //!
-//! To work around this limitation, we bind the point buffer four times, with an offset of one to
-//! three vertices, respectively. Each of these bindings gets a stride of one vertex and exposes one
-//! vertex to the shader, which is spec compliant.
+//! Instead, we bind points as a read-only storage buffer and directly look up vertex data in that
+//! buffer.
 //!
-//! ```text
-//!                   first                                                         last
-//!                  instance                                                     instance
-//!                     │                                                            │
-//!                     ▼                                                            ▼
-//!                   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬ ─ ─ ─ ─ ┬ ─ ─
-//! p0                │ A0 │ A0 │ A1 │ A1 │ B0 │ B0 │ B1 │ B2 │ B3 │ B3 │ C2 │ C0 │ C1 │ C2 │ C0   C1 │
-//!                   └────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴ ─ ─ ─ ─ ┴ ─ ─
-//!              ┌ ─ ─┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬ ─ ─ ─ ─ ┐
-//! p1             A0 │ A0 │ A1 │ A1 │ B0 │ B0 │ B1 │ B2 │ B3 │ B3 │ C2 │ C0 │ C1 │ C2 │ C0 │ C1    offset = 1
-//!              └ ─ ─└────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴ ─ ─ ─ ─ ┘
-//!          ─ ─ ┬ ─ ─┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬ ─ ─
-//! p2      │ A0   A0 │ A1 │ A1 │ B0 │ B0 │ B1 │ B2 │ B3 │ B3 │ C2 │ C0 │ C1 │ C2 │ C0 │ C1 │       offset = 2
-//!          ─ ─ ┴ ─ ─└────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴ ─ ─
-//!    ┌ ─ ─ ─ ─ ┬ ─ ─┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
-//! p3   A0 │ A0   A1 │ A1 │ B0 │ B0 │ B1 │ B2 │ B3 │ B3 │ C2 │ C0 │ C1 │ C2 │ C0 │ C1 │            offset = 3
-//!    └ ─ ─ ─ ─ ┴ ─ ─└────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
-//!                   point buffer (bound four times)
-//!
-//!
-//!
-//!                   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
-//!                   │ A0 │    │    │    │ B0 │ B1 │ B2 │    │    │    │ C0 │ C1 │ C2 │
-//!                   └────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
-//!                   attributes buffer
-//! ```
+//! Note: this is not compatible with WebGL.
 
 use wgpu::{
     include_wgsl, util::DeviceExt, vertex_attr_array, Buffer, ColorTargetState, PrimitiveTopology,
@@ -179,14 +153,14 @@ impl LinePainterData {
 
         let (vertices, attribs) = Self::build_buffers(paths, display_options);
 
-        // prepare point buffer
+        // prepare point buffer – used as a storage binding!
         let points_buffer =
             render_objects
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Point instance buffer"),
                     contents: bytemuck::cast_slice(vertices.as_slice()),
-                    usage: wgpu::BufferUsages::VERTEX,
+                    usage: wgpu::BufferUsages::STORAGE,
                 });
 
         // prepare color buffer
@@ -282,43 +256,37 @@ impl LinePainterData {
 ///
 /// See module documentation for details.
 pub(crate) struct LinePainter {
+    points_bind_group_layout: wgpu::BindGroupLayout,
     render_pipeline: RenderPipeline,
 }
 
 impl LinePainter {
     pub(crate) fn new(render_objects: &EngineRenderObjects) -> Self {
-        // This is where we prepare the 4x binding of the same point buffer. Each binding has a
-        // stride of one vertex but a different starting offset.
-
-        let vertex_attributes = (0..4)
-            .map(|i| wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x2,
-                offset: 0,
-                shader_location: i,
-            })
-            .collect::<Vec<_>>();
-
-        let mut buffer_layouts = vertex_attributes
-            .iter()
-            .map(|vertex_attrb| wgpu::VertexBufferLayout {
-                array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
-                step_mode: wgpu::VertexStepMode::Instance,
-                attributes: std::slice::from_ref(vertex_attrb),
-            })
-            .collect::<Vec<_>>();
-
-        // add the color and width attributes
-
-        let vertex_attrib_color_width = vertex_attr_array![
-            4 => Uint32,
-            5 => Float32,
-        ];
-
-        buffer_layouts.push(wgpu::VertexBufferLayout {
+        let vertex_attrib_buffer_layout = wgpu::VertexBufferLayout {
             array_stride: size_of::<Attribute>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &vertex_attrib_color_width,
-        });
+            attributes: &vertex_attr_array![
+                0 => Uint32,
+                1 => Float32,
+            ],
+        };
+
+        let points_bind_group_layout =
+            render_objects
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    }],
+                    label: Some("point_bind_group_layout"),
+                });
 
         let shader = render_objects
             .device
@@ -329,7 +297,10 @@ impl LinePainter {
                 .device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: None,
-                    bind_group_layouts: &[&render_objects.camera_bind_group_layout],
+                    bind_group_layouts: &[
+                        &render_objects.camera_bind_group_layout,
+                        &points_bind_group_layout,
+                    ],
                     push_constant_ranges: &[],
                 });
 
@@ -361,7 +332,7 @@ impl LinePainter {
                         module: &shader,
                         entry_point: Some("vs_main"),
                         compilation_options: Default::default(),
-                        buffers: &buffer_layouts,
+                        buffers: &[vertex_attrib_buffer_layout],
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader,
@@ -379,7 +350,12 @@ impl LinePainter {
                     cache: None,
                 });
 
-        Self { render_pipeline }
+        /////////
+
+        Self {
+            points_bind_group_layout,
+            render_pipeline,
+        }
     }
 }
 
@@ -389,24 +365,31 @@ impl Painter for LinePainter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &wgpu::BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &LinePainterData,
     ) {
-        // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
-        if data.points_buffer.size() == 0 {
+        // This also avoids the fact that `Buffer::slice(..)` panics for empty buffers in wgpu 23+
+        if data.instance_count == 0 {
             return;
         }
 
+        let points_bind_group =
+            render_objects
+                .device
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &self.points_bind_group_layout,
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: data.points_buffer.as_entire_binding(),
+                    }],
+                    label: Some("point_bind_group"),
+                });
+
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_bind_group(0, &render_objects.camera_bind_group, &[]);
+        rpass.set_bind_group(1, &points_bind_group, &[]);
+        rpass.set_vertex_buffer(0, data.attributes_buffer.slice(..));
 
-        let offset = size_of::<Vertex>() as u64;
-        rpass.set_vertex_buffer(0, data.points_buffer.slice(..));
-        rpass.set_vertex_buffer(1, data.points_buffer.slice(offset..));
-        rpass.set_vertex_buffer(2, data.points_buffer.slice((2 * offset)..));
-        rpass.set_vertex_buffer(3, data.points_buffer.slice((3 * offset)..));
-
-        rpass.set_vertex_buffer(4, data.attributes_buffer.slice(..));
         rpass.draw(0..4, 0..data.instance_count);
     }
 }

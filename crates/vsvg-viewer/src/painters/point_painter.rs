@@ -140,7 +140,7 @@ impl Painter for PointPainter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &wgpu::BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &Self::Data,
     ) {
         // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
@@ -149,7 +149,7 @@ impl Painter for PointPainter {
         }
 
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_bind_group(0, &render_objects.camera_bind_group, &[]);
         rpass.set_vertex_buffer(0, data.instance_buffer.slice(..));
         rpass.draw(0..4, 0..data.instance_count);
     }

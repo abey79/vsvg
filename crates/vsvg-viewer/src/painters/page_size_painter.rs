@@ -4,7 +4,7 @@ use crate::engine::{
 };
 use crate::painters::{BasicPainter, BasicPainterData, Painter};
 use vsvg::PageSize;
-use wgpu::{BindGroup, RenderPass};
+use wgpu::RenderPass;
 
 pub(crate) struct PageSizePainterData {
     background: BasicPainterData,
@@ -64,14 +64,14 @@ impl Painter for PageSizePainter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &Self::Data,
     ) {
         self.background_and_shadow_painter
-            .draw(rpass, camera_bind_group, &data.shadow);
+            .draw(rpass, render_objects, &data.shadow);
         self.background_and_shadow_painter
-            .draw(rpass, camera_bind_group, &data.background);
+            .draw(rpass, render_objects, &data.background);
         self.border_painter
-            .draw(rpass, camera_bind_group, &data.border);
+            .draw(rpass, render_objects, &data.border);
     }
 }
