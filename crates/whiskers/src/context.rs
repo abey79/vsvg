@@ -101,6 +101,10 @@ impl<'a> Context<'a> {
     }
 
     /// Helper function to return a number with a Gaussian (normal) distribution
+    ///
+    /// # Panics
+    ///
+    /// Panics when the `rand_distr` can't create a Normal distribution struct instance.
     pub fn rng_gaussian(&mut self, mean: f64, std_dev: f64) -> f64 {
         let normal = Normal::new(mean, std_dev).expect("Failed to create normal distribution");
 
