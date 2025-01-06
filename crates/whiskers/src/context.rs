@@ -1,6 +1,6 @@
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
-use rand_distr::{Distribution, WeightedAliasIndex};
+use rand_distr::{Distribution, Normal, WeightedAliasIndex};
 use std::{fmt::Debug, ops::Range};
 use vsvg::Point;
 
@@ -98,6 +98,13 @@ impl<'a> Context<'a> {
         let y = self.rng_range(y_range);
 
         Point::new(x, y)
+    }
+
+    /// Helper function to return a number with a Gaussian (normal) distribution
+    pub fn rng_gaussian(&mut self, mean: f64, std_dev: f64) -> f64 {
+        let normal = Normal::new(mean, std_dev).expect("Failed to create normal distribution");
+
+        normal.sample(&mut self.rng)
     }
 
     /// Helper function to display an inspect parameter in the inspect variables UI
