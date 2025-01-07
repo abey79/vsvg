@@ -113,11 +113,7 @@ impl<'a> Context<'a> {
 
     /// Helper function to return random angle
     pub fn rng_angle(&mut self) -> Angle {
-        let deg = self.rng_range(Range {
-            start: 0.0,
-            end: 360.0,
-        });
-        Angle::from_deg(deg)
+        Angle::from_deg(self.rng_range(0.0..360.0))
     }
 
     /// Helper function to display an inspect parameter in the inspect variables UI
