@@ -154,7 +154,8 @@ impl LayerPainters {
         if let Some(line_painter_data) = layer_data.line_painter_data() {
             self.line_painter.draw(
                 render_pass,
-                &render_objects.camera_bind_group,
+                render_objects,
+                //&render_objects.camera_bind_group,
                 line_painter_data,
             );
         }
@@ -163,13 +164,13 @@ impl LayerPainters {
             if let Some(bezier_handles_painter_data) = layer_data.bezier_handles_painter_data() {
                 self.bezier_handles_point_painter.draw(
                     render_pass,
-                    &render_objects.camera_bind_group,
+                    render_objects,
                     &bezier_handles_painter_data.point_painter_data,
                 );
 
                 self.bezier_handles_line_painter.draw(
                     render_pass,
-                    &render_objects.camera_bind_group,
+                    render_objects,
                     &bezier_handles_painter_data.line_painter_data,
                 );
             }
@@ -180,7 +181,7 @@ impl LayerPainters {
             {
                 self.display_vertices_painter.draw(
                     render_pass,
-                    &render_objects.camera_bind_group,
+                    render_objects,
                     display_vertices_painter_data,
                 );
             }
@@ -188,11 +189,8 @@ impl LayerPainters {
 
         if display_options.show_pen_up {
             if let Some(pen_up_painter_data) = layer_data.pen_up_painter_data() {
-                self.pen_up_painter.draw(
-                    render_pass,
-                    &render_objects.camera_bind_group,
-                    pen_up_painter_data,
-                );
+                self.pen_up_painter
+                    .draw(render_pass, render_objects, pen_up_painter_data);
             }
         }
     }
@@ -201,7 +199,7 @@ impl LayerPainters {
 /// wgpu-related objects used by the engine.
 ///
 /// They are grouped in a separate structure, so they can be provided to painters during engine
-/// initialisation.
+/// initialization.
 pub(crate) struct EngineRenderObjects {
     pub(crate) device: Arc<Device>,
     pub(crate) camera_buffer: Buffer,
@@ -369,11 +367,8 @@ impl Engine {
         vsvg::trace_function!();
 
         if let Some(page_size_painter_data) = &self.page_size_painter_data {
-            self.page_size_painter.draw(
-                render_pass,
-                &self.render_objects.camera_bind_group,
-                page_size_painter_data,
-            );
+            self.page_size_painter
+                .draw(render_pass, &self.render_objects, page_size_painter_data);
         }
 
         let mut viewer_options = self.viewer_options.lock().unwrap();

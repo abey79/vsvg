@@ -138,7 +138,7 @@ impl Painter for BasicPainter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &wgpu::BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &Self::Data,
     ) {
         // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
@@ -147,7 +147,7 @@ impl Painter for BasicPainter {
         }
 
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_bind_group(0, camera_bind_group, &[]);
+        rpass.set_bind_group(0, &render_objects.camera_bind_group, &[]);
         rpass.set_vertex_buffer(0, data.vertex_buffer.slice(..));
         rpass.draw(0..data.vertex_count, 0..1);
     }
