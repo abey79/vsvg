@@ -2,7 +2,7 @@ use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
 use rand_distr::{Distribution, Normal, WeightedAliasIndex};
 use std::{fmt::Debug, ops::Range};
-use vsvg::Point;
+use vsvg::{Angle, Point};
 
 use crate::runner::InspectVariables;
 
@@ -109,6 +109,11 @@ impl<'a> Context<'a> {
         let normal = Normal::new(mean, std_dev).expect("Failed to create normal distribution");
 
         normal.sample(&mut self.rng)
+    }
+
+    /// Helper function to return random angle
+    pub fn rng_angle(&mut self) -> Angle {
+        Angle::from_deg(self.rng_range(0.0..360.0))
     }
 
     /// Helper function to display an inspect parameter in the inspect variables UI
