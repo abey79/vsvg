@@ -115,7 +115,7 @@ impl<'a> Context<'a> {
     pub fn rng_angle(&mut self) -> Angle {
         let deg = self.rng_range(Range {
             start: 0.0,
-            end: 359.0,
+            end: 360.0,
         });
         Angle::from_deg(deg)
     }
