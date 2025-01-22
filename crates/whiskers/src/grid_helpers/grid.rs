@@ -20,6 +20,8 @@ pub struct GridCell {
     pub size: [f64; 2],
     /// Grid's width and height
     pub grid_size: [f64; 2],
+    /// Cell's index in the flattened grid
+    pub index: usize,
 }
 
 impl IntoBezPathTolerance for &GridCell {
@@ -152,6 +154,7 @@ impl Grid {
                     position: Point::new(pos_x, pos_y),
                     size: [module_width, module_height],
                     grid_size,
+                    index: row * columns + column,
                 };
                 callback_fn(sketch, &cell);
             }
