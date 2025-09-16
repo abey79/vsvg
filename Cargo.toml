@@ -19,7 +19,6 @@ approx = "0.5.1"
 arrayvec = "0.7.2"
 base64 = "0.22.1"
 bitvec = "1.0.1"
-bumpalo = "3.14.0"  # avoid yanked 3.12.1, pulled by wasm-bindgen
 bytemuck = "1.13.1"
 camino = "1.1.0"
 cfg_aliases = "0.2.1"
@@ -28,7 +27,7 @@ clap = "4.4.12"
 convert_case = "0.6.0"
 criterion = "0.5.1"
 dhat = "0.3.2"  # for heap profiling
-eframe = { version = "0.28.1", default-features = false, features = [
+eframe = { version = "0.30.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "persistence",
@@ -36,7 +35,7 @@ eframe = { version = "0.28.1", default-features = false, features = [
     "wayland",
     "x11",
 ] }
-egui = "0.28.1"
+egui = "0.30.0"
 env_logger = "0.11.5"
 geo = "0.28.0"  # for point interop only
 geos = "9.0.0"
@@ -52,18 +51,19 @@ log = "0.4.20"
 lyon_geom = "1.0.4"
 noise = "0.9.0"
 num-traits = "0.2.17"
-pollster = "0.3.0"
+pollster = "0.4.0"
 puffin = "0.19.0"
 puffin_http = "0.16"
 proc-macro2 = "1.0.67"
+profiling = "1.0"
 quote = "1.0.33"
-quick-xml = "0.31"  # sync with egui
+quick-xml = "0.36.2"  # sync with egui
 open = "5.0.0"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
 rayon = "1.8.0"
-raw-window-handle = "0.5"  # sync with eframe
+raw-window-handle = "0.6.0"  # sync with eframe
 regex = "1.7.1"
 rfd = { version = "0.15.0", default-features = false }
 serde = { version = "1", features = ["derive", "rc"] }
@@ -75,12 +75,12 @@ time = "0.3.20"
 tracing-subscriber = "0.3.16"
 usvg = "0.43.0"
 voronoice = "0.2.0"
-wasm-bindgen = "0.2.93" # sync with CI!!
+wasm-bindgen = "=0.2.99" # sync with CI!!
 wasm-bindgen-futures = "0.4.42"
-web-time = "0.2"  # sync with egui-winit
-web-sys = "0.3.64"
-wgpu = { version = "0.20.1", default-features = false, features = ["webgl"] } # sync with egui-wgpu
-winit = "0.29.10" # sync with egui-winit
+web-time = "1.1.0"  # sync with egui-winit
+web-sys = "0.3.70"
+wgpu = { version = "23.0.1", default-features = false, features = ["webgl"] } # sync with egui-wgpu
+winit = "0.30.5" # sync with egui-winit
 
 # Config for 'cargo dist'
 [workspace.metadata.dist]

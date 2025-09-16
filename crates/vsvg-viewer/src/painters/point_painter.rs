@@ -110,13 +110,13 @@ impl PointPainter {
                     layout: Some(&pipeline_layout),
                     vertex: wgpu::VertexState {
                         module: &shader,
-                        entry_point: "vs_main",
+                        entry_point: Some("vs_main"),
                         compilation_options: Default::default(),
                         buffers: &[vertex_buffer_layout],
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader,
-                        entry_point: "fs_main",
+                        entry_point: Some("fs_main"),
                         compilation_options: Default::default(),
                         targets: &[Some(target)],
                     }),
@@ -127,6 +127,7 @@ impl PointPainter {
                     depth_stencil: None,
                     multisample: wgpu::MultisampleState::default(),
                     multiview: None,
+                    cache: None,
                 });
 
         Self { render_pipeline }
@@ -136,12 +137,17 @@ impl PointPainter {
 impl Painter for PointPainter {
     type Data = PointPainterData;
 
-    fn draw<'a>(
-        &'a self,
-        rpass: &mut RenderPass<'a>,
-        camera_bind_group: &'a wgpu::BindGroup,
-        data: &'a Self::Data,
+    fn draw(
+        &self,
+        rpass: &mut RenderPass<'static>,
+        camera_bind_group: &wgpu::BindGroup,
+        data: &Self::Data,
     ) {
+        // `Buffer::slice(..)` panics for empty buffers in wgpu 23+
+        if data.instance_buffer.size() == 0 {
+            return;
+        }
+
         rpass.set_pipeline(&self.render_pipeline);
         rpass.set_bind_group(0, camera_bind_group, &[]);
         rpass.set_vertex_buffer(0, data.instance_buffer.slice(..));

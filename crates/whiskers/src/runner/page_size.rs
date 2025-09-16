@@ -57,7 +57,7 @@ impl PageSizeOptions {
             ui.horizontal(|ui| {
                 ui.label("format:");
 
-                egui::ComboBox::from_id_source("sketch_page_size")
+                egui::ComboBox::from_id_salt("sketch_page_size")
                     .selected_text(new_page_size.to_format().unwrap_or("Custom"))
                     .width(120.)
                     .show_ui(ui, |ui| {

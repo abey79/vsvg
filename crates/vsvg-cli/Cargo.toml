@@ -27,13 +27,8 @@ vsvg = { workspace = true, features = ["egui"] }
 vsvg-viewer.workspace = true
 
 clap = { workspace = true, features = ["cargo"] }
-dhat = { workspace = true,  optional = true } # for heap profiling
-eframe.workspace = true
-egui.workspace = true
+dhat = { workspace = true, optional = true } # for heap profiling
 kurbo.workspace = true
-rand.workspace = true
-rand_chacha.workspace = true
-serde.workspace = true
 tracing-subscriber.workspace = true
 
 

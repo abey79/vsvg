@@ -14,11 +14,11 @@ pub(crate) use point_painter::{PointPainter, PointPainterData};
 pub(crate) trait Painter {
     type Data;
 
-    fn draw<'a>(
-        &'a self,
-        rpass: &mut RenderPass<'a>,
-        camera_bind_group: &'a wgpu::BindGroup,
-        data: &'a Self::Data,
+    fn draw(
+        &self,
+        rpass: &mut RenderPass<'static>,
+        camera_bind_group: &wgpu::BindGroup,
+        data: &Self::Data,
     );
 }
 

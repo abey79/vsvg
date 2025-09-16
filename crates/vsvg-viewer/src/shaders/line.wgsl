@@ -193,4 +193,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
              discard;
         }
     }
+
+    // should never happen, appease Chrome and/or the spec
+    return vec4<f32>(0.0, 0.0, 0.0, 0.0);
 }

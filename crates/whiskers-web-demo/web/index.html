@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<script defer data-domain="whisk.rs" data-api="https://sta.abeyeler.workers.dev/sta/event" src="https://sta.abeyeler.workers.dev/sta/script.js"></script>
+<script defer data-domain="whisk.rs" data-api="https://sta.abeyeler.workers.dev/sta/event"
+        src="https://sta.abeyeler.workers.dev/sta/script.js"></script>
 
 <!-- Disable zooming: -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -45,9 +46,11 @@
             margin-left: auto;
             display: block;
             position: absolute;
-            top: 0%;
-            left: 50%;
-            transform: translate(-50%, 0%);
+            /* see: https://github.com/emilk/egui/issues/4699 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .centered {
@@ -167,7 +170,7 @@
 
         check_for_panic();
 
-        wasm_bindgen.start(handle, "the_canvas_id").then(on_app_started).catch(on_error);
+        wasm_bindgen.start(handle, document.getElementById("the_canvas_id")).then(on_app_started).catch(on_error);
     }
 
     function on_app_started(handle) {

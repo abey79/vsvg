@@ -1,9 +1,14 @@
-use quick_xml::events::attributes::{AttrError, Attribute};
-use quick_xml::events::{BytesStart, Event};
-use quick_xml::name::QName;
-use quick_xml::{Reader, Writer};
 use std::io::Cursor;
 use std::sync::atomic::{AtomicU64, Ordering};
+
+use quick_xml::{
+    events::{
+        attributes::{AttrError, Attribute},
+        BytesStart, Event,
+    },
+    name::QName,
+    Reader, Writer,
+};
 
 static UNIQUE_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -107,7 +112,7 @@ impl GroupInfo {
 
 pub(crate) fn preprocess_inkscape_layer(xml: &str) -> Result<String, InkscapeExtPreprocessorError> {
     let mut reader = Reader::from_str(xml);
-    reader.trim_text(true);
+    reader.config_mut().trim_text(true);
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     loop {
         match reader.read_event() {

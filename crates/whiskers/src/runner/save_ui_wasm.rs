@@ -88,8 +88,8 @@ fn download_file(name: &str, content: &str) -> Option<()> {
     a.style().set_property("display", "none").ok()?;
     body.append_child(&a).ok()?;
 
-    let mut blob_options = BlobPropertyBag::new();
-    blob_options.type_("image/svg+xml;charset=utf-8");
+    let blob_options = BlobPropertyBag::new();
+    blob_options.set_type("image/svg+xml;charset=utf-8");
 
     let blob_sequence = js_sys::Array::new_with_length(1);
     blob_sequence.set(0, JsValue::from(content));

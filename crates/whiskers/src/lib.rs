@@ -116,6 +116,12 @@ pub use sketch::Sketch;
 /// main function.
 pub type Result = anyhow::Result<()>;
 
+/// Re-exports for use by `whiskers-widgets` and `whiskers-derive`.
+pub mod exports {
+    pub use egui;
+    pub use serde;
+}
+
 /// This is the trait that your sketch app must explicitly implement. The [`App::update`] function
 /// is where the sketch draw code goes.
 pub trait App {
@@ -133,7 +139,11 @@ pub trait App {
 /// This trait is implemented by the [`whiskers_widgets::Sketch`] derive macro and makes it possible
 /// for the [`Runner`] to execute your sketch.s
 pub trait SketchApp:
-    App + whiskers_widgets::WidgetApp + Default + serde::Serialize + serde::de::DeserializeOwned
+    App
+    + whiskers_widgets::WidgetApp
+    + Default
+    + crate::exports::serde::Serialize
+    + crate::exports::serde::de::DeserializeOwned
 {
     /// Create a runner for this app.
     fn runner<'a>() -> Runner<'a, Self> {
@@ -151,7 +161,7 @@ macro_rules! wasm_sketch {
         #[wasm_bindgen::prelude::wasm_bindgen]
         pub async fn start(
             handle: &vsvg_viewer::web_handle::WebHandle,
-            canvas_id: &str,
+            canvas_id: vsvg_viewer::exports::web_sys::HtmlCanvasElement,
         ) -> std::result::Result<(), wasm_bindgen::JsValue> {
             handle.start(canvas_id, $t).await
         }
