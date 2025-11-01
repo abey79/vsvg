@@ -72,7 +72,7 @@ impl PathDataTrait for Polyline {
         self.points()
             .iter()
             .skip(1)
-            .fold(rect, |acc, point| acc.union_pt(point.into()))
+            .fold(rect, |acc, point| acc.union_pt(point))
     }
 
     fn start(&self) -> Option<Point> {
