@@ -6,6 +6,7 @@ mod point_painter;
 use vsvg::Point;
 use wgpu::RenderPass;
 
+use crate::engine::EngineRenderObjects;
 pub(crate) use basic_painter::{BasicPainter, BasicPainterData};
 pub(crate) use line_painter::{LineDisplayOptions, LinePainter, LinePainterData};
 pub(crate) use page_size_painter::{PageSizePainter, PageSizePainterData};
@@ -17,7 +18,7 @@ pub(crate) trait Painter {
     fn draw(
         &self,
         rpass: &mut RenderPass<'static>,
-        camera_bind_group: &wgpu::BindGroup,
+        render_objects: &EngineRenderObjects,
         data: &Self::Data,
     );
 }
