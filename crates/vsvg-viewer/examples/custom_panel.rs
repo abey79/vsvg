@@ -5,7 +5,7 @@ use eframe::CreationContext;
 use rand::Rng;
 use std::sync::Arc;
 use vsvg::{Document, DocumentTrait};
-use vsvg_viewer::{show_with_viewer_app, DocumentWidget, ViewerApp};
+use vsvg_viewer::{DocumentWidget, ViewerApp, show_with_viewer_app};
 
 struct SidePanelViewerApp {
     document: Document,

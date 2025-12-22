@@ -107,7 +107,7 @@ mod sketch;
 pub use context::Context;
 pub use grid_helpers::{
     grid::{Grid, GridCell},
-    hex_grid::{cell::HexGridCell, HexGrid},
+    hex_grid::{HexGrid, cell::HexGridCell},
 };
 pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
 pub use sketch::Sketch;

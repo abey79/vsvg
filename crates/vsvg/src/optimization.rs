@@ -42,7 +42,7 @@ impl Layer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{test_file, Document, DocumentTrait, FlattenedLayer, FlattenedPath, LayerTrait};
+    use crate::{Document, DocumentTrait, FlattenedLayer, FlattenedPath, LayerTrait, test_file};
 
     #[test]
     fn test_sort() {

@@ -1,5 +1,5 @@
-use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
+use rand::distributions::uniform::SampleUniform;
 use rand_distr::{Distribution, Normal, WeightedAliasIndex};
 use std::{fmt::Debug, ops::Range};
 use vsvg::{Angle, Point};

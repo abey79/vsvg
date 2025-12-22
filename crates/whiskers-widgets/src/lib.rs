@@ -112,7 +112,7 @@ pub use ui::*;
 pub use vec::*;
 
 // reexport whiskers-derive macros
-pub use whiskers_derive::{sketch_app, sketch_widget, Sketch, Widget};
+pub use whiskers_derive::{Sketch, Widget, sketch_app, sketch_widget};
 
 pub trait WidgetApp {
     /// The name of the sketch, used the window title, the default output file name, and persistent

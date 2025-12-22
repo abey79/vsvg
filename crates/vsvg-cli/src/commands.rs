@@ -1,5 +1,5 @@
 use crate::cli::{CommandDesc, CommandValue};
-use clap::{arg, value_parser, Arg, Id};
+use clap::{Arg, Id, arg, value_parser};
 use std::collections::HashMap;
 use vsvg::{DocumentTrait, Draw, LayerTrait, PathTrait, Transforms};
 

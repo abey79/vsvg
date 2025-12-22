@@ -4,7 +4,7 @@ use egui::{Color32, Ui};
 
 #[cfg(puffin)]
 use crate::profiler::Profiler;
-use crate::{document_widget::DocumentWidget, ViewerApp};
+use crate::{ViewerApp, document_widget::DocumentWidget};
 
 const VSVG_VIEWER_STATE_STORAGE_KEY: &str = "vsvg-viewer-state";
 const VSVG_VIEWER_ANTIALIAS_STORAGE_KEY: &str = "vsvg-viewer-aa";

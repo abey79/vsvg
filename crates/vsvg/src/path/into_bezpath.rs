@@ -1,6 +1,6 @@
 //! Trait and implementation to support flexible conversion to `kurbo::BezPath`.
 
-use crate::{Point, Polyline, DEFAULT_TOLERANCE};
+use crate::{DEFAULT_TOLERANCE, Point, Polyline};
 
 use kurbo::BezPath;
 

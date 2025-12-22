@@ -5,8 +5,8 @@ use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    parse_macro_input, parse_quote, visit_mut::VisitMut, Attribute, Data, DataEnum, DataStruct,
-    DeriveInput, Expr, ExprPath, Field, Fields, FieldsNamed, FieldsUnnamed, Index, Variant,
+    Attribute, Data, DataEnum, DataStruct, DeriveInput, Expr, ExprPath, Field, Fields, FieldsNamed,
+    FieldsUnnamed, Index, Variant, parse_macro_input, parse_quote, visit_mut::VisitMut,
 };
 
 fn label_from_ident(ident: &Ident) -> String {

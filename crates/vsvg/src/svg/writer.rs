@@ -142,8 +142,8 @@ pub(crate) fn document_to_svg_doc<
     //TODO: find suitable replacement
     #[cfg(not(target_arch = "wasm32"))]
     {
-        use time::format_description::well_known::Iso8601;
         use time::OffsetDateTime;
+        use time::format_description::well_known::Iso8601;
 
         let mut dc_date = svg::node::element::Element::new("dc:date");
         dc_date.append(svg::node::Text::new(

@@ -48,14 +48,13 @@ impl SaveUI {
                         if ui
                             .add_enabled(document.is_some(), egui::Button::new("download"))
                             .clicked()
+                            && let Some(document) = document
                         {
-                            if let Some(document) = document {
-                                let mut document = (*document).clone();
-                                optimize_fn(&mut document);
+                            let mut document = (*document).clone();
+                            optimize_fn(&mut document);
 
-                                let res = save_and_download(&self.base_name, &document);
-                                self.last_error = Some(res);
-                            }
+                            let res = save_and_download(&self.base_name, &document);
+                            self.last_error = Some(res);
                         }
 
                         if let Some(Err(error)) = &self.last_error {

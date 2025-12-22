@@ -1,5 +1,5 @@
 use crate::engine::{
-    DisplayOptions, EngineRenderObjects, CONTROL_POINTS_COLOR, CONTROL_POINTS_SIZE,
+    CONTROL_POINTS_COLOR, CONTROL_POINTS_SIZE, DisplayOptions, EngineRenderObjects,
     PEN_UP_TRAJECTORY_COLOR, POINTS_COLOR, POINTS_SIZE,
 };
 use crate::painters::{BasicPainterData, LinePainterData, PointPainterData};
