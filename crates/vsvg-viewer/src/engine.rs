@@ -202,7 +202,7 @@ impl LayerPainters {
 /// They are grouped in a separate structure, so they can be provided to painters during engine
 /// initialisation.
 pub(crate) struct EngineRenderObjects {
-    pub(crate) device: Arc<Device>,
+    pub(crate) device: Device,
     pub(crate) camera_buffer: Buffer,
     pub(crate) camera_bind_group_layout: wgpu::BindGroupLayout,
     pub(crate) camera_bind_group: wgpu::BindGroup,

@@ -1,9 +1,10 @@
 //! Copied from <https://github.com/rerun-io/rerun> under MIT license.
 
 use std::default::Default;
+use std::sync::Arc;
 
 use egui::epaint::text::TextWrapping;
-use egui::{Response, Ui};
+use egui::{Response, Ui, emath::GuiRounding as _};
 
 struct ListItemSpacing {
     height: f32,
@@ -332,7 +333,7 @@ impl<'a> ListItem<'a> {
                 egui::FontSelection::Default,
                 egui::Align::LEFT,
             );
-            let galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
+            let galley = ui.fonts_mut(|fonts| fonts.layout_job(Arc::unwrap_or_clone(layout_job)));
 
             let text_width = galley.size().x;
 
@@ -359,21 +360,16 @@ impl<'a> ListItem<'a> {
         // we want to be able to select/hover the item across its full span, so we sense that and
         // update the response accordingly.
         let full_span_response = ui.interact(bg_rect, response.id, egui::Sense::click());
-        response.clicked = full_span_response.clicked;
-        response.hovered = full_span_response.hovered;
+        response |= full_span_response;
 
-        // override_hover should not affect the returned response
-        let mut style_response = response.clone();
-        if self.force_hovered {
-            style_response.hovered = true;
-        }
+        // Track if we should use hover styling (doesn't affect the returned response)
+        let force_hovered = self.force_hovered;
 
         let mut collapse_response = None;
 
         if ui.is_rect_visible(bg_rect) {
             let mut visuals = if self.active {
-                ui.style()
-                    .interact_selectable(&style_response, self.selected)
+                ui.style().interact_selectable(&response, self.selected)
             } else {
                 ui.visuals().widgets.inactive
             };
@@ -389,10 +385,8 @@ impl<'a> ListItem<'a> {
 
             // Draw collapsing triangle
             if let Some(openness) = self.collapse_openness {
-                let triangle_pos = ui.painter().round_pos_to_pixels(egui::pos2(
-                    rect.min.x,
-                    rect.center().y - 0.5 * icon_size.y,
-                ));
+                let triangle_pos = egui::pos2(rect.min.x, rect.center().y - 0.5 * icon_size.y)
+                    .round_to_pixels(ui.painter().pixels_per_point());
                 let triangle_rect = egui::Rect::from_min_size(triangle_pos, icon_size);
                 let triangle_response = ui.interact(
                     triangle_rect.expand(3.0), // make it easier to click
@@ -405,10 +399,11 @@ impl<'a> ListItem<'a> {
 
             // Draw icon
             if let Some(icon_fn) = self.icon_fn {
-                let icon_pos = ui.painter().round_pos_to_pixels(egui::pos2(
+                let icon_pos = egui::pos2(
                     rect.min.x + collapse_extra,
                     rect.center().y - 0.5 * self.spacing.icon_size.y,
-                ));
+                )
+                .round_to_pixels(ui.painter().pixels_per_point());
                 let icon_rect = egui::Rect::from_min_size(icon_pos, self.spacing.icon_size);
                 icon_fn(ui, icon_rect, visuals);
             }
@@ -444,14 +439,15 @@ impl<'a> ListItem<'a> {
                 text_rect.max.x -= button_response.rect.width() + self.spacing.text_to_icon_padding;
             }
 
-            let mut layout_job = self.text.into_layout_job(
+            let layout_job_arc = self.text.into_layout_job(
                 ui.style(),
                 egui::FontSelection::Default,
                 egui::Align::LEFT,
             );
+            let mut layout_job = Arc::unwrap_or_clone(layout_job_arc);
             layout_job.wrap = TextWrapping::truncate_at_width(text_rect.width());
 
-            let galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
+            let galley = ui.fonts_mut(|fonts| fonts.layout_job(layout_job));
 
             // this happens here to avoid cloning the text
             response.widget_info(|| {
@@ -473,9 +469,10 @@ impl<'a> ListItem<'a> {
             let bg_fill = if button_response.is_some_and(|r| r.hovered()) {
                 Some(visuals.bg_fill)
             } else if self.selected
-                || style_response.hovered()
-                || style_response.highlighted()
-                || style_response.has_focus()
+                || response.hovered()
+                || force_hovered
+                || response.highlighted()
+                || response.has_focus()
             {
                 Some(visuals.weak_bg_fill)
             } else {

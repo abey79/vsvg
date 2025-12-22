@@ -84,8 +84,8 @@ impl FileNameOverlay {
             .min_width(max_width)
             .frame(egui::Frame {
                 fill: ui.visuals().window_fill().gamma_multiply(opacity),
-                inner_margin: Margin::symmetric(10.0, 7.0),
-                rounding: egui::Rounding::same(10.0),
+                inner_margin: Margin::symmetric(10, 7),
+                corner_radius: egui::CornerRadius::same(10),
                 ..Default::default()
             })
             .show(ui.ctx(), |ui| {
@@ -313,13 +313,13 @@ impl ViewerApp for App {
                 ui.add_space(-1.0);
 
                 egui::Frame {
-                    inner_margin: Margin::symmetric(2.0, 0.0),
+                    inner_margin: Margin::symmetric(2, 0),
                     ..Default::default()
                 }
                 .show(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
                         egui::Frame {
-                            inner_margin: Margin::symmetric(6.0, 0.0),
+                            inner_margin: Margin::symmetric(6, 0),
                             ..Default::default()
                         }
                         .show(ui, content_ui);

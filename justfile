@@ -18,7 +18,7 @@ web-build:
     wasm-bindgen target/wasm32-unknown-unknown/release/whiskers_web_demo.wasm --out-dir crates/whiskers-web-demo/web --out-name whiskers_web_demo --no-modules --no-typescript
 
 web-build-opt: web-build
-    wasm-opt -Os crates/whiskers-web-demo/web/whiskers_web_demo_bg.wasm -o crates7whiskers-web-demo/web/whiskers_web_demo_bg.wasm
+    wasm-opt -Os crates/whiskers-web-demo/web/whiskers_web_demo_bg.wasm -o crates/whiskers-web-demo/web/whiskers_web_demo_bg.wasm
 
 web-serve:
     basic-http-server crates/whiskers-web-demo/web
