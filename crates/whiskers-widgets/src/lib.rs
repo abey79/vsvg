@@ -2,7 +2,7 @@
 //!
 //! This crate implements the UI widget machinery used by the `whiskers` crate to display the sketch
 //! parameter UI. The main entry point is the [`trait@Widget`] trait and the associated macros defined
-//! in [`whiskers-derive`].
+//! in [`whiskers_derive`].
 //!
 //! This crate is separate from the main crate to allow other crates (including the `vsvg` crate)
 //! to implement the [`trait@Widget`] trait for their own types.
