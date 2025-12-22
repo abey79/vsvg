@@ -107,7 +107,6 @@ use vsvg::{
 ///
 /// Note that here the page size is not set. If needed, it must be set manually using the
 /// [`Sketch::page_size`] function.
-
 pub struct Sketch {
     document: Document,
     transform_stack: Vec<Affine>,

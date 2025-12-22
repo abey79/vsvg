@@ -329,13 +329,12 @@ impl ViewerApp for App {
 
         // --- Update the document widget if needed ---
 
-        if self.document_dirty {
-            if let Some(LoadedDocument::Loaded(document)) =
+        if self.document_dirty
+            && let Some(LoadedDocument::Loaded(document)) =
                 self.loaded_documents.get(&self.paths[self.active_document])
-            {
-                document_widget.set_document(document.clone());
-                self.document_dirty = false;
-            }
+        {
+            document_widget.set_document(document.clone());
+            self.document_dirty = false;
         }
 
         Ok(())

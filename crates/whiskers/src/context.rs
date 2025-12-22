@@ -21,7 +21,7 @@ pub struct Context<'a> {
     pub inspect_variables: &'a mut InspectVariables,
 }
 
-impl<'a> Context<'a> {
+impl Context<'_> {
     /// Time parameter, normalized by the loop time.
     ///
     /// Always returns 0.0 if the loop time is set to 0.0.

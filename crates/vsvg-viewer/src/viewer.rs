@@ -33,6 +33,7 @@ pub struct Viewer {
     /// Record frame performance
     frame_history: FrameHistory,
 
+    #[allow(clippy::struct_field_names)]
     viewer_app: Box<dyn ViewerApp>,
 
     #[cfg(puffin)]
@@ -52,7 +53,7 @@ impl Viewer {
 
             if let Some(aa) = eframe::get_value(storage, VSVG_VIEWER_ANTIALIAS_STORAGE_KEY) {
                 document_widget.set_antialias(aa);
-            };
+            }
 
             eframe::get_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY).unwrap_or_default()
         } else {

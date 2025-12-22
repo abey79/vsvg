@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // create and process document
     let mut state = State {
-        document: if path == PathBuf::from("-") {
+        document: if path.as_os_str() == "-" {
             let mut s = String::new();
             std::io::stdin().read_to_string(&mut s)?;
             Document::from_string(s.as_str(), single_layer)?

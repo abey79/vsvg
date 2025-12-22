@@ -384,10 +384,10 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
             self.layout_options = layout_options;
         }
 
-        if !self.page_size_options.locked {
-            if let Some(page_size_options) = eframe::get_value(storage, "whiskers-page-size") {
-                self.page_size_options = page_size_options;
-            }
+        if !self.page_size_options.locked
+            && let Some(page_size_options) = eframe::get_value(storage, "whiskers-page-size")
+        {
+            self.page_size_options = page_size_options;
         }
 
         if let Some(animation_options) = eframe::get_value(storage, "whiskers-animation") {

@@ -203,20 +203,20 @@ impl LayerRenderData {
     fn prepare_pen_up_painter_data(&mut self, render_objects: &EngineRenderObjects) {
         vsvg::trace_function!();
 
-        if let Some(flattened_layer) = &self.flattened_layer {
-            if self.pen_up_painter_data.is_none() {
-                let pen_up_trajectories = flattened_layer
-                    .pen_up_trajectories()
-                    .par_iter()
-                    .flat_map(|(start, end)| [start.into(), end.into()])
-                    .collect::<Vec<[f32; 2]>>();
+        if let Some(flattened_layer) = &self.flattened_layer
+            && self.pen_up_painter_data.is_none()
+        {
+            let pen_up_trajectories = flattened_layer
+                .pen_up_trajectories()
+                .par_iter()
+                .flat_map(|(start, end)| [start.into(), end.into()])
+                .collect::<Vec<[f32; 2]>>();
 
-                self.pen_up_painter_data = Some(BasicPainterData::new(
-                    render_objects,
-                    pen_up_trajectories,
-                    PEN_UP_TRAJECTORY_COLOR,
-                ));
-            }
+            self.pen_up_painter_data = Some(BasicPainterData::new(
+                render_objects,
+                pen_up_trajectories,
+                PEN_UP_TRAJECTORY_COLOR,
+            ));
         }
     }
 }

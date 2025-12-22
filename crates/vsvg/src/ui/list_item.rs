@@ -282,10 +282,10 @@ impl<'a> ListItem<'a> {
 
         let response = self.ui(ui, Some(id));
 
-        if let Some(collapse_response) = response.collapse_response {
-            if collapse_response.clicked() {
-                state.toggle(ui);
-            }
+        if let Some(collapse_response) = response.collapse_response
+            && collapse_response.clicked()
+        {
+            state.toggle(ui);
         }
         if response.response.double_clicked() {
             state.toggle(ui);
@@ -470,7 +470,7 @@ impl<'a> ListItem<'a> {
             ui.painter().galley(text_pos, galley, visuals.text_color());
 
             // Draw background on interaction.
-            let bg_fill = if button_response.map_or(false, |r| r.hovered()) {
+            let bg_fill = if button_response.is_some_and(|r| r.hovered()) {
                 Some(visuals.bg_fill)
             } else if self.selected
                 || style_response.hovered()

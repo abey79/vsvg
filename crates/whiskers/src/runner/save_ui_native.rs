@@ -69,10 +69,9 @@ impl SaveUI {
                                     egui::Button::new("open"),
                                 )
                                 .clicked()
+                                && let Some(path) = &self.destination_dir
                             {
-                                if let Some(path) = &self.destination_dir {
-                                    let _ = open::that(path);
-                                }
+                                let _ = open::that(path);
                             }
 
                             if ui
@@ -124,24 +123,23 @@ impl SaveUI {
                                 egui::Button::new("save"),
                             )
                             .clicked()
+                            && let Some(document) = document
                         {
-                            if let Some(document) = document {
-                                let mut document = (*document).clone();
-                                optimize_fn(&mut document);
+                            let mut document = (*document).clone();
+                            optimize_fn(&mut document);
 
-                                if let Some(path) = self.get_output_path() {
-                                    self.last_error = Some(document.to_svg_file(&path).map(|()| {
-                                        path.file_name().map_or("<unknown>".to_string(), |s| {
-                                            s.to_string_lossy().to_string()
-                                        })
-                                    }));
-                                }
+                            if let Some(path) = self.get_output_path() {
+                                self.last_error = Some(document.to_svg_file(&path).map(|()| {
+                                    path.file_name().map_or("<unknown>".to_string(), |s| {
+                                        s.to_string_lossy().to_string()
+                                    })
+                                }));
                             }
                         }
 
                         if let Some(last_error) = &self.last_error {
                             let txt = match last_error {
-                                Ok(file_name) => file_name.to_string(),
+                                Ok(file_name) => file_name.clone(),
                                 Err(err) => format!("Error: {err}"),
                             };
                             let label =

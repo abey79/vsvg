@@ -35,7 +35,7 @@ pub(crate) struct State {
 }
 
 impl State {
-    pub(crate) fn draw(&mut self) -> LayerDrawer {
+    pub(crate) fn draw(&mut self) -> LayerDrawer<'_, '_> {
         LayerDrawer {
             state: &self.draw_state,
             layer: self.document.get_mut(self.draw_layer),

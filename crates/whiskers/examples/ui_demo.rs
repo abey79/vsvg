@@ -1,6 +1,9 @@
 //! This example demonstrates all UI building capabilities of the [`derive@Sketch`] and
 //! [`derive@Widget`] derived traits.
 
+// TODO: https://github.com/rust-lang/rust/issues/138967
+#![allow(unused_assignments)]
+
 use whiskers::prelude::*;
 
 #[sketch_app]

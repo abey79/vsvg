@@ -4,8 +4,8 @@ use crate::{
     PathTrait,
 };
 use kurbo::{BezPath, PathEl};
-use lazy_static::lazy_static;
 use regex::Regex;
+use std::sync::LazyLock;
 use std::{error::Error, fs, path};
 use usvg::{tiny_skia_path::PathSegment, Tree};
 
@@ -67,9 +67,7 @@ fn parse_group(group: &usvg::Group, layer: &mut Layer) {
     });
 }
 
-lazy_static! {
-    static ref DIGITS_RE: Regex = Regex::new(r"\d+").unwrap();
-}
+static DIGITS_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d+").unwrap());
 
 /// Interpret the attributes of a top-level group to determine its layer ID.
 ///
