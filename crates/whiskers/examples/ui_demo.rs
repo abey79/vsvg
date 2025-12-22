@@ -1,7 +1,9 @@
 //! This example demonstrates all UI building capabilities of the [`derive@Sketch`] and
 //! [`derive@Widget`] derived traits.
 
-// TODO: https://github.com/rust-lang/rust/issues/138967
+// The `#[sketch_widget]` macro generates struct literals for enum variants with `#[skip]` fields.
+// These fields are intentionally never read, triggering `unused_assignments`. The lint reports at
+// the user's source span, so `#[allow]` in the macro doesn't help - this is a proc macro limitation.
 #![allow(unused_assignments)]
 
 use whiskers::prelude::*;

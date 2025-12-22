@@ -1,6 +1,6 @@
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
@@ -128,6 +128,8 @@ fn field_defaults<'a>(fields: impl Iterator<Item = &'a Field>) -> proc_macro2::T
     for field in fields {
         let typ_ = &field.ty;
         if let Some(name) = &field.ident {
+            // Use call_site span so unused_assignments lint points to macro, not user code
+            let name = Ident::new(&name.to_string(), Span::call_site());
             output.extend(quote! {
                 #name: #typ_::default(),
             });
@@ -178,7 +180,7 @@ fn process_enum(
         };
 
         default_functions.extend(quote! {
-            #[allow(non_snake_case)]
+            #[allow(non_snake_case, unused_assignments)]
             fn #func_ident() -> Self {
                 #name::#ident #fields_defaults
             }
