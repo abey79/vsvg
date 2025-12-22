@@ -88,21 +88,21 @@ impl Viewer {
         ui.menu_button("Debug", |ui| {
             if ui.button("Show settings window").clicked() {
                 self.state.show_settings = true;
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Show inspection window").clicked() {
                 self.state.show_inspection = true;
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Show memory window").clicked() {
                 self.state.show_memory = true;
-                ui.close_menu();
+                ui.close();
             }
 
             #[cfg(puffin)]
             if ui.button("Show profiler window").clicked() {
                 self.profiler.start();
-                ui.close_menu();
+                ui.close();
             }
 
             #[cfg(debug_assertions)]
@@ -163,7 +163,7 @@ impl eframe::App for Viewer {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 #[cfg(not(target_arch = "wasm32"))]
                 self.menu_file(ui);
 
@@ -186,7 +186,7 @@ impl eframe::App for Viewer {
             .expect("ViewerApp failed!!!");
 
         let panel_frame = egui::Frame::central_panel(&ctx.style())
-            .inner_margin(egui::Margin::same(0.))
+            .inner_margin(egui::Margin::same(0))
             .fill(Color32::from_rgb(242, 242, 242));
 
         egui::CentralPanel::default()

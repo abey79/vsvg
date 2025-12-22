@@ -22,7 +22,7 @@ approx = "0.5.1"
 arrayvec = "0.7.2"
 base64 = "0.22.1"
 bitvec = "1.0.1"
-bytemuck = "1.21"
+bytemuck = "1.24"  # sync with egui
 camino = "1.1.0"
 cfg_aliases = "0.2.1"
 cgmath = "0.18.0"
@@ -30,7 +30,7 @@ clap = "4.4.12"
 convert_case = "0.6.0"
 criterion = "0.5.1"
 dhat = "0.3.2"  # for heap profiling
-eframe = { version = "0.30.0", default-features = false, features = [
+eframe = { version = "0.33.3", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "persistence",
@@ -38,7 +38,7 @@ eframe = { version = "0.30.0", default-features = false, features = [
     "wayland",
     "x11",
 ] }
-egui = "0.30.0"
+egui = "0.33.3"
 env_logger = "0.11.5"
 geo = "0.28.0"  # for point interop only
 geos = "9.0.0"
@@ -66,7 +66,7 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
 rayon = "1.8.0"
-raw-window-handle = "0.6.0"  # sync with eframe
+raw-window-handle = "0.6.2"  # sync with eframe
 regex = "1.7.1"
 rfd = { version = "0.15.0", default-features = false }
 serde = { version = "1", features = ["derive", "rc"] }
@@ -78,12 +78,18 @@ time = "0.3.20"
 tracing-subscriber = "0.3.16"
 usvg = "0.43.0"
 voronoice = "0.2.0"
-wasm-bindgen = "=0.2.99" # sync with CI!!
-wasm-bindgen-futures = "0.4.42"
+wasm-bindgen = "=0.2.100" # sync with CI and egui!!
+wasm-bindgen-futures = "0.4"
 web-time = "1.1.0"  # sync with egui-winit
-web-sys = "0.3.70"
-wgpu = { version = "23.0.1", default-features = false, features = ["webgl"] } # sync with egui-wgpu
-winit = "0.30.5" # sync with egui-winit
+web-sys = "0.3.77"  # sync with egui
+wgpu = { version = "27.0.1", default-features = false, features = [
+    "metal",   # macOS backend
+    "vulkan",  # Linux/Windows backend
+    "webgl",   # web fallback backend
+    "webgpu",  # modern web backend
+    "wgsl",    # shader language
+] } # sync with egui-wgpu
+winit = "0.30.12" # sync with egui-winit
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

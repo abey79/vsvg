@@ -3,7 +3,7 @@ name: Deploy demo
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches: [ "master" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
 
       - uses: jetli/wasm-bindgen-action@v0.2.0
         with:
-          version: 0.2.99
+          version: 0.2.100
 
       - run: |
           just web-build

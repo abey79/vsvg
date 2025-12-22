@@ -178,7 +178,7 @@ impl DocumentWidget {
                     )
                     .clicked()
                 {
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui
                     .radio_value(
@@ -188,7 +188,7 @@ impl DocumentWidget {
                     )
                     .clicked()
                 {
-                    ui.close_menu();
+                    ui.close();
                 }
             });
 
@@ -204,7 +204,7 @@ impl DocumentWidget {
                     .override_width;
                 ui.menu_button("Override Pen Width", |ui| {
                     if ui.radio_value(pen_width, None, "Off").clicked() {
-                        ui.close_menu();
+                        ui.close();
                     }
                     ui.separator();
                     for width in PEN_WIDTHS_MM {
@@ -216,7 +216,7 @@ impl DocumentWidget {
                             )
                             .clicked()
                         {
-                            ui.close_menu();
+                            ui.close();
                         }
                     }
                 });
@@ -233,7 +233,7 @@ impl DocumentWidget {
 
                 ui.menu_button("Override Pen Opacity", |ui| {
                     if ui.radio_value(opacity, None, "Off").clicked() {
-                        ui.close_menu();
+                        ui.close();
                     }
                     ui.separator();
                     for opacity_value in PEN_OPACITY_PERCENT {
@@ -246,7 +246,7 @@ impl DocumentWidget {
                             )
                             .clicked()
                         {
-                            ui.close_menu();
+                            ui.close();
                         }
                     }
                 });
@@ -284,7 +284,7 @@ impl DocumentWidget {
             ui.separator();
             if ui.button("Fit to view").clicked() {
                 self.must_fit_to_view = true;
-                ui.close_menu();
+                ui.close();
             }
 
             ui.separator();
@@ -332,7 +332,7 @@ impl DocumentWidget {
                     anti_alias: options.anti_alias,
                     ..DisplayOptions::default()
                 };
-                ui.close_menu();
+                ui.close();
             }
         });
     }
