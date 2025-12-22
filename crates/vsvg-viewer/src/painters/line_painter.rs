@@ -126,8 +126,8 @@
 //! ```
 
 use wgpu::{
-    include_wgsl, util::DeviceExt, vertex_attr_array, Buffer, ColorTargetState, PrimitiveTopology,
-    RenderPass, RenderPipeline,
+    Buffer, ColorTargetState, PrimitiveTopology, RenderPass, RenderPipeline, include_wgsl,
+    util::DeviceExt, vertex_attr_array,
 };
 
 use vsvg::{FlattenedPath, PathTrait};

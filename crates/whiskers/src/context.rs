@@ -1,5 +1,5 @@
-use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
+use rand::distributions::uniform::SampleUniform;
 use rand_distr::{Distribution, Normal, WeightedAliasIndex};
 use std::{fmt::Debug, ops::Range};
 use vsvg::{Angle, Point};
@@ -21,7 +21,7 @@ pub struct Context<'a> {
     pub inspect_variables: &'a mut InspectVariables,
 }
 
-impl<'a> Context<'a> {
+impl Context<'_> {
     /// Time parameter, normalized by the loop time.
     ///
     /// Always returns 0.0 if the loop time is set to 0.0.

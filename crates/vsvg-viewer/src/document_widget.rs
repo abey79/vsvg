@@ -179,7 +179,7 @@ impl DocumentWidget {
                     .clicked()
                 {
                     ui.close_menu();
-                };
+                }
                 if ui
                     .radio_value(
                         &mut self.viewer_options.lock().unwrap().display_mode,
@@ -189,7 +189,7 @@ impl DocumentWidget {
                     .clicked()
                 {
                     ui.close_menu();
-                };
+                }
             });
 
             ui.separator();
@@ -349,7 +349,8 @@ impl DocumentWidget {
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
                 let mut label = format!("Layer {lid}");
                 if let Some(name) = &layer.metadata().name {
-                    label.push_str(&format!(": {name}"));
+                    use std::fmt::Write;
+                    let _ = write!(label, ": {name}");
                 }
 
                 ui.checkbox(visibility, label);

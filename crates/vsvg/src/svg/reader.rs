@@ -1,13 +1,13 @@
-use crate::svg::inkscape_layer_preprocessor::{preprocess_inkscape_layer, GroupInfo};
+use crate::svg::inkscape_layer_preprocessor::{GroupInfo, preprocess_inkscape_layer};
 use crate::{
     Color, Document, DocumentTrait, IntoBezPath, Layer, LayerID, LayerTrait, PageSize, Path,
     PathTrait,
 };
 use kurbo::{BezPath, PathEl};
-use lazy_static::lazy_static;
 use regex::Regex;
+use std::sync::LazyLock;
 use std::{error::Error, fs, path};
-use usvg::{tiny_skia_path::PathSegment, Tree};
+use usvg::{Tree, tiny_skia_path::PathSegment};
 
 impl IntoBezPath for usvg::tiny_skia_path::Path {
     fn into_bezpath(self) -> BezPath {
@@ -67,9 +67,7 @@ fn parse_group(group: &usvg::Group, layer: &mut Layer) {
     });
 }
 
-lazy_static! {
-    static ref DIGITS_RE: Regex = Regex::new(r"\d+").unwrap();
-}
+static DIGITS_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d+").unwrap());
 
 /// Interpret the attributes of a top-level group to determine its layer ID.
 ///
@@ -219,10 +217,9 @@ impl Document {
                                 group_info.id.as_deref().unwrap_or(""),
                                 None,
                             );
-                            layer_name =
-                                group_info
-                                    .id
-                                    .and_then(|id| if id.is_empty() { None } else { Some(id) });
+                            layer_name = group_info
+                                .id
+                                .and_then(|id| if id.is_empty() { None } else { Some(id) });
                         }
 
                         // this is a top-level path that was embedded in a group by usvg
@@ -248,7 +245,7 @@ impl Document {
 
 #[cfg(test)]
 mod tests {
-    use crate::{test_file, Document, DocumentTrait, LayerTrait, PathDataTrait};
+    use crate::{Document, DocumentTrait, LayerTrait, PathDataTrait, test_file};
     use kurbo::BezPath;
 
     #[test]

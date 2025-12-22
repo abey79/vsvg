@@ -159,41 +159,40 @@ impl LayerPainters {
             );
         }
 
-        if display_options.show_bezier_handles {
-            if let Some(bezier_handles_painter_data) = layer_data.bezier_handles_painter_data() {
-                self.bezier_handles_point_painter.draw(
-                    render_pass,
-                    &render_objects.camera_bind_group,
-                    &bezier_handles_painter_data.point_painter_data,
-                );
+        if display_options.show_bezier_handles
+            && let Some(bezier_handles_painter_data) = layer_data.bezier_handles_painter_data()
+        {
+            self.bezier_handles_point_painter.draw(
+                render_pass,
+                &render_objects.camera_bind_group,
+                &bezier_handles_painter_data.point_painter_data,
+            );
 
-                self.bezier_handles_line_painter.draw(
-                    render_pass,
-                    &render_objects.camera_bind_group,
-                    &bezier_handles_painter_data.line_painter_data,
-                );
-            }
+            self.bezier_handles_line_painter.draw(
+                render_pass,
+                &render_objects.camera_bind_group,
+                &bezier_handles_painter_data.line_painter_data,
+            );
         }
 
-        if display_options.show_display_vertices {
-            if let Some(display_vertices_painter_data) = layer_data.display_vertices_painter_data()
-            {
-                self.display_vertices_painter.draw(
-                    render_pass,
-                    &render_objects.camera_bind_group,
-                    display_vertices_painter_data,
-                );
-            }
+        if display_options.show_display_vertices
+            && let Some(display_vertices_painter_data) = layer_data.display_vertices_painter_data()
+        {
+            self.display_vertices_painter.draw(
+                render_pass,
+                &render_objects.camera_bind_group,
+                display_vertices_painter_data,
+            );
         }
 
-        if display_options.show_pen_up {
-            if let Some(pen_up_painter_data) = layer_data.pen_up_painter_data() {
-                self.pen_up_painter.draw(
-                    render_pass,
-                    &render_objects.camera_bind_group,
-                    pen_up_painter_data,
-                );
-            }
+        if display_options.show_pen_up
+            && let Some(pen_up_painter_data) = layer_data.pen_up_painter_data()
+        {
+            self.pen_up_painter.draw(
+                render_pass,
+                &render_objects.camera_bind_group,
+                pen_up_painter_data,
+            );
         }
     }
 }
@@ -320,10 +319,10 @@ impl Engine {
         }
 
         // rebuild the document data only if the new document is different from the previous one
-        if let Some(render_data) = self.render_data.as_ref() {
-            if Arc::ptr_eq(&document, render_data.document()) {
-                return;
-            }
+        if let Some(render_data) = self.render_data.as_ref()
+            && Arc::ptr_eq(&document, render_data.document())
+        {
+            return;
         }
         self.render_data = Some(RenderData::new(document));
     }

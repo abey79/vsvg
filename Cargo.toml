@@ -4,6 +4,9 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+edition = "2024"
+
 [workspace.dependencies]
 # When using alpha-release, always use exact version, e.g. `version = "=0.x.y-alpha.z"
 # This is because we treat alpha-releases as incompatible, but semver doesn't.
@@ -19,7 +22,7 @@ approx = "0.5.1"
 arrayvec = "0.7.2"
 base64 = "0.22.1"
 bitvec = "1.0.1"
-bytemuck = "1.13.1"
+bytemuck = "1.21"
 camino = "1.1.0"
 cfg_aliases = "0.2.1"
 cgmath = "0.18.0"

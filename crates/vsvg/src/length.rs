@@ -3,8 +3,8 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use num_traits::{AsPrimitive, Float};
-use rand::distributions::uniform::{SampleBorrow, SampleUniform, UniformSampler};
 use rand::Rng;
+use rand::distributions::uniform::{SampleBorrow, SampleUniform, UniformSampler};
 
 use crate::{Unit, UnitError};
 

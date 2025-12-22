@@ -1,4 +1,4 @@
-use clap::{arg, command, value_parser, Arg, ArgAction, ArgGroup, ArgMatches, Command, Id};
+use clap::{Arg, ArgAction, ArgGroup, ArgMatches, Command, Id, arg, command, value_parser};
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
 
@@ -35,7 +35,7 @@ pub(crate) struct State {
 }
 
 impl State {
-    pub(crate) fn draw(&mut self) -> LayerDrawer {
+    pub(crate) fn draw(&mut self) -> LayerDrawer<'_, '_> {
         LayerDrawer {
             state: &self.draw_state,
             layer: self.document.get_mut(self.draw_layer),

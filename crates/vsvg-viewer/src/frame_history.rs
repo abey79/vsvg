@@ -1,5 +1,5 @@
-use egui::util::History;
 use egui::Label;
+use egui::util::History;
 
 pub(crate) struct FrameHistory {
     frame_times: History<f32>,

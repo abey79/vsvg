@@ -1,6 +1,6 @@
 pub use crate::{
-    wasm_sketch, AnimationOptions, App, Context, Grid, GridCell, HexGrid, HexGridCell, InfoOptions,
-    LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp,
+    AnimationOptions, App, Context, Grid, GridCell, HexGrid, HexGridCell, InfoOptions,
+    LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp, wasm_sketch,
 };
 pub use vsvg::{
     Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms,
@@ -8,7 +8,7 @@ pub use vsvg::{
 };
 pub use whiskers_widgets;
 pub use whiskers_widgets::Widget as _;
-pub use whiskers_widgets::{sketch_app, sketch_widget, Sketch, Widget}; // bring trait in scope, but avoid name-clash with macro
+pub use whiskers_widgets::{Sketch, Widget, sketch_app, sketch_widget}; // bring trait in scope, but avoid name-clash with macro
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use vsvg_viewer::show;

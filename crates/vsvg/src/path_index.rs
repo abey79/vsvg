@@ -77,7 +77,7 @@ impl IndexBuilder {
     }
 
     #[must_use]
-    pub fn build<P: PathTrait<D>, D: PathDataTrait>(self, paths: &[P]) -> PathIndex<P, D> {
+    pub fn build<P: PathTrait<D>, D: PathDataTrait>(self, paths: &[P]) -> PathIndex<'_, P, D> {
         PathIndex::new(paths, self)
     }
 }
@@ -183,7 +183,7 @@ impl<'a, P: PathTrait<D>, D: PathDataTrait> PathIndex<'a, P, D> {
         }
     }
 
-    pub fn pop_first(&mut self) -> Option<PathItem<P, D>> {
+    pub fn pop_first(&mut self) -> Option<PathItem<'_, P, D>> {
         // since the paths were reversed upon insertion, the pop operation corresponds to pop_first
         let (idx, path_item) = self.paths.pop()?;
         self.occupancy.set(idx, false);
@@ -205,7 +205,7 @@ impl<'a, P: PathTrait<D>, D: PathDataTrait> PathIndex<'a, P, D> {
     /// This function may return `None` even if the `PathIndex` is not empty, as some paths may not
     /// be indexed.
     #[allow(clippy::missing_panics_doc)]
-    pub fn pop_nearest(&mut self, point: &Point) -> Option<(PathItem<P, D>, bool)> {
+    pub fn pop_nearest(&mut self, point: &Point) -> Option<(PathItem<'_, P, D>, bool)> {
         if self.reindex_agent.should_reindex() {
             self.reindex();
         }

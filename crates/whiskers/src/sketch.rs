@@ -1,7 +1,7 @@
 use kurbo::Affine;
 use vsvg::{
-    Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path, PathMetadata,
-    Transforms, DEFAULT_TOLERANCE,
+    DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path,
+    PathMetadata, Transforms,
 };
 
 /// Primary interface for drawing.
@@ -107,7 +107,6 @@ use vsvg::{
 ///
 /// Note that here the page size is not set. If needed, it must be set manually using the
 /// [`Sketch::page_size`] function.
-
 pub struct Sketch {
     document: Document,
     transform_stack: Vec<Affine>,

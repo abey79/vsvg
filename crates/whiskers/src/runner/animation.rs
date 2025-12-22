@@ -116,17 +116,17 @@ impl AnimationOptions {
 
         let mut changed = false;
 
-        if let Some(last_instant) = self.last_instant {
-            if self.playing {
-                let delta = now - last_instant;
-                self.time += delta.as_secs_f64();
+        if let Some(last_instant) = self.last_instant
+            && self.playing
+        {
+            let delta = now - last_instant;
+            self.time += delta.as_secs_f64();
 
-                if self.is_looping {
-                    self.time %= self.loop_time;
-                }
-
-                changed = true;
+            if self.is_looping {
+                self.time %= self.loop_time;
             }
+
+            changed = true;
         }
 
         self.last_instant = Some(web_time::Instant::now());

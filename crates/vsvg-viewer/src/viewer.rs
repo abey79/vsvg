@@ -4,14 +4,14 @@ use egui::{Color32, Ui};
 
 #[cfg(puffin)]
 use crate::profiler::Profiler;
-use crate::{document_widget::DocumentWidget, ViewerApp};
+use crate::{ViewerApp, document_widget::DocumentWidget};
 
 const VSVG_VIEWER_STATE_STORAGE_KEY: &str = "vsvg-viewer-state";
 const VSVG_VIEWER_ANTIALIAS_STORAGE_KEY: &str = "vsvg-viewer-aa";
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
-#[allow(clippy::struct_excessive_bools, clippy::struct_field_names)]
+#[allow(clippy::struct_excessive_bools)]
 struct ViewerState {
     /// Show settings window.
     show_settings: bool,
@@ -33,7 +33,7 @@ pub struct Viewer {
     /// Record frame performance
     frame_history: FrameHistory,
 
-    viewer_app: Box<dyn ViewerApp>,
+    app: Box<dyn ViewerApp>,
 
     #[cfg(puffin)]
     profiler: Profiler,
@@ -52,7 +52,7 @@ impl Viewer {
 
             if let Some(aa) = eframe::get_value(storage, VSVG_VIEWER_ANTIALIAS_STORAGE_KEY) {
                 document_widget.set_antialias(aa);
-            };
+            }
 
             eframe::get_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY).unwrap_or_default()
         } else {
@@ -68,7 +68,7 @@ impl Viewer {
             state,
             document_widget,
             frame_history: FrameHistory::default(),
-            viewer_app,
+            app: viewer_app,
             #[cfg(puffin)]
             profiler: Profiler::default(),
         })
@@ -159,7 +159,7 @@ impl eframe::App for Viewer {
         vsvg::trace_function!();
 
         // hook to handle input (called early to allow capturing input before egui)
-        self.viewer_app.handle_input(ctx, &mut self.document_widget);
+        self.app.handle_input(ctx, &mut self.document_widget);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -181,7 +181,7 @@ impl eframe::App for Viewer {
 
         // hook for creating side panels
         //TODO: better error management
-        self.viewer_app
+        self.app
             .show_panels(ctx, &mut self.document_widget)
             .expect("ViewerApp failed!!!");
 
@@ -195,7 +195,7 @@ impl eframe::App for Viewer {
                 self.document_widget.ui(ui);
 
                 //TODO: better error management
-                self.viewer_app
+                self.app
                     .show_central_panel(ui, &mut self.document_widget)
                     .expect("ViewerApp failed!!!");
             });
@@ -233,11 +233,11 @@ impl eframe::App for Viewer {
             VSVG_VIEWER_ANTIALIAS_STORAGE_KEY,
             &self.document_widget.antialias(),
         );
-        self.viewer_app.save(storage);
+        self.app.save(storage);
     }
 
     /// Called by the framework before shutting down.
     fn on_exit(&mut self) {
-        self.viewer_app.on_exit();
+        self.app.on_exit();
     }
 }

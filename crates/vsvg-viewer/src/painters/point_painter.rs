@@ -3,8 +3,8 @@ use crate::painters::Painter;
 use std::mem;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, vertex_attr_array, Buffer, ColorTargetState, PrimitiveTopology, RenderPass,
-    RenderPipeline,
+    Buffer, ColorTargetState, PrimitiveTopology, RenderPass, RenderPipeline, include_wgsl,
+    vertex_attr_array,
 };
 
 #[repr(C)]

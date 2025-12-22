@@ -1,9 +1,9 @@
 use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
-use crate::crop::{crop_quad_bezier, Crop, QuadCropResult};
-use crate::path::into_bezpath::{
-    line_segment_to_bezpath, points_to_bezpath, IntoBezPath, IntoBezPathTolerance,
-};
 use crate::Transforms;
+use crate::crop::{Crop, QuadCropResult, crop_quad_bezier};
+use crate::path::into_bezpath::{
+    IntoBezPath, IntoBezPathTolerance, line_segment_to_bezpath, points_to_bezpath,
+};
 use kurbo::{Affine, BezPath, PathEl};
 use std::cell::RefCell;
 use std::error::Error;

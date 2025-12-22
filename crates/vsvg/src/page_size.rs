@@ -112,11 +112,7 @@ impl PageSize {
             Self::Custom(w, h, Unit::Px)
         };
 
-        if flip {
-            page_size.flip()
-        } else {
-            page_size
-        }
+        if flip { page_size.flip() } else { page_size }
     }
 
     /// Create a [`PageSize::Custom`] from width and height in the given [`Unit`].

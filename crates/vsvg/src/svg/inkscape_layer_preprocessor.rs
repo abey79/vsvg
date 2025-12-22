@@ -2,12 +2,12 @@ use std::io::Cursor;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use quick_xml::{
+    Reader, Writer,
     events::{
-        attributes::{AttrError, Attribute},
         BytesStart, Event,
+        attributes::{AttrError, Attribute},
     },
     name::QName,
-    Reader, Writer,
 };
 
 static UNIQUE_ID: AtomicU64 = AtomicU64::new(0);

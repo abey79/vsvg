@@ -44,7 +44,7 @@ impl<T: Numeric> NumericWidget<T> {
         self
     }
 
-    /// Sets the widget to logarithmic mode. Implies [`slider(true)`].
+    /// Sets the widget to logarithmic mode. Implies `slider(true)`.
     #[must_use]
     pub fn logarithmic(mut self, log: bool) -> Self {
         self.logarithmic = log;
