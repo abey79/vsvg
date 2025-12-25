@@ -1,6 +1,6 @@
 pub use crate::{
     AnimationOptions, App, Context, Grid, GridCell, HexGrid, HexGridCell, InfoOptions,
-    LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp, wasm_sketch,
+    LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp, ViewerOptions, wasm_sketch,
 };
 pub use vsvg::{
     Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms,

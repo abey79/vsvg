@@ -106,6 +106,30 @@ impl DocumentWidget {
             .anti_alias = anti_alias;
     }
 
+    pub fn set_show_points(&self, show: bool) {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .show_display_vertices = show;
+    }
+
+    pub fn set_show_pen_up(&self, show: bool) {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .show_pen_up = show;
+    }
+
+    pub fn set_show_control_points(&self, show: bool) {
+        self.viewer_options
+            .lock()
+            .unwrap()
+            .display_options
+            .show_bezier_handles = show;
+    }
+
     #[must_use]
     pub fn vertex_count(&self) -> u64 {
         self.viewer_options.lock().unwrap().vertex_count
