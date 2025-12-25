@@ -159,7 +159,7 @@ impl Path {
         let mut lines: Vec<FlattenedPath> = vec![];
         let current_line: RefCell<Polyline> = RefCell::new(Polyline::default());
 
-        self.data.flatten(tolerance, |el| match el {
+        kurbo::flatten(&self.data, tolerance, |el| match el {
             PathEl::MoveTo(pt) => {
                 if !current_line.borrow().points().is_empty() {
                     // lines.push(Polyline::from(current_line.replace(vec![])));
