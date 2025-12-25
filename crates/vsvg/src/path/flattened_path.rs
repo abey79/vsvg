@@ -1,5 +1,7 @@
+use std::ops::Range;
+
 use super::{PathDataTrait, PathMetadata, Point};
-use crate::{PathTrait, Transforms};
+use crate::{Path, PathTrait, Transforms};
 use kurbo::Affine;
 
 // ======================================================================================
@@ -144,6 +146,150 @@ impl From<Polyline> for FlattenedPath {
 impl From<Vec<Point>> for FlattenedPath {
     fn from(points: Vec<Point>) -> Self {
         Polyline::new(points).into()
+    }
+}
+
+// ======================================================================================
+// Curve fitting support
+
+/// Helper struct for implementing `kurbo::ParamCurveFit` on a polyline.
+///
+/// This enables using kurbo's `fit_to_bezpath` algorithm to fit smooth Bézier curves
+/// to a sequence of points.
+struct PolylineCurveFit<'a> {
+    points: &'a [Point],
+    cumulative_len: Vec<f64>,
+    total_len: f64,
+}
+
+impl<'a> PolylineCurveFit<'a> {
+    fn new(points: &'a [Point]) -> Self {
+        // Store cumulative length at the END of each segment
+        // So cumulative_len[i] = length from point 0 to point i+1
+        let n_segments = points.len().saturating_sub(1);
+        let mut cumulative_len = Vec::with_capacity(n_segments);
+        let mut total = 0.0;
+
+        for i in 0..n_segments {
+            total += points[i + 1].distance(&points[i]);
+            cumulative_len.push(total);
+        }
+
+        Self {
+            points,
+            cumulative_len,
+            total_len: total,
+        }
+    }
+
+    /// Map parameter t ∈ [0,1] to a point and tangent on the polyline.
+    fn sample(&self, t: f64) -> (kurbo::Point, kurbo::Vec2) {
+        if self.points.len() < 2 || self.total_len < 1e-10 {
+            let p = self
+                .points
+                .first()
+                .map_or(kurbo::Point::ZERO, |p| kurbo::Point::new(p.x(), p.y()));
+            return (p, kurbo::Vec2::ZERO);
+        }
+
+        let target_len = t.clamp(0.0, 1.0) * self.total_len;
+
+        // Binary search to find the segment containing target_len
+        // cumulative_len[i] is the cumulative length at the end of segment i
+        let seg_idx = self
+            .cumulative_len
+            .partition_point(|&l| l < target_len)
+            .min(self.cumulative_len.len() - 1);
+
+        let seg_start_len = if seg_idx == 0 {
+            0.0
+        } else {
+            self.cumulative_len[seg_idx - 1]
+        };
+        let seg_end_len = self.cumulative_len[seg_idx];
+        let seg_len = seg_end_len - seg_start_len;
+
+        let local_t = if seg_len > 1e-10 {
+            ((target_len - seg_start_len) / seg_len).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let p0 = &self.points[seg_idx];
+        let p1 = &self.points[seg_idx + 1];
+
+        let point = kurbo::Point::new(
+            p0.x() + local_t * (p1.x() - p0.x()),
+            p0.y() + local_t * (p1.y() - p0.y()),
+        );
+        let tangent = kurbo::Vec2::new(p1.x() - p0.x(), p1.y() - p0.y());
+
+        (point, tangent)
+    }
+}
+
+impl kurbo::ParamCurveFit for PolylineCurveFit<'_> {
+    fn sample_pt_tangent(&self, t: f64, _sign: f64) -> kurbo::CurveFitSample {
+        let (p, tangent) = self.sample(t);
+        kurbo::CurveFitSample { p, tangent }
+    }
+
+    fn sample_pt_deriv(&self, t: f64) -> (kurbo::Point, kurbo::Vec2) {
+        self.sample(t)
+    }
+
+    fn break_cusp(&self, _range: Range<f64>) -> Option<f64> {
+        // Polylines are piecewise linear, no cusps
+        None
+    }
+}
+
+impl FlattenedPath {
+    /// Fit smooth Bézier curves to this polyline.
+    ///
+    /// This is the inverse of [`Path::flatten`]: it converts a sequence of points back into
+    /// smooth curves using kurbo's curve fitting algorithm.
+    ///
+    /// # Arguments
+    ///
+    /// * `tolerance` - Controls how closely the fitted curve follows the original points.
+    ///   Smaller values produce tighter fits with more curve segments; larger values produce
+    ///   smoother curves that may deviate more from the original points.
+    ///
+    /// # Returns
+    ///
+    /// A [`Path`] containing Bézier curves that approximate this polyline. The path's metadata
+    /// is preserved from the original `FlattenedPath`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use vsvg::{FlattenedPath, Point};
+    ///
+    /// let points = vec![
+    ///     Point::new(0.0, 0.0),
+    ///     Point::new(50.0, 100.0),
+    ///     Point::new(100.0, 0.0),
+    /// ];
+    /// let flattened = FlattenedPath::from(points);
+    /// let path = flattened.fit_to_path(1.0);
+    /// ```
+    #[must_use]
+    pub fn fit_to_path(&self, tolerance: f64) -> Path {
+        let points = self.data.points();
+
+        if points.len() < 2 {
+            // Not enough points to fit, return a simple path
+            return Path::from_metadata(self.data.clone(), self.metadata.clone());
+        }
+
+        let curve_fit = PolylineCurveFit::new(points);
+        let bezpath = kurbo::fit_to_bezpath(&curve_fit, tolerance);
+
+        Path {
+            data: bezpath,
+            metadata: self.metadata.clone(),
+        }
     }
 }
 
