@@ -25,8 +25,8 @@ pub use inspect::InspectVariables;
 pub use layout::LayoutOptions;
 pub use optimization::OptimizationOptions;
 pub use page_size::PageSizeOptions;
-pub use viewer_options::ViewerOptions;
 use rand::SeedableRng;
+pub use viewer_options::ViewerOptions;
 use vsvg::Document;
 
 use vsvg_viewer::DocumentWidget;
