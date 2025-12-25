@@ -35,17 +35,13 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
     fn metadata_mut(&mut self) -> &mut LayerMetadata;
 
     fn bounds(&self) -> Option<kurbo::Rect> {
-        if self.paths().is_empty() {
-            return None;
-        }
-
-        let first = self.paths().first().expect("checked").bounds();
-        Some(
-            self.paths()
-                .iter()
-                .skip(1)
-                .fold(first, |acc, path| acc.union(path.bounds())),
-        )
+        self.paths().iter().fold(None, |acc, path| {
+            if let Some(acc) = acc {
+                Some(acc.union(path.bounds()))
+            } else {
+                Some(path.bounds())
+            }
+        })
     }
 
     fn push_path(&mut self, path: impl Into<P>) {
