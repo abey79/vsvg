@@ -6,6 +6,7 @@ pub use vsvg::{
     Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms,
     Unit,
 };
+pub use vsvg_viewer::DisplayOptions;
 pub use whiskers_widgets;
 pub use whiskers_widgets::Widget as _;
 pub use whiskers_widgets::{Sketch, Widget, sketch_app, sketch_widget}; // bring trait in scope, but avoid name-clash with macro

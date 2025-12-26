@@ -81,29 +81,14 @@ impl DocumentWidget {
         self.document = Some(doc);
     }
 
-    pub fn set_tolerance(&mut self, tolerance: f64) {
-        self.viewer_options
-            .lock()
-            .unwrap()
-            .display_options
-            .tolerance = tolerance;
+    /// Read this widget's display options.
+    pub fn display_options<R>(&self, func: impl FnOnce(&DisplayOptions) -> R) -> R {
+        func(&self.viewer_options.lock().unwrap().display_options)
     }
 
-    #[must_use]
-    pub fn antialias(&self) -> f32 {
-        self.viewer_options
-            .lock()
-            .unwrap()
-            .display_options
-            .anti_alias
-    }
-
-    pub fn set_antialias(&self, anti_alias: f32) {
-        self.viewer_options
-            .lock()
-            .unwrap()
-            .display_options
-            .anti_alias = anti_alias;
+    /// Mutate this widget's display options.
+    pub fn display_options_mut<R>(&self, func: impl FnOnce(&mut DisplayOptions) -> R) -> R {
+        func(&mut self.viewer_options.lock().unwrap().display_options)
     }
 
     #[must_use]

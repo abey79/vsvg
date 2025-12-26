@@ -27,7 +27,7 @@ pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
 use vsvg::Document;
 
-use vsvg_viewer::DocumentWidget;
+use vsvg_viewer::{DisplayOptions, DocumentWidget};
 
 /// The [`Runner`] is the main entry point for executing a [`crate::SketchApp`].
 ///
@@ -67,6 +67,9 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Options and UI for save panel.
     save_ui: SaveUI,
 
+    /// Initialization values for the display options (if explicitly set by the user).
+    display_options_init: Option<DisplayOptions>,
+
     // ========== seed stuff
     /// Random seed used to generate the sketch.
     seed: u32,
@@ -99,6 +102,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
             optimization_options: OptimizationOptions::default(),
             inspect_variables: InspectVariables::default(),
             save_ui,
+            display_options_init: None,
             seed: 0,
             _phantom: std::marker::PhantomData,
         }
@@ -159,6 +163,15 @@ impl<A: crate::SketchApp> Runner<'_, A> {
     pub fn with_optimization_options(self, options: impl Into<OptimizationOptions>) -> Self {
         Self {
             optimization_options: options.into(),
+            ..self
+        }
+    }
+
+    /// Sets the display options.
+    #[must_use]
+    pub fn with_display_options(self, options: impl Into<DisplayOptions>) -> Self {
+        Self {
+            display_options_init: Some(options.into()),
             ..self
         }
     }
@@ -241,6 +254,18 @@ impl<A: crate::SketchApp> Runner<'_, A> {
 }
 
 impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
+    fn setup(
+        &mut self,
+        _cc: &eframe::CreationContext,
+        document_widget: &mut DocumentWidget,
+    ) -> anyhow::Result<()> {
+        if let Some(display_options) = self.display_options_init {
+            document_widget.display_options_mut(|opt| *opt = display_options);
+        }
+
+        Ok(())
+    }
+
     fn show_panels(
         &mut self,
         ctx: &egui::Context,

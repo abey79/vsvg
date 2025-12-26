@@ -7,7 +7,7 @@ use crate::profiler::Profiler;
 use crate::{ViewerApp, document_widget::DocumentWidget};
 
 const VSVG_VIEWER_STATE_STORAGE_KEY: &str = "vsvg-viewer-state";
-const VSVG_VIEWER_ANTIALIAS_STORAGE_KEY: &str = "vsvg-viewer-aa";
+const VSVG_VIEWER_DISPLAY_OPTIONS_KEY: &str = "vsvg-viewer-display-options";
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -50,8 +50,10 @@ impl Viewer {
         let state = if let Some(storage) = cc.storage {
             viewer_app.load(storage);
 
-            if let Some(aa) = eframe::get_value(storage, VSVG_VIEWER_ANTIALIAS_STORAGE_KEY) {
-                document_widget.set_antialias(aa);
+            if let Some(display_options) =
+                eframe::get_value(storage, VSVG_VIEWER_DISPLAY_OPTIONS_KEY)
+            {
+                document_widget.display_options_mut(|opt| *opt = display_options);
             }
 
             eframe::get_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY).unwrap_or_default()
@@ -228,11 +230,9 @@ impl eframe::App for Viewer {
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, VSVG_VIEWER_STATE_STORAGE_KEY, &self.state);
-        eframe::set_value(
-            storage,
-            VSVG_VIEWER_ANTIALIAS_STORAGE_KEY,
-            &self.document_widget.antialias(),
-        );
+
+        let display_options = self.document_widget.display_options(|opt| *opt);
+        eframe::set_value(storage, VSVG_VIEWER_DISPLAY_OPTIONS_KEY, &display_options);
         self.app.save(storage);
     }
 

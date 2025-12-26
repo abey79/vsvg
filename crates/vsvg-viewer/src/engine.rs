@@ -30,24 +30,24 @@ pub(crate) enum DisplayMode {
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 #[allow(clippy::struct_field_names)]
-pub(crate) struct DisplayOptions {
+pub struct DisplayOptions {
     /// show points
-    pub show_display_vertices: bool,
+    pub(crate) show_display_vertices: bool,
 
     /// show pen-up trajectories
-    pub show_pen_up: bool,
+    pub(crate) show_pen_up: bool,
 
     /// show control points
-    pub show_bezier_handles: bool,
+    pub(crate) show_bezier_handles: bool,
 
     /// tolerance parameter used for flattening curves by the renderer
-    pub tolerance: f64,
+    pub(crate) tolerance: f64,
 
     /// anti alias parameter
-    pub anti_alias: f32,
+    pub(crate) anti_alias: f32,
 
     /// display options specific to the line painter
-    pub line_display_options: LineDisplayOptions,
+    pub(crate) line_display_options: LineDisplayOptions,
 }
 
 impl Default for DisplayOptions {
@@ -63,7 +63,44 @@ impl Default for DisplayOptions {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+impl DisplayOptions {
+    /// Enable or disable showing points on paths.
+    #[must_use]
+    pub fn with_show_points(mut self, show: bool) -> Self {
+        self.show_display_vertices = show;
+        self
+    }
+
+    /// Enable or disable showing pen-up trajectories.
+    #[must_use]
+    pub fn with_show_pen_up(mut self, show: bool) -> Self {
+        self.show_pen_up = show;
+        self
+    }
+
+    /// Enable or disable showing control points for bezier curves.
+    #[must_use]
+    pub fn with_show_control_points(mut self, show: bool) -> Self {
+        self.show_bezier_handles = show;
+        self
+    }
+
+    /// Set the tolerance parameter used for flattening curves by the renderer.
+    #[must_use]
+    pub fn with_tolerance(mut self, tolerance: f64) -> Self {
+        self.tolerance = tolerance;
+        self
+    }
+
+    /// Set the anti-aliasing parameter.
+    #[must_use]
+    pub fn with_anti_alias(mut self, anti_alias: f32) -> Self {
+        self.anti_alias = anti_alias;
+        self
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct ViewerOptions {
     //TODO: implement that
     /// display mode
@@ -73,7 +110,6 @@ pub(crate) struct ViewerOptions {
     pub display_options: DisplayOptions,
 
     /// layer visibility
-    #[serde(skip)]
     pub layer_visibility: HashMap<LayerID, bool>,
 
     /// vertex count (updated by [`Engine::paint`] for display purposes)
