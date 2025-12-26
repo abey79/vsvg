@@ -152,7 +152,7 @@ impl Attribute {
 }
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub(crate) struct LineDisplayOptions {
+pub struct LineDisplayOptions {
     /// override width
     pub override_width: Option<f32>,
 

@@ -8,7 +8,6 @@ mod page_size;
 mod save_ui_native;
 #[cfg(target_arch = "wasm32")]
 mod save_ui_wasm;
-mod viewer_options;
 
 #[cfg(not(target_arch = "wasm32"))]
 use save_ui_native::SaveUI;
@@ -26,10 +25,9 @@ pub use layout::LayoutOptions;
 pub use optimization::OptimizationOptions;
 pub use page_size::PageSizeOptions;
 use rand::SeedableRng;
-pub use viewer_options::ViewerOptions;
 use vsvg::Document;
 
-use vsvg_viewer::DocumentWidget;
+use vsvg_viewer::{DisplayOptions, DocumentWidget};
 
 /// The [`Runner`] is the main entry point for executing a [`crate::SketchApp`].
 ///
@@ -69,8 +67,8 @@ pub struct Runner<'a, A: crate::SketchApp> {
     /// Options and UI for save panel.
     save_ui: SaveUI,
 
-    /// Viewer display options.
-    viewer_options: ViewerOptions,
+    /// Initialization values for the display options (if explicitly set by the user).
+    display_options_init: Option<DisplayOptions>,
 
     // ========== seed stuff
     /// Random seed used to generate the sketch.
@@ -104,7 +102,7 @@ impl<A: crate::SketchApp> Runner<'_, A> {
             optimization_options: OptimizationOptions::default(),
             inspect_variables: InspectVariables::default(),
             save_ui,
-            viewer_options: ViewerOptions::default(),
+            display_options_init: None,
             seed: 0,
             _phantom: std::marker::PhantomData,
         }
@@ -169,11 +167,11 @@ impl<A: crate::SketchApp> Runner<'_, A> {
         }
     }
 
-    /// Sets the viewer display options.
+    /// Sets the display options.
     #[must_use]
-    pub fn with_viewer_options(self, options: impl Into<ViewerOptions>) -> Self {
+    pub fn with_display_options(self, options: impl Into<DisplayOptions>) -> Self {
         Self {
-            viewer_options: options.into(),
+            display_options_init: Some(options.into()),
             ..self
         }
     }
@@ -261,9 +259,10 @@ impl<A: crate::SketchApp> vsvg_viewer::ViewerApp for Runner<'_, A> {
         _cc: &eframe::CreationContext,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
-        document_widget.set_show_points(self.viewer_options.show_points);
-        document_widget.set_show_pen_up(self.viewer_options.show_pen_up);
-        document_widget.set_show_control_points(self.viewer_options.show_control_points);
+        if let Some(display_options) = self.display_options_init {
+            document_widget.display_options_mut(|opt| *opt = display_options);
+        }
+
         Ok(())
     }
 

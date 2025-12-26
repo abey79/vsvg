@@ -18,9 +18,8 @@ pub mod web_handle;
 
 use eframe::CreationContext;
 use std::sync::Arc;
-pub use viewer::Viewer;
 
-pub use crate::document_widget::DocumentWidget;
+pub use self::{document_widget::DocumentWidget, engine::DisplayOptions, viewer::Viewer};
 
 /// Export of core dependencies in addition to what vsvg already re-exports.
 pub mod exports {
@@ -45,7 +44,7 @@ impl ViewerApp for ShowViewerApp {
         _cc: &CreationContext,
         document_widget: &mut DocumentWidget,
     ) -> anyhow::Result<()> {
-        document_widget.set_tolerance(self.tolerance);
+        document_widget.display_options_mut(|opt| opt.tolerance = self.tolerance);
         document_widget.set_document(self.document.clone());
         Ok(())
     }
