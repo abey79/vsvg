@@ -131,5 +131,10 @@ fn main() -> Result {
     FitToBezpathSketch::runner()
         .with_page_size_options(PageSize::A4H)
         .with_layout_options(LayoutOptions::Center)
+        .with_display_options(
+            DisplayOptions::default()
+                .with_show_points(true)
+                .with_show_control_points(true),
+        )
         .run()
 }
