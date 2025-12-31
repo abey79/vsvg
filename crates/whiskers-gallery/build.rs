@@ -126,7 +126,9 @@ mod wasm {
         handle: &vsvg_viewer::web_handle::WebHandle,
         canvas: vsvg_viewer::exports::web_sys::HtmlCanvasElement,
     ) -> Result<(), JsValue> {{
-        handle.start(canvas, crate::sketches::{id}::runner()).await
+        handle
+            .start(canvas, crate::sketches::{id}::runner())
+            .await
     }}
 "#,
             id = sketch.id

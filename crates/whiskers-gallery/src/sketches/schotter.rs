@@ -2,8 +2,8 @@
 //! using whiskers.
 
 use itertools::iproduct;
-use whiskers::prelude::*;
 use whiskers::Runner;
+use whiskers::prelude::*;
 
 #[sketch_app]
 pub struct SchotterSketch {

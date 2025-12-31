@@ -8,7 +8,7 @@ use anyhow::Result;
 use std::path::PathBuf;
 use vsvg::DocumentTrait;
 
-use whiskers_gallery::{render_sketch, SKETCH_MANIFEST};
+use whiskers_gallery::{SKETCH_MANIFEST, render_sketch};
 
 fn main() -> Result<()> {
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

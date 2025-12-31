@@ -1,7 +1,7 @@
 //! Whiskers Gallery - A collection of interactive sketches for whisk.rs
 
-pub mod sketches;
 mod generated;
+pub mod sketches;
 
 pub use generated::SKETCH_MANIFEST;
 #[cfg(not(target_arch = "wasm32"))]

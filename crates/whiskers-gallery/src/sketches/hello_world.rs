@@ -1,7 +1,7 @@
 //! A simple introductory sketch demonstrating basic whiskers usage.
 
-use whiskers::prelude::*;
 use whiskers::Runner;
+use whiskers::prelude::*;
 
 #[sketch_app]
 pub struct HelloWorldSketch {

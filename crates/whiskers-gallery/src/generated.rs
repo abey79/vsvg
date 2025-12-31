@@ -38,7 +38,9 @@ mod wasm {
         handle: &vsvg_viewer::web_handle::WebHandle,
         canvas: vsvg_viewer::exports::web_sys::HtmlCanvasElement,
     ) -> Result<(), JsValue> {
-        handle.start(canvas, crate::sketches::schotter::runner()).await
+        handle
+            .start(canvas, crate::sketches::schotter::runner())
+            .await
     }
 
     #[wasm_bindgen]
@@ -46,6 +48,8 @@ mod wasm {
         handle: &vsvg_viewer::web_handle::WebHandle,
         canvas: vsvg_viewer::exports::web_sys::HtmlCanvasElement,
     ) -> Result<(), JsValue> {
-        handle.start(canvas, crate::sketches::hello_world::runner()).await
+        handle
+            .start(canvas, crate::sketches::hello_world::runner())
+            .await
     }
 }
