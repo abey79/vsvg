@@ -33,4 +33,9 @@ jobs:
 
       - run: just web-build
 
+      - name: Check generated code is up to date
+        run: |
+          cargo build -p whiskers-gallery
+          git diff --exit-code crates/whiskers-gallery/src/generated.rs
+
       - run: just gallery-wasm

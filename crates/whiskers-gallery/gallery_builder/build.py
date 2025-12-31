@@ -1,33 +1,26 @@
 """Build script for whiskers gallery.
 
 Generates HTML pages for each sketch with embedded source code.
+Reads sketch metadata from sketches.toml (single source of truth).
 """
 
-from importlib.resources import files
+import tomllib
 from pathlib import Path
 
 from jinja2 import Environment, PackageLoader
-
-# Sketch metadata - should match SKETCH_MANIFEST in mod.rs
-SKETCHES = [
-    {
-        "id": "schotter",
-        "name": "Schotter",
-        "description": "Recreation of Georg Nees' classic 1968-1970 generative art piece",
-        "author": "Antoine Beyeler",
-    },
-    {
-        "id": "hello_world",
-        "name": "Hello World",
-        "description": "A simple introductory sketch demonstrating basic whiskers usage",
-        "author": "Antoine Beyeler",
-    },
-]
 
 
 def get_crate_root() -> Path:
     """Get the root directory of the whiskers-gallery crate."""
     return Path(__file__).parent.parent
+
+
+def load_sketches() -> list[dict]:
+    """Load sketch metadata from sketches.toml."""
+    toml_path = get_crate_root() / "sketches.toml"
+    with open(toml_path, "rb") as f:
+        data = tomllib.load(f)
+    return data.get("sketch", [])
 
 
 def read_sketch_source(sketch_id: str) -> str:
@@ -44,6 +37,9 @@ def build_gallery() -> None:
     web_dir = crate_root / "web"
     sketches_dir = web_dir / "sketches"
 
+    # Load sketch metadata from TOML
+    sketches = load_sketches()
+
     # Ensure output directories exist
     sketches_dir.mkdir(parents=True, exist_ok=True)
 
@@ -53,7 +49,7 @@ def build_gallery() -> None:
     index_template = env.get_template("index.html.jinja")
 
     # Build each sketch page
-    for sketch in SKETCHES:
+    for sketch in sketches:
         sketch_id = sketch["id"]
         print(f"Building sketch page: {sketch_id}")
 
@@ -70,7 +66,7 @@ def build_gallery() -> None:
 
     # Build landing page
     print("Building landing page")
-    landing_html = index_template.render(sketches=SKETCHES)
+    landing_html = index_template.render(sketches=sketches)
     (web_dir / "index.html").write_text(landing_html)
 
     print(f"Gallery built successfully in {web_dir}")

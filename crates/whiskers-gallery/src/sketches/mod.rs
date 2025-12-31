@@ -1,4 +1,4 @@
-//! Gallery sketch registry and metadata.
+//! Gallery sketch modules.
 
 pub mod hello_world;
 pub mod schotter;
@@ -11,19 +11,3 @@ pub struct SketchMeta {
     pub description: &'static str,
     pub author: &'static str,
 }
-
-/// Registry of all available sketches.
-pub static SKETCH_MANIFEST: &[SketchMeta] = &[
-    SketchMeta {
-        id: "schotter",
-        name: "Schotter",
-        description: "Recreation of Georg Nees' classic 1968-1970 generative art piece",
-        author: "Antoine Beyeler",
-    },
-    SketchMeta {
-        id: "hello_world",
-        name: "Hello World",
-        description: "A simple introductory sketch demonstrating basic whiskers usage",
-        author: "Antoine Beyeler",
-    },
-];
