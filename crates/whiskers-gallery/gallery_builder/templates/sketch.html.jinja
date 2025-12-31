@@ -6,6 +6,7 @@
     <title>{{ sketch.name }} - Whiskers Gallery</title>
     <meta name="description" content="{{ sketch.description }}">
     <link rel="stylesheet" href="../../gallery.css">
+    <link rel="stylesheet" href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
     <nav class="sketch-nav">
@@ -27,7 +28,7 @@
             <span>Source Code</span>
             <button id="source-close" class="source-close">×</button>
         </div>
-        <pre><code>{{ source | e }}</code></pre>
+        <pre><code class="language-rust">{{ source | e }}</code></pre>
     </aside>
 
     <script src="../whiskers_gallery.js"></script>
@@ -63,5 +64,7 @@
                     '<p><a href="../../">Back to Gallery</a></p>';
             });
     </script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-rust.min.js"></script>
 </body>
 </html>
