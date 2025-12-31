@@ -18,8 +18,10 @@ fn main() -> Result<()> {
     println!("Generating thumbnails in {:?}", thumbnails_dir);
 
     for sketch in SKETCH_MANIFEST {
-        let document = render_sketch(sketch.id, 0)
+        let mut document = render_sketch(sketch.id, 0)
             .unwrap_or_else(|| panic!("Unknown sketch: {}", sketch.id))?;
+        // Disable date in SVG metadata for deterministic output
+        document.metadata_mut().include_date = false;
         let svg = document.to_svg_string()?;
         let path = thumbnails_dir.join(format!("{}.svg", sketch.id));
         std::fs::write(&path, &svg)?;
