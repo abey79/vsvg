@@ -8,11 +8,18 @@ publish = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "generate-thumbnails"
+path = "src/bin/generate_thumbnails.rs"
+
 [dependencies]
 whiskers = { workspace = true, features = ["viewer"] }
 vsvg-viewer.workspace = true
+vsvg.workspace = true
 itertools.workspace = true
 anyhow.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen.workspace = true

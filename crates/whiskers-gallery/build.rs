@@ -84,6 +84,31 @@ pub static SKETCH_MANIFEST: &[SketchMeta] = &[
 
     code.push_str("];\n");
 
+    // Native: render a sketch headlessly by ID (for thumbnail generation, etc.)
+    code.push_str(
+        "
+/// Render a sketch headlessly by ID and return the resulting document.
+#[cfg(not(target_arch = \"wasm32\"))]
+pub fn render_sketch(id: &str, seed: u32) -> Option<anyhow::Result<vsvg::Document>> {
+    match id {
+",
+    );
+
+    for sketch in sketches {
+        code.push_str(&format!(
+            r#"        "{id}" => Some(crate::sketches::{id}::runner().run_headless(seed)),
+"#,
+            id = sketch.id
+        ));
+    }
+
+    code.push_str(
+        "        _ => None,
+    }
+}
+",
+    );
+
     // WASM entry points
     code.push_str(
         "

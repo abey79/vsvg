@@ -31,11 +31,14 @@ gallery-wasm:
 gallery-wasm-opt: gallery-wasm
     wasm-opt -Os crates/whiskers-gallery/web/sketches/whiskers_gallery_bg.wasm -o crates/whiskers-gallery/web/sketches/whiskers_gallery_bg.wasm
 
+gallery-thumbnails:
+    cargo run --bin generate-thumbnails --release
+
 gallery-html:
     pip install -q -e crates/whiskers-gallery
     gallery-build
 
-gallery-build: gallery-wasm-opt gallery-html
+gallery-build: gallery-wasm-opt gallery-thumbnails gallery-html
 
 gallery-serve: gallery-build
     python -m http.server -d crates/whiskers-gallery/web 8080

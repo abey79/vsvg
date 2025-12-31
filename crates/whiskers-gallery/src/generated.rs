@@ -19,6 +19,16 @@ pub static SKETCH_MANIFEST: &[SketchMeta] = &[
     },
 ];
 
+/// Render a sketch headlessly by ID and return the resulting document.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn render_sketch(id: &str, seed: u32) -> Option<anyhow::Result<vsvg::Document>> {
+    match id {
+        "schotter" => Some(crate::sketches::schotter::runner().run_headless(seed)),
+        "hello_world" => Some(crate::sketches::hello_world::runner().run_headless(seed)),
+        _ => None,
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use wasm_bindgen::prelude::*;
