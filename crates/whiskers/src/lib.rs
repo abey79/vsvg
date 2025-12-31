@@ -85,8 +85,8 @@
 //! wasm_main!(my_sketch);  // `my_sketch` is the crate name
 //! ```
 //!
-//! Deploying the Wasm sketch additionally requires a spacial `index.html` file. See the
-//! [`whiskers-web-demo`](https://github.com/abey79/vsvg/tree/master/crates/whiskers-web-demo) crate
+//! Deploying the Wasm sketch additionally requires a special `index.html` file. See the
+//! [`whiskers-gallery`](https://github.com/abey79/vsvg/tree/master/crates/whiskers-gallery) crate
 //! for an example.
 
 #![warn(missing_docs)]

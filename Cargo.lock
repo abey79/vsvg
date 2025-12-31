@@ -5065,14 +5065,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "whiskers-web-demo"
-version = "0.6.0-alpha.0"
-dependencies = [
- "itertools 0.14.0",
- "whiskers",
-]
-
-[[package]]
 name = "whiskers-widgets"
 version = "0.6.0-alpha.0"
 dependencies = [
