@@ -1,13 +1,27 @@
 /* Whiskers Gallery Styles */
 
 :root {
-    --bg-color: #1a1a2e;
-    --surface-color: #16213e;
-    --primary-color: #e94560;
-    --text-color: #eaeaea;
-    --text-muted: #a0a0a0;
-    --border-color: #2a2a4a;
-    --code-bg: #0f0f1a;
+    /* Light theme matching egui Visuals::light() */
+    --bg-color: #F8F8F8;
+    --surface-color: #FFFFFF;
+    --primary-color: #009BFF;
+    --text-color: #1a1a1a;
+    --text-muted: #666666;
+    --border-color: #d0d0d0;
+    --code-bg: #E6E6E6;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark theme matching egui Visuals::dark() */
+        --bg-color: #1b1b1b;
+        --surface-color: #272727;
+        --primary-color: #5599ff;
+        --text-color: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --border-color: #404040;
+        --code-bg: #1a1a1a;
+    }
 }
 
 * {
@@ -167,7 +181,7 @@ a:hover {
 }
 
 .source-toggle:hover {
-    background: #d13550;
+    background: #0080d0;
 }
 
 /* Split layout */
