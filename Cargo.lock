@@ -5050,6 +5050,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "whiskers-gallery"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "itertools 0.14.0",
+ "vsvg-viewer",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "whiskers",
+]
+
+[[package]]
 name = "whiskers-web-demo"
 version = "0.6.0-alpha.0"
 dependencies = [

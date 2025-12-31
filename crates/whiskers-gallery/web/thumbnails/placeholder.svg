@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#0f0f1a"/>
+  <text x="200" y="150" text-anchor="middle" fill="#4a4a6a" font-family="system-ui" font-size="24">
+    Sketch Preview
+  </text>
+  <rect x="100" y="180" width="200" height="2" fill="#2a2a4a"/>
+</svg>

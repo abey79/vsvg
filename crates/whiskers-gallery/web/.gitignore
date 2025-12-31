@@ -1,0 +1,7 @@
+# Generated WASM files
+sketches/*.js
+sketches/*.wasm
+
+# Generated HTML files (from build_gallery.py)
+index.html
+sketches/*/index.html

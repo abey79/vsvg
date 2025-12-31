@@ -5,3 +5,13 @@
 /dhat-heap.json
 /venv
 /my_work
+
+# Python
+__pycache__/
+*.egg-info/
+*.pyc
+.eggs/
+dist/
+build/
+*.egg
+.Python

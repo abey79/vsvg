@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiskers Gallery</title>
+    <meta name="description" content="Interactive generative art sketches for pen plotters">
+    <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+    <header class="gallery-header">
+        <h1>Whiskers Gallery</h1>
+        <p>Interactive generative art sketches for pen plotters</p>
+        <p class="subtitle">
+            Built with <a href="https://github.com/abey79/vsvg">whiskers</a> -
+            a Rust framework for creating plotter-ready generative art
+        </p>
+    </header>
+
+    <main class="gallery-grid">
+        {% for sketch in sketches %}
+        <a href="sketches/{{ sketch.id }}/" class="sketch-card">
+            <div class="sketch-thumbnail">
+                <img src="thumbnails/placeholder.svg" alt="{{ sketch.name }}" loading="lazy">
+            </div>
+            <h2>{{ sketch.name }}</h2>
+            <p>{{ sketch.description }}</p>
+            <span class="sketch-author">by {{ sketch.author }}</span>
+        </a>
+        {% endfor %}
+    </main>
+
+    <footer class="gallery-footer">
+        <p>
+            <a href="https://github.com/abey79/vsvg">GitHub</a> ·
+            <a href="https://docs.rs/whiskers">Documentation</a>
+        </p>
+    </footer>
+</body>
+</html>

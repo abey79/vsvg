@@ -1,0 +1,21 @@
+[project]
+name = "whiskers-gallery-builder"
+version = "0.1.0"
+description = "Build script for the whiskers gallery website"
+requires-python = ">=3.9"
+dependencies = [
+    "jinja2>=3.0",
+]
+
+[project.scripts]
+gallery-build = "gallery_builder:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+gallery_builder = ["templates/*.jinja"]

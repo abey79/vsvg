@@ -32,3 +32,5 @@ jobs:
       - run: just clippy-wasm
 
       - run: just web-build
+
+      - run: just gallery-wasm

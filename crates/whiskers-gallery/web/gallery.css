@@ -1,0 +1,292 @@
+/* Whiskers Gallery Styles */
+
+:root {
+    --bg-color: #1a1a2e;
+    --surface-color: #16213e;
+    --primary-color: #e94560;
+    --text-color: #eaeaea;
+    --text-muted: #a0a0a0;
+    --border-color: #2a2a4a;
+    --code-bg: #0f0f1a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Landing Page */
+.gallery-header {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+    background: linear-gradient(180deg, var(--surface-color) 0%, var(--bg-color) 100%);
+}
+
+.gallery-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.gallery-header p {
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.gallery-header .subtitle {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.sketch-card {
+    background: var(--surface-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+    color: var(--text-color);
+}
+
+.sketch-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+}
+
+.sketch-thumbnail {
+    aspect-ratio: 4 / 3;
+    background: var(--code-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.sketch-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sketch-card h2 {
+    font-size: 1.25rem;
+    padding: 1rem 1rem 0.5rem;
+}
+
+.sketch-card p {
+    padding: 0 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.sketch-author {
+    display: block;
+    padding: 0.75rem 1rem 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.gallery-footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+    margin-top: 2rem;
+}
+
+.gallery-footer a {
+    color: var(--text-muted);
+    margin: 0 0.5rem;
+}
+
+.gallery-footer a:hover {
+    color: var(--primary-color);
+}
+
+/* Sketch Page */
+.sketch-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    z-index: 100;
+    gap: 1rem;
+}
+
+.back-link {
+    font-size: 0.9rem;
+}
+
+.sketch-title {
+    flex: 1;
+    font-weight: 600;
+    text-align: center;
+}
+
+.source-toggle {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.source-toggle:hover {
+    background: #d13550;
+}
+
+#sketch-container {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#sketch-container canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 1rem auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error {
+    color: var(--primary-color);
+}
+
+/* Source Panel */
+.source-panel {
+    position: fixed;
+    top: 48px;
+    right: 0;
+    width: 500px;
+    max-width: 90vw;
+    height: calc(100vh - 48px);
+    background: var(--code-bg);
+    border-left: 1px solid var(--border-color);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+}
+
+.source-panel.open {
+    transform: translateX(0);
+}
+
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.source-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    line-height: 1;
+}
+
+.source-close:hover {
+    color: var(--text-color);
+}
+
+.source-panel pre {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 1rem;
+}
+
+.source-panel code {
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-color);
+    white-space: pre;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gallery-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .gallery-grid {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .source-panel {
+        width: 100vw;
+        max-width: 100vw;
+    }
+
+    .sketch-title {
+        font-size: 0.9rem;
+    }
+}

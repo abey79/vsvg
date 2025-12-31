@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{{ sketch.name }} - Whiskers Gallery</title>
+    <meta name="description" content="{{ sketch.description }}">
+    <link rel="stylesheet" href="../../gallery.css">
+</head>
+<body>
+    <nav class="sketch-nav">
+        <a href="../../" class="back-link">← Gallery</a>
+        <span class="sketch-title">{{ sketch.name }}</span>
+        <button id="source-toggle" class="source-toggle">View Source</button>
+    </nav>
+
+    <main id="sketch-container">
+        <canvas id="the_canvas_id"></canvas>
+        <div id="loading" class="loading">
+            <p>Loading sketch...</p>
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    <aside id="source-panel" class="source-panel">
+        <div class="source-header">
+            <span>Source Code</span>
+            <button id="source-close" class="source-close">×</button>
+        </div>
+        <pre><code>{{ source | e }}</code></pre>
+    </aside>
+
+    <script src="../whiskers_gallery.js"></script>
+    <script>
+        const SKETCH_ID = '{{ sketch.id }}';
+
+        // Toggle source panel
+        document.getElementById('source-toggle').addEventListener('click', () => {
+            document.getElementById('source-panel').classList.add('open');
+        });
+        document.getElementById('source-close').addEventListener('click', () => {
+            document.getElementById('source-panel').classList.remove('open');
+        });
+
+        // Load and start sketch
+        wasm_bindgen('../whiskers_gallery_bg.wasm')
+            .then(() => {
+                document.getElementById('loading').style.display = 'none';
+                const handle = new wasm_bindgen.WebHandle();
+                const canvas = document.getElementById('the_canvas_id');
+                // Call the sketch-specific start function
+                const startFn = wasm_bindgen['start_' + SKETCH_ID];
+                if (startFn) {
+                    return startFn(handle, canvas);
+                } else {
+                    throw new Error('Unknown sketch: ' + SKETCH_ID);
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load sketch:', err);
+                document.getElementById('loading').innerHTML =
+                    '<p class="error">Failed to load: ' + err + '</p>' +
+                    '<p><a href="../../">Back to Gallery</a></p>';
+            });
+    </script>
+</body>
+</html>
