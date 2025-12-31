@@ -1,4 +1,4 @@
-name: Deploy demo
+name: Deploy gallery
 
 on:
   # Runs on pushes targeting the default branch
@@ -42,13 +42,17 @@ jobs:
         with:
           version: 0.2.100
 
-      - run: |
-          just web-build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Optimize Wasm
+      - name: Build gallery (WASM + thumbnails + HTML)
+        run: just gallery-wasm gallery-thumbnails gallery-html
+
+      - name: Optimize WASM
         uses: NiklasEi/wasm-opt-action@v2
         with:
-          file: crates/whiskers-web-demo/web/whiskers_web_bg.wasm
+          file: crates/whiskers-gallery/web/sketches/whiskers_gallery_bg.wasm
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -56,7 +60,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: "crates/whiskers-web-demo/web"
+          path: "crates/whiskers-gallery/web"
 
       - name: Deploy to GitHub Pages
         id: deployment

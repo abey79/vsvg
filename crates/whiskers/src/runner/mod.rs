@@ -185,6 +185,26 @@ impl<A: crate::SketchApp + 'static> Runner<'static, A> {
 
         vsvg_viewer::show_with_viewer_app(self)
     }
+
+    /// Run the sketch headlessly and return the resulting document.
+    ///
+    /// This is useful for generating thumbnails or batch processing without a UI.
+    pub fn run_headless(mut self, seed: u32) -> anyhow::Result<Document> {
+        let mut inspect_variables = InspectVariables::default();
+        let mut context = crate::context::Context {
+            rng: rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(seed)),
+            time: self.animation_options.time,
+            loop_time: self.animation_options.loop_time,
+            inspect_variables: &mut inspect_variables,
+        };
+
+        let mut sketch = Sketch::new();
+        sketch.page_size(self.page_size_options.page_size);
+        self.app.update(&mut sketch, &mut context)?;
+        self.layout_options.apply(&mut sketch);
+
+        Ok(sketch.into_document())
+    }
 }
 
 /// Convenience trait to be used with [`egui::Response`] for setting the [`Runner`] dirty

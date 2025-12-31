@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{{ sketch.name }} - Whiskers Gallery</title>
+    <meta name="description" content="{{ sketch.description }}">
+    <link rel="stylesheet" href="../../gallery.css">
+    <link rel="stylesheet" id="prism-light" href="https://unpkg.com/prismjs@1.29.0/themes/prism.min.css" media="(prefers-color-scheme: light)">
+    <link rel="stylesheet" id="prism-dark" href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+    <nav class="sketch-nav">
+        <a href="../../" class="back-link">← Gallery</a>
+        <span class="sketch-title">{{ sketch.name }}</span>
+        <button id="source-toggle" class="source-toggle">View Source</button>
+    </nav>
+
+    <div id="split-container" class="split-container">
+        <div id="sketch-pane" class="sketch-pane">
+            <canvas id="the_canvas_id"></canvas>
+            <div id="loading" class="loading">
+                <p>Loading sketch...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+        <div id="source-pane" class="source-pane">
+            <div class="source-header">
+                <span>Source Code</span>
+            </div>
+            <pre><code class="language-rust">{{ source | e }}</code></pre>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/split.js@1.6.5/dist/split.min.js"></script>
+    <script src="../whiskers_gallery.js"></script>
+    <script>
+        const SKETCH_ID = '{{ sketch.id }}';
+        const splitContainer = document.getElementById('split-container');
+        const sketchPane = document.getElementById('sketch-pane');
+        const sourcePane = document.getElementById('source-pane');
+        const sourceToggle = document.getElementById('source-toggle');
+
+        let sourceOpen = false;
+        let splitInstance = null;
+
+        // Toggle source panel
+        sourceToggle.addEventListener('click', () => {
+            sourceOpen = !sourceOpen;
+            sourceToggle.textContent = sourceOpen ? 'Hide Source' : 'View Source';
+
+            if (sourceOpen) {
+                sourcePane.style.display = 'flex';
+                splitInstance = Split(['#sketch-pane', '#source-pane'], {
+                    sizes: [60, 40],
+                    minSize: [300, 200],
+                    gutterSize: 6,
+                    cursor: 'col-resize',
+                });
+            } else {
+                if (splitInstance) {
+                    splitInstance.destroy();
+                    splitInstance = null;
+                }
+                sourcePane.style.display = 'none';
+                sketchPane.style.width = '100%';
+            }
+        });
+
+        // Load and start sketch
+        wasm_bindgen('../whiskers_gallery_bg.wasm')
+            .then(() => {
+                document.getElementById('loading').style.display = 'none';
+                const handle = new wasm_bindgen.WebHandle();
+                const canvas = document.getElementById('the_canvas_id');
+                // Call the sketch-specific start function
+                const startFn = wasm_bindgen['start_' + SKETCH_ID];
+                if (startFn) {
+                    return startFn(handle, canvas);
+                } else {
+                    throw new Error('Unknown sketch: ' + SKETCH_ID);
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load sketch:', err);
+                document.getElementById('loading').innerHTML =
+                    '<p class="error">Failed to load: ' + err + '</p>' +
+                    '<p><a href="../../">Back to Gallery</a></p>';
+            });
+    </script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-rust.min.js"></script>
+</body>
+</html>

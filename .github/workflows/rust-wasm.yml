@@ -31,4 +31,14 @@ jobs:
 
       - run: just clippy-wasm
 
-      - run: just web-build
+      - name: Check generated code is up to date
+        run: |
+          cargo build -p whiskers-gallery
+          git diff --exit-code crates/whiskers-gallery/src/generated.rs
+
+      - name: Check thumbnails are up to date
+        run: |
+          cargo run --bin generate-thumbnails --release
+          git diff --exit-code crates/whiskers-gallery/web/thumbnails/
+
+      - run: just gallery-wasm

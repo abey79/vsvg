@@ -2,10 +2,11 @@
 //! using whiskers.
 
 use itertools::iproduct;
+use whiskers::Runner;
 use whiskers::prelude::*;
 
 #[sketch_app]
-pub struct WhiskersDemoSketch {
+pub struct SchotterSketch {
     col_count: u32,
     row_count: u32,
 
@@ -25,7 +26,7 @@ pub struct WhiskersDemoSketch {
     stroke_width: f64,
 }
 
-impl Default for WhiskersDemoSketch {
+impl Default for SchotterSketch {
     fn default() -> Self {
         Self {
             col_count: 12,
@@ -39,7 +40,7 @@ impl Default for WhiskersDemoSketch {
     }
 }
 
-impl App for WhiskersDemoSketch {
+impl App for SchotterSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch.stroke_width(self.stroke_width);
 
@@ -64,23 +65,24 @@ impl App for WhiskersDemoSketch {
     }
 }
 
-wasm_sketch!(
-    WhiskersDemoSketch::runner()
+/// Create a configured runner for this sketch.
+pub fn runner() -> Runner<'static, SchotterSketch> {
+    SchotterSketch::runner()
         .with_layout_options(LayoutOptions::centered())
         .with_info_options(
             InfoOptions::default()
                 .description(
                     "This sketch is a recreation of the classic \"Schotter\" series by Georg Nees \
-            (1968-1970).\n\nGeorg Nees (born 1926, Nuremberg) is considered one of the founders \
-            of computer art and graphics. He was also one of the first people to exhibit his \
-            computer graphics, at the studio gallery of the Technische Hochschule in Stuttgart in \
-            February 1965. In 1969, he received his doctorate on the subject of Generative \
-            Computer Graphics."
+                    (1968-1970).\n\nGeorg Nees (born 1926, Nuremberg) is considered one of the founders \
+                    of computer art and graphics. He was also one of the first people to exhibit his \
+                    computer graphics, at the studio gallery of the Technische Hochschule in Stuttgart in \
+                    February 1965. In 1969, he received his doctorate on the subject of Generative \
+                    Computer Graphics.",
                 )
                 .author("Antoine Beyeler")
                 .author_url("https://bylr.info/")
                 .source_url(
-                    "https://github.com/abey79/vsvg/blob/master/crates/whiskers-web-demo/src/lib.rs"
-                )
+                    "https://github.com/abey79/vsvg/blob/master/crates/whiskers-gallery/src/sketches/schotter.rs",
+                ),
         )
-);
+}

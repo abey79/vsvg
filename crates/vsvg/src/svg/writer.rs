@@ -141,7 +141,7 @@ pub(crate) fn document_to_svg_doc<
 
     //TODO: find suitable replacement
     #[cfg(not(target_arch = "wasm32"))]
-    {
+    if document.metadata().include_date {
         use time::OffsetDateTime;
         use time::format_description::well_known::Iso8601;
 
