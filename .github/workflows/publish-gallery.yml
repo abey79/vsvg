@@ -42,18 +42,13 @@ jobs:
         with:
           version: 0.2.100
 
-      - name: Build gallery WASM
-        run: just gallery-wasm
+      - name: Build gallery (WASM + thumbnails + HTML)
+        run: just gallery-wasm gallery-thumbnails gallery-html
 
-      - name: Optimize Wasm
+      - name: Optimize WASM
         uses: NiklasEi/wasm-opt-action@v2
         with:
           file: crates/whiskers-gallery/web/sketches/whiskers_gallery_bg.wasm
-
-      - name: Build gallery HTML
-        run: |
-          pip install crates/whiskers-gallery
-          gallery-build
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
