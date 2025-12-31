@@ -4,13 +4,13 @@
 # - gallery_builder (generates HTML pages)
 
 [[sketch]]
-id = "schotter"
-name = "Schotter"
-description = "Recreation of Georg Nees' classic 1968-1970 generative art piece"
-author = "Antoine Beyeler"
-
-[[sketch]]
 id = "hello_world"
 name = "Hello World"
 description = "A simple introductory sketch demonstrating basic whiskers usage"
+author = "Antoine Beyeler"
+
+[[sketch]]
+id = "schotter"
+name = "Schotter"
+description = "Recreation of Georg Nees' classic 1968-1970 generative art piece"
 author = "Antoine Beyeler"
