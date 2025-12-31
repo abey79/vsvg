@@ -170,18 +170,61 @@ a:hover {
     background: #d13550;
 }
 
-#sketch-container {
+/* Split layout */
+.split-container {
     position: fixed;
     top: 48px;
     left: 0;
     right: 0;
     bottom: 0;
+    display: flex;
 }
 
-#sketch-container canvas {
+.sketch-pane {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.sketch-pane canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     display: block;
+}
+
+.source-pane {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    background: var(--code-bg);
+    overflow: hidden;
+}
+
+.source-pane pre {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 1rem;
+}
+
+.source-pane code {
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* Split.js gutter */
+.gutter {
+    background: var(--border-color);
+    cursor: col-resize;
+}
+
+.gutter:hover {
+    background: var(--primary-color);
 }
 
 .loading {
@@ -210,27 +253,6 @@ a:hover {
     color: var(--primary-color);
 }
 
-/* Source Panel */
-.source-panel {
-    position: fixed;
-    top: 48px;
-    right: 0;
-    width: 500px;
-    max-width: 90vw;
-    height: calc(100vh - 48px);
-    background: var(--code-bg);
-    border-left: 1px solid var(--border-color);
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-}
-
-.source-panel.open {
-    transform: translateX(0);
-}
-
 .source-header {
     display: flex;
     justify-content: space-between;
@@ -239,35 +261,6 @@ a:hover {
     background: var(--surface-color);
     border-bottom: 1px solid var(--border-color);
     font-weight: 600;
-}
-
-.source-close {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0 0.5rem;
-    line-height: 1;
-}
-
-.source-close:hover {
-    color: var(--text-color);
-}
-
-.source-panel pre {
-    flex: 1;
-    overflow: auto;
-    margin: 0;
-    padding: 1rem;
-}
-
-.source-panel code {
-    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-color);
-    white-space: pre;
 }
 
 /* Responsive */

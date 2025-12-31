@@ -15,32 +15,55 @@
         <button id="source-toggle" class="source-toggle">View Source</button>
     </nav>
 
-    <main id="sketch-container">
-        <canvas id="the_canvas_id"></canvas>
-        <div id="loading" class="loading">
-            <p>Loading sketch...</p>
-            <div class="spinner"></div>
+    <div id="split-container" class="split-container">
+        <div id="sketch-pane" class="sketch-pane">
+            <canvas id="the_canvas_id"></canvas>
+            <div id="loading" class="loading">
+                <p>Loading sketch...</p>
+                <div class="spinner"></div>
+            </div>
         </div>
-    </main>
-
-    <aside id="source-panel" class="source-panel">
-        <div class="source-header">
-            <span>Source Code</span>
-            <button id="source-close" class="source-close">×</button>
+        <div id="source-pane" class="source-pane">
+            <div class="source-header">
+                <span>Source Code</span>
+            </div>
+            <pre><code class="language-rust">{{ source | e }}</code></pre>
         </div>
-        <pre><code class="language-rust">{{ source | e }}</code></pre>
-    </aside>
+    </div>
 
+    <script src="https://unpkg.com/split.js@1.6.5/dist/split.min.js"></script>
     <script src="../whiskers_gallery.js"></script>
     <script>
         const SKETCH_ID = '{{ sketch.id }}';
+        const splitContainer = document.getElementById('split-container');
+        const sketchPane = document.getElementById('sketch-pane');
+        const sourcePane = document.getElementById('source-pane');
+        const sourceToggle = document.getElementById('source-toggle');
+
+        let sourceOpen = false;
+        let splitInstance = null;
 
         // Toggle source panel
-        document.getElementById('source-toggle').addEventListener('click', () => {
-            document.getElementById('source-panel').classList.add('open');
-        });
-        document.getElementById('source-close').addEventListener('click', () => {
-            document.getElementById('source-panel').classList.remove('open');
+        sourceToggle.addEventListener('click', () => {
+            sourceOpen = !sourceOpen;
+            sourceToggle.textContent = sourceOpen ? 'Hide Source' : 'View Source';
+
+            if (sourceOpen) {
+                sourcePane.style.display = 'flex';
+                splitInstance = Split(['#sketch-pane', '#source-pane'], {
+                    sizes: [60, 40],
+                    minSize: [300, 200],
+                    gutterSize: 6,
+                    cursor: 'col-resize',
+                });
+            } else {
+                if (splitInstance) {
+                    splitInstance.destroy();
+                    splitInstance = null;
+                }
+                sourcePane.style.display = 'none';
+                sketchPane.style.width = '100%';
+            }
         });
 
         // Load and start sketch
