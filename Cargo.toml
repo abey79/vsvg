@@ -1,7 +1,5 @@
 [workspace]
-members = [
-    "crates/*"
-]
+members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
@@ -22,28 +20,28 @@ approx = "0.5.1"
 arrayvec = "0.7.2"
 base64 = "0.22.1"
 bitvec = "1.0.1"
-bytemuck = "1.24"  # sync with egui
+bytemuck = "1.24" # sync with egui
 camino = "1.1.0"
 cfg_aliases = "0.2.1"
 cgmath = "0.18.0"
 clap = "4.4.12"
 convert_case = "0.10.0"
 criterion = "0.5.1"
-dhat = "0.3.2"  # for heap profiling
+dhat = "0.3.2" # for heap profiling
 eframe = { version = "0.33.3", default-features = false, features = [
-    "accesskit",
-    "default_fonts",
-    "persistence",
-    "wgpu",
-    "wayland",
-    "x11",
+  "accesskit",
+  "default_fonts",
+  "persistence",
+  "wgpu",
+  "wayland",
+  "x11",
 ] }
 egui = "0.33.3"
 env_logger = "0.11.5"
-geo = "0.32.0"  # for point interop only
+geo = "0.32.0" # for point interop only
 geos = "10.0.0"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
-glam = "0"  # for point interop only
+glam = "0" # for point interop only
 indexmap = "2.0.2"
 itertools = "0.14.0"
 js-sys = "0.3.64"
@@ -60,13 +58,13 @@ puffin_http = "0.16"
 proc-macro2 = "1.0.67"
 profiling = "1.0"
 quote = "1.0.33"
-quick-xml = "0.36.2"  # sync with egui
+quick-xml = "0.36.2" # sync with egui
 open = "5.0.0"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
 rayon = "1.8.0"
-raw-window-handle = "0.6.2"  # sync with eframe
+raw-window-handle = "0.6.2" # sync with eframe
 regex = "1.7.1"
 rfd = { version = "0.15.0", default-features = false }
 serde = { version = "1", features = ["derive", "rc"] }
@@ -80,14 +78,14 @@ usvg = "0.45.1"
 voronoice = "0.2.0"
 wasm-bindgen = "=0.2.100" # sync with CI and egui!!
 wasm-bindgen-futures = "0.4"
-web-time = "1.1.0"  # sync with egui-winit
-web-sys = "0.3.77"  # sync with egui
+web-time = "1.1.0" # sync with egui-winit
+web-sys = "0.3.77" # sync with egui
 wgpu = { version = "27.0.1", default-features = false, features = [
-    "metal",   # macOS backend
-    "vulkan",  # Linux/Windows backend
-    "webgl",   # web fallback backend
-    "webgpu",  # modern web backend
-    "wgsl",    # shader language
+  "metal",  # macOS backend
+  "vulkan", # Linux/Windows backend
+  "webgl",  # web fallback backend
+  "webgpu", # modern web backend
+  "wgsl",   # shader language
 ] } # sync with egui-wgpu
 winit = "0.30.12" # sync with egui-winit
 
