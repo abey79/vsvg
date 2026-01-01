@@ -23,9 +23,10 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: just
+          tool: just,taplo-cli
 
-      - run: just fmt
+      - run: just fmt-check
+      - run: just toml-fmt-check
       - run: just clippy
 
   test:

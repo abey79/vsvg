@@ -1,0 +1,11 @@
+exclude = [
+  "target/**",
+  "target_*/**",
+  "venv/**",
+  "my_work/**",
+  "__pycache__/**",
+  "*.egg-info/**",
+  ".eggs/**",
+  "dist/**",
+  "build/**",
+]

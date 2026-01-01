@@ -20,13 +20,13 @@
 # dependencies not shared by any other crates, would be ignored, as the target
 # list here is effectively saying which targets you are building for.
 targets = [
-    # The triple can be any string, but only the target triples built in to
-    # rustc (as of 1.40) can be checked against actual config expressions
-    #{ triple = "x86_64-unknown-linux-musl" },
-    # You can also specify which target_features you promise are enabled for a
-    # particular target. target_features are currently not validated against
-    # the actual valid features supported by the target architecture.
-    #{ triple = "wasm32-unknown-unknown", features = ["atomics"] },
+  # The triple can be any string, but only the target triples built in to
+  # rustc (as of 1.40) can be checked against actual config expressions
+  #{ triple = "x86_64-unknown-linux-musl" },
+  # You can also specify which target_features you promise are enabled for a
+  # particular target. target_features are currently not validated against
+  # the actual valid features supported by the target architecture.
+  #{ triple = "wasm32-unknown-unknown", features = ["atomics"] },
 ]
 # When creating the dependency graph used as the source of truth when checks are
 # executed, this field can be used to prune crates from the graph, removing them
@@ -74,7 +74,7 @@ notice = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    #"RUSTSEC-0000-0000",
+  #"RUSTSEC-0000-0000",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -102,26 +102,26 @@ unlicensed = "deny"
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
-    "Apache-2.0 WITH LLVM-exception", # https://spdx.org/licenses/LLVM-exception.html
-    "Apache-2.0", # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
-    "BSD-2-Clause", # https://tldrlegal.com/license/bsd-2-clause-license-(freebsd)
-    "BSD-3-Clause", # https://tldrlegal.com/license/bsd-3-clause-license-(revised)
-    "BSL-1.0", # https://tldrlegal.com/license/boost-software-license-1.0-explained
-    "CC0-1.0", # https://creativecommons.org/publicdomain/zero/1.0/
-    "ISC", # https://tldrlegal.com/license/-isc-license
-    "LicenseRef-UFL-1.0", # https://tldrlegal.com/license/ubuntu-font-license,-1.0 - no official SPDX, see https://github.com/emilk/egui/issues/2321
-    "MIT", # https://tldrlegal.com/license/mit-license
-    "MPL-2.0", # https://www.mozilla.org/en-US/MPL/2.0/FAQ/ - see Q11. Used by webpki-roots on Linux.
-    "OFL-1.1", # https://spdx.org/licenses/OFL-1.1.html
-    "Unicode-3.0",
-    "Unicode-DFS-2016", # https://spdx.org/licenses/Unicode-DFS-2016.html
-    "Zlib", # https://tldrlegal.com/license/zlib-libpng-license-(zlib)
+  "Apache-2.0 WITH LLVM-exception", # https://spdx.org/licenses/LLVM-exception.html
+  "Apache-2.0",                     # https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
+  "BSD-2-Clause",                   # https://tldrlegal.com/license/bsd-2-clause-license-(freebsd)
+  "BSD-3-Clause",                   # https://tldrlegal.com/license/bsd-3-clause-license-(revised)
+  "BSL-1.0",                        # https://tldrlegal.com/license/boost-software-license-1.0-explained
+  "CC0-1.0",                        # https://creativecommons.org/publicdomain/zero/1.0/
+  "ISC",                            # https://tldrlegal.com/license/-isc-license
+  "LicenseRef-UFL-1.0",             # https://tldrlegal.com/license/ubuntu-font-license,-1.0 - no official SPDX, see https://github.com/emilk/egui/issues/2321
+  "MIT",                            # https://tldrlegal.com/license/mit-license
+  "MPL-2.0",                        # https://www.mozilla.org/en-US/MPL/2.0/FAQ/ - see Q11. Used by webpki-roots on Linux.
+  "OFL-1.1",                        # https://spdx.org/licenses/OFL-1.1.html
+  "Unicode-3.0",
+  "Unicode-DFS-2016",               # https://spdx.org/licenses/Unicode-DFS-2016.html
+  "Zlib",                           # https://tldrlegal.com/license/zlib-libpng-license-(zlib)
 ]
 # List of explicitly disallowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 deny = [
-    #"Nokia",
+  #"Nokia",
 ]
 # Lint level for licenses considered copyleft
 copyleft = "warn"
@@ -145,9 +145,9 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-    # Each entry is the crate and version constraint, and its specific allow
-    # list
-    #{ allow = ["Zlib"], name = "adler32", version = "*" },
+  # Each entry is the crate and version constraint, and its specific allow
+  # list
+  #{ allow = ["Zlib"], name = "adler32", version = "*" },
 ]
 
 [licenses.private]
@@ -160,7 +160,7 @@ ignore = true
 # is only published to private registries, and ignore is true, the crate will
 # not have its license(s) checked
 registries = [
-    #"https://sekretz.com/registry
+  #"https://sekretz.com/registry
 ]
 
 # This section is considered when running `cargo deny check bans`.
@@ -187,17 +187,17 @@ workspace-default-features = "allow"
 external-default-features = "allow"
 # List of crates that are allowed. Use with care!
 allow = [
-    #{ name = "ansi_term", version = "=0.11.0" },
+  #{ name = "ansi_term", version = "=0.11.0" },
 ]
 # List of crates to deny
 deny = [
-    # Each entry the name of a crate and a version range. If version is
-    # not specified, all versions will be matched.
-    #{ name = "ansi_term", version = "=0.11.0" },
-    #
-    # Wrapper crates can optionally be specified to allow the crate when it
-    # is a direct dependency of the otherwise banned crate
-    #{ name = "ansi_term", version = "=0.11.0", wrappers = [] },
+  # Each entry the name of a crate and a version range. If version is
+  # not specified, all versions will be matched.
+  #{ name = "ansi_term", version = "=0.11.0" },
+  #
+  # Wrapper crates can optionally be specified to allow the crate when it
+  # is a direct dependency of the otherwise banned crate
+  #{ name = "ansi_term", version = "=0.11.0", wrappers = [] },
 ]
 
 # List of features to allow/deny
@@ -225,18 +225,18 @@ deny = [
 
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
-    #{ name = "ansi_term", version = "=0.11.0" },
+  #{ name = "ansi_term", version = "=0.11.0" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
 skip-tree = [
-    #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
-    { name = "egui-winit" },
-    { name = "voronoice" }, # dev dep only, 2y-old
-    { name = "geo" }, # dev dep only
-    { name = "roxmltree" }, # double dependency within usvg 0.42.0, hopefully fixed by next version
+  #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
+  { name = "egui-winit" },
+  { name = "voronoice" },  # dev dep only, 2y-old
+  { name = "geo" },        # dev dep only
+  { name = "roxmltree" },  # double dependency within usvg 0.42.0, hopefully fixed by next version
 ]
 
 # This section is considered when running `cargo deny check sources`.

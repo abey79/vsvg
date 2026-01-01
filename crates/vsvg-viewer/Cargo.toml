@@ -27,7 +27,7 @@ vsvg = { workspace = true, features = ["egui"] }
 web-sys.workspace = true
 wgpu.workspace = true
 
-[dev-dependencies]  # mostly for examples
+[dev-dependencies] # mostly for examples
 env_logger.workspace = true
 pollster.workspace = true
 rand.workspace = true

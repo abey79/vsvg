@@ -27,7 +27,7 @@ vsvg = { workspace = true, features = ["egui"] }
 vsvg-viewer.workspace = true
 
 clap = { workspace = true, features = ["cargo"] }
-dhat = { workspace = true, optional = true } # for heap profiling
+dhat = { workspace = true, optional = true }      # for heap profiling
 kurbo.workspace = true
 tracing-subscriber.workspace = true
 
@@ -38,5 +38,5 @@ tracing-subscriber.workspace = true
 
 [features]
 puffin = ["vsvg/puffin", "vsvg-viewer/puffin"]
-dhat-heap = ["dhat"]    # if you are doing heap profiling
-dhat-ad-hoc = []  # if you are doing ad hoc profiling
+dhat-heap = ["dhat"]                           # if you are doing heap profiling
+dhat-ad-hoc = []                               # if you are doing ad hoc profiling

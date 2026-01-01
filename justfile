@@ -11,7 +11,16 @@ docs $RUSTDOCFLAGS="-Dwarnings":
     cargo doc --all-features --no-deps --lib --bins --examples -p whiskers -p whiskers-widgets -p vsvg
 
 fmt:
+    cargo fmt --all
+
+fmt-check:
     cargo fmt --all -- --check
+
+toml-fmt:
+    taplo fmt
+
+toml-fmt-check:
+    taplo fmt --check
 
 # Gallery build recipes
 gallery-wasm:
@@ -39,4 +48,4 @@ test:
 doc-test:
     cargo test --doc --all-features
 
-lint: clippy clippy-wasm fmt test doc-test docs
+lint: clippy clippy-wasm fmt-check toml-fmt-check test doc-test docs
