@@ -10,6 +10,20 @@ on:
       - master
       - release/*
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   clippy:
     runs-on: ubuntu-latest
@@ -64,3 +78,54 @@ jobs:
           version: 0.2.100
 
       - run: just gallery-wasm
+
+      - name: Upload wasm artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-sketches
+          path: crates/whiskers-gallery/web/sketches/
+
+  deploy:
+    name: "deploy to GitHub Pages"
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [clippy, check-generated, check-thumbnails, build-wasm]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download wasm artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-sketches
+          path: crates/whiskers-gallery/web/sketches/
+
+      - name: Optimize WASM
+        uses: NiklasEi/wasm-opt-action@v2
+        with:
+          file: crates/whiskers-gallery/web/sketches/whiskers_gallery_bg.wasm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Build HTML
+        run: just gallery-html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "crates/whiskers-gallery/web"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
