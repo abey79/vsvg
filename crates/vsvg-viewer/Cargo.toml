@@ -28,25 +28,16 @@ web-sys.workspace = true
 wgpu.workspace = true
 
 [dev-dependencies] # mostly for examples
-env_logger.workspace = true
-pollster.workspace = true
 rand.workspace = true
-raw-window-handle.workspace = true
-tracing-subscriber.workspace = true
 
 [build-dependencies]
 cfg_aliases.workspace = true
 
-[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion.workspace = true
-winit.workspace = true
-
-
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-js-sys.workspace = true
 wasm-bindgen.workspace = true
-wasm-bindgen-futures.workspace = true
-
 
 [features]
 puffin = ["dep:puffin", "dep:puffin_http", "vsvg/puffin"]
+
+[package.metadata.cargo-shear]
+ignored = ["wasm-bindgen"]

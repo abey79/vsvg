@@ -23,11 +23,12 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: just,taplo-cli
+          tool: just,taplo-cli,cargo-shear
 
       - run: just fmt-check
       - run: just toml-fmt-check
       - run: just clippy
+      - run: cargo shear
 
   test:
     runs-on: ubuntu-latest

@@ -37,7 +37,6 @@ eframe = { version = "0.33.3", default-features = false, features = [
   "x11",
 ] }
 egui = "0.33.3"
-env_logger = "0.11.5"
 geo = "0.32.0" # for point interop only
 geos = "10.0.0"
 getrandom = { version = "0.2", features = ["js"] } # wasm support
@@ -47,12 +46,10 @@ itertools = "0.14.0"
 js-sys = "0.3.64"
 kdtree = "0.7.0"
 kurbo = "0.13.0"
-lazy_static = "1.4.0"
 log = "0.4.20"
 lyon_geom = "1.0.4"
 noise = "0.9.0"
 num-traits = "0.2.17"
-pollster = "0.4.0"
 puffin = "0.19.0"
 puffin_http = "0.16"
 proc-macro2 = "1.0.67"
@@ -64,7 +61,6 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
 rayon = "1.8.0"
-raw-window-handle = "0.6.2" # sync with eframe
 regex = "1.7.1"
 rfd = { version = "0.15.0", default-features = false }
 serde = { version = "1", features = ["derive", "rc"] }
@@ -87,13 +83,15 @@ wgpu = { version = "27.0.1", default-features = false, features = [
   "webgpu", # modern web backend
   "wgsl",   # shader language
 ] } # sync with egui-wgpu
-winit = "0.30.12" # sync with egui-winit
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"
 lto = "thin"
 
+
+[workspace.metadata.cargo-shear]
+ignored = ["getrandom", "profiling"]
 
 [patch.crates-io]
 # geo = { path = "../geo/geo" }

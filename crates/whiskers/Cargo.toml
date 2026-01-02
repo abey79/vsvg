@@ -70,3 +70,6 @@ geos.workspace = true
 default = ["viewer", "puffin"]
 viewer = ["dep:vsvg-viewer"]
 puffin = ["vsvg/puffin", "vsvg-viewer/puffin"]
+
+[package.metadata.cargo-shear]
+ignored = ["getrandom"]
