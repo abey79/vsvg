@@ -89,35 +89,7 @@ impl Layer {
     pub fn join_paths(&mut self, tolerance: f64, flip: bool) {
         join_paths_impl(&mut self.paths, tolerance, flip);
     }
-}
 
-impl FlattenedLayer {
-    /// Join paths whose endpoints are within tolerance.
-    ///
-    /// If `flip` is true, paths may be reversed to enable more joins.
-    ///
-    /// Unlike [`FlattenedLayer::sort`](crate::LayerTrait::sort) which reorders paths,
-    /// `join_paths` concatenates them, reducing the total path count.
-    ///
-    /// Note: Currently joins are only made at path endpoints. A future enhancement
-    /// could re-loop closed paths when another path's endpoint touches any point
-    /// along the closed path, enabling more joins.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn join_paths(&mut self, tolerance: f64, flip: bool) {
-        join_paths_impl(&mut self.paths, tolerance, flip);
-    }
-
-    /// No-op for `FlattenedLayer`.
-    ///
-    /// [`FlattenedPath`](crate::FlattenedPath) is based on [`Polyline`](crate::Polyline),
-    /// which is always a single connected sequence of points and cannot represent
-    /// compound paths. This method exists for API consistency with [`Layer::explode`].
-    pub fn explode(&mut self) {
-        // No-op: FlattenedPath cannot be compound
-    }
-}
-
-impl Layer {
     /// Sort the paths such as to minimize the pen up distance
     ///
     /// This is done using a greedy algorithm, starting with the layer's first path. Any path that
@@ -153,19 +125,22 @@ impl Layer {
 
         self.paths = new_paths;
     }
+}
 
-    /// Split all compound paths into individual subpaths.
+impl FlattenedLayer {
+    /// Join paths whose endpoints are within tolerance.
     ///
-    /// This is useful before [`join_paths`](Layer::join_paths) to maximize
-    /// optimization opportunities. When paths contain multiple subpaths (e.g.,
-    /// from SVG imports or boolean operations), only the overall start/end
-    /// points are considered for joining. Exploding first exposes all subpath
-    /// endpoints.
+    /// If `flip` is true, paths may be reversed to enable more joins.
     ///
-    /// Paths that are already simple (single subpath) are unchanged.
-    pub fn explode(&mut self) {
-        let paths = std::mem::take(&mut self.paths);
-        self.paths = paths.into_iter().flat_map(crate::Path::split).collect();
+    /// Unlike [`FlattenedLayer::sort`](crate::LayerTrait::sort) which reorders paths,
+    /// `join_paths` concatenates them, reducing the total path count.
+    ///
+    /// Note: Currently joins are only made at path endpoints. A future enhancement
+    /// could re-loop closed paths when another path's endpoint touches any point
+    /// along the closed path, enabling more joins.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn join_paths(&mut self, tolerance: f64, flip: bool) {
+        join_paths_impl(&mut self.paths, tolerance, flip);
     }
 }
 

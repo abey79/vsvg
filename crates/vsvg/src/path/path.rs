@@ -129,6 +129,44 @@ impl PathTrait<BezPath> for Path {
 
         self.metadata.merge(&other.metadata);
     }
+
+    fn split(self) -> Vec<Self> {
+        let elements = self.data.elements();
+        if elements.is_empty() {
+            return vec![];
+        }
+
+        let mut result = Vec::new();
+        let mut current = BezPath::new();
+
+        for el in elements {
+            match el {
+                PathEl::MoveTo(pt) => {
+                    // Save current path if non-empty and start new one
+                    if !current.elements().is_empty() {
+                        result.push(Path {
+                            data: std::mem::take(&mut current),
+                            metadata: self.metadata.clone(),
+                        });
+                    }
+                    current.push(PathEl::MoveTo(*pt));
+                }
+                _ => {
+                    current.push(*el);
+                }
+            }
+        }
+
+        // Don't forget the last subpath
+        if !current.elements().is_empty() {
+            result.push(Path {
+                data: current,
+                metadata: self.metadata,
+            });
+        }
+
+        result
+    }
 }
 
 impl Path {
@@ -279,56 +317,6 @@ impl Path {
 
         self.data = new_bezpath;
         self
-    }
-
-    /// Split a compound path into its individual subpaths.
-    ///
-    /// Each `MoveTo` element starts a new subpath. Metadata is cloned to all
-    /// resulting paths.
-    ///
-    /// Returns a single-element `Vec` if the path has only one subpath.
-    /// Returns an empty `Vec` if the path is empty.
-    ///
-    /// This is useful before [`Layer::join_paths`](crate::Layer::join_paths) to
-    /// maximize optimization opportunities, since `join_paths` only considers
-    /// the start/end points of each path, not internal subpath endpoints.
-    #[must_use]
-    pub fn split(self) -> Vec<Self> {
-        let elements = self.data.elements();
-        if elements.is_empty() {
-            return vec![];
-        }
-
-        let mut result = Vec::new();
-        let mut current = BezPath::new();
-
-        for el in elements {
-            match el {
-                PathEl::MoveTo(pt) => {
-                    // Save current path if non-empty and start new one
-                    if !current.elements().is_empty() {
-                        result.push(Path {
-                            data: std::mem::take(&mut current),
-                            metadata: self.metadata.clone(),
-                        });
-                    }
-                    current.push(PathEl::MoveTo(*pt));
-                }
-                _ => {
-                    current.push(*el);
-                }
-            }
-        }
-
-        // Don't forget the last subpath
-        if !current.elements().is_empty() {
-            result.push(Path {
-                data: current,
-                metadata: self.metadata,
-            });
-        }
-
-        result
     }
 }
 

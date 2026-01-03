@@ -159,6 +159,11 @@ impl PathTrait<Polyline> for FlattenedPath {
         self.data.join(&other.data, epsilon);
         self.metadata.merge(&other.metadata);
     }
+
+    /// Returns `vec![self]` since polylines cannot represent compound paths.
+    fn split(self) -> Vec<Self> {
+        vec![self]
+    }
 }
 
 impl From<Polyline> for FlattenedPath {
