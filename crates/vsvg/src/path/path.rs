@@ -100,6 +100,35 @@ impl PathTrait<BezPath> for Path {
     fn metadata_mut(&mut self) -> &mut PathMetadata {
         &mut self.metadata
     }
+
+    /// Append another path to this one.
+    ///
+    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
+    /// the initial `MoveTo` of `other` is converted to `LineTo` to create a continuous path.
+    /// Otherwise, the `MoveTo` is kept, creating a compound path with multiple subpaths.
+    ///
+    /// Metadata is merged (currently first path's metadata wins).
+    fn join(&mut self, other: &Path, epsilon: f64) {
+        let should_connect = match (self.data.end(), other.data.start()) {
+            (Some(end), Some(start)) => end.distance(&start) < epsilon,
+            _ => false,
+        };
+
+        for (i, el) in other.data.elements().iter().enumerate() {
+            if i == 0 {
+                match el {
+                    PathEl::MoveTo(pt) if should_connect => {
+                        self.data.push(PathEl::LineTo(*pt));
+                    }
+                    _ => self.data.push(*el),
+                }
+            } else {
+                self.data.push(*el);
+            }
+        }
+
+        self.metadata.merge(&other.metadata);
+    }
 }
 
 impl Path {
@@ -250,35 +279,6 @@ impl Path {
 
         self.data = new_bezpath;
         self
-    }
-
-    /// Append another path to this one.
-    ///
-    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
-    /// the initial `MoveTo` of `other` is converted to `LineTo` to create a continuous path.
-    /// Otherwise, the `MoveTo` is kept, creating a compound path with multiple subpaths.
-    ///
-    /// Metadata is merged (currently first path's metadata wins).
-    pub fn join(&mut self, other: &Path, epsilon: f64) {
-        let dominated = match (self.data.end(), other.data.start()) {
-            (Some(end), Some(start)) => end.distance(&start) < epsilon,
-            _ => false,
-        };
-
-        for (i, el) in other.data.elements().iter().enumerate() {
-            if i == 0 {
-                match el {
-                    PathEl::MoveTo(pt) if dominated => {
-                        self.data.push(PathEl::LineTo(*pt));
-                    }
-                    _ => self.data.push(*el),
-                }
-            } else {
-                self.data.push(*el);
-            }
-        }
-
-        self.metadata.merge(&other.metadata);
     }
 
     /// Split a compound path into its individual subpaths.
