@@ -1,5 +1,78 @@
 use crate::path_index::IndexBuilder;
-use crate::{FlattenedLayer, Layer, PathDataTrait, Point};
+use crate::{FlattenedLayer, Layer, PathDataTrait, PathTrait, Point};
+
+/// Generic implementation of `join_paths` algorithm.
+///
+/// Uses greedy chain building: repeatedly extend the current path by joining
+/// the nearest path whose endpoint is within tolerance.
+fn join_paths_impl<P, D>(paths: &mut Vec<P>, tolerance: f64, flip: bool)
+where
+    P: PathTrait<D>,
+    D: PathDataTrait,
+{
+    if paths.len() <= 1 {
+        return;
+    }
+
+    let taken_paths = std::mem::take(paths);
+    let mut index = IndexBuilder::default().flip(flip).build(&taken_paths);
+    let mut result: Vec<P> = Vec::new();
+
+    // Start first chain
+    let Some(first_item) = index.pop_first() else {
+        return;
+    };
+    let mut current = first_item.path.clone();
+
+    // Greedy chain building
+    loop {
+        let Some(current_end) = current.end() else {
+            result.push(current);
+            match index.pop_first() {
+                Some(item) => current = item.path.clone(),
+                None => break,
+            }
+            continue;
+        };
+
+        // Find nearest path within tolerance
+        if let Some((item, reversed)) = index.pop_nearest(&current_end) {
+            let candidate_start = if reversed {
+                item.end.unwrap_or(current_end)
+            } else {
+                item.start.unwrap_or(current_end)
+            };
+
+            if current_end.distance(&candidate_start) <= tolerance {
+                // Join this path
+                let mut next = item.path.clone();
+                if reversed {
+                    next.data_mut().flip();
+                }
+                current.join(&next, tolerance);
+                // Continue trying to extend
+            } else {
+                // Too far, start new chain
+                result.push(current);
+                current = item.path.clone();
+                if reversed {
+                    current.data_mut().flip();
+                }
+            }
+        } else {
+            // No more paths in index
+            result.push(current);
+            break;
+        }
+    }
+
+    // Add remaining paths from index (shouldn't happen normally)
+    while let Some(item) = index.pop_first() {
+        result.push(item.path.clone());
+    }
+
+    *paths = result;
+}
 
 impl Layer {
     /// Join paths whose endpoints are within tolerance.
@@ -14,68 +87,7 @@ impl Layer {
     /// along the closed path, enabling more joins.
     #[allow(clippy::missing_panics_doc)]
     pub fn join_paths(&mut self, tolerance: f64, flip: bool) {
-        if self.paths.len() <= 1 {
-            return;
-        }
-
-        let paths = std::mem::take(&mut self.paths);
-        let mut index = IndexBuilder::default().flip(flip).build(&paths);
-        let mut result: Vec<crate::Path> = Vec::new();
-
-        // Start first chain
-        let Some(first_item) = index.pop_first() else {
-            return;
-        };
-        let mut current = (*first_item.path).clone();
-
-        // Greedy chain building
-        loop {
-            let Some(current_end) = current.data.end() else {
-                result.push(current);
-                match index.pop_first() {
-                    Some(item) => current = (*item.path).clone(),
-                    None => break,
-                }
-                continue;
-            };
-
-            // Find nearest path within tolerance
-            if let Some((item, reversed)) = index.pop_nearest(&current_end) {
-                let candidate_start = if reversed {
-                    item.end.unwrap_or(current_end)
-                } else {
-                    item.start.unwrap_or(current_end)
-                };
-
-                if current_end.distance(&candidate_start) <= tolerance {
-                    // Join this path
-                    let mut next = (*item.path).clone();
-                    if reversed {
-                        next.data.flip();
-                    }
-                    current.join(&next, tolerance);
-                    // Continue trying to extend
-                } else {
-                    // Too far, start new chain
-                    result.push(current);
-                    current = (*item.path).clone();
-                    if reversed {
-                        current.data.flip();
-                    }
-                }
-            } else {
-                // No more paths in index
-                result.push(current);
-                break;
-            }
-        }
-
-        // Add remaining paths from index (shouldn't happen normally)
-        while let Some(item) = index.pop_first() {
-            result.push((*item.path).clone());
-        }
-
-        self.paths = result;
+        join_paths_impl(&mut self.paths, tolerance, flip);
     }
 }
 
@@ -92,68 +104,16 @@ impl FlattenedLayer {
     /// along the closed path, enabling more joins.
     #[allow(clippy::missing_panics_doc)]
     pub fn join_paths(&mut self, tolerance: f64, flip: bool) {
-        if self.paths.len() <= 1 {
-            return;
-        }
+        join_paths_impl(&mut self.paths, tolerance, flip);
+    }
 
-        let paths = std::mem::take(&mut self.paths);
-        let mut index = IndexBuilder::default().flip(flip).build(&paths);
-        let mut result: Vec<crate::FlattenedPath> = Vec::new();
-
-        // Start first chain
-        let Some(first_item) = index.pop_first() else {
-            return;
-        };
-        let mut current = (*first_item.path).clone();
-
-        // Greedy chain building
-        loop {
-            let Some(current_end) = current.data.end() else {
-                result.push(current);
-                match index.pop_first() {
-                    Some(item) => current = (*item.path).clone(),
-                    None => break,
-                }
-                continue;
-            };
-
-            // Find nearest path within tolerance
-            if let Some((item, reversed)) = index.pop_nearest(&current_end) {
-                let candidate_start = if reversed {
-                    item.end.unwrap_or(current_end)
-                } else {
-                    item.start.unwrap_or(current_end)
-                };
-
-                if current_end.distance(&candidate_start) <= tolerance {
-                    // Join this path
-                    let mut next = (*item.path).clone();
-                    if reversed {
-                        next.data.flip();
-                    }
-                    current.join(&next, tolerance);
-                    // Continue trying to extend
-                } else {
-                    // Too far, start new chain
-                    result.push(current);
-                    current = (*item.path).clone();
-                    if reversed {
-                        current.data.flip();
-                    }
-                }
-            } else {
-                // No more paths in index
-                result.push(current);
-                break;
-            }
-        }
-
-        // Add remaining paths from index (shouldn't happen normally)
-        while let Some(item) = index.pop_first() {
-            result.push((*item.path).clone());
-        }
-
-        self.paths = result;
+    /// No-op for `FlattenedLayer`.
+    ///
+    /// [`FlattenedPath`](crate::FlattenedPath) is based on [`Polyline`](crate::Polyline),
+    /// which is always a single connected sequence of points and cannot represent
+    /// compound paths. This method exists for API consistency with [`Layer::explode`].
+    pub fn explode(&mut self) {
+        // No-op: FlattenedPath cannot be compound
     }
 }
 

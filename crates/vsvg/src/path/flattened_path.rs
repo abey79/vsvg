@@ -150,6 +150,15 @@ impl PathTrait<Polyline> for FlattenedPath {
     fn metadata_mut(&mut self) -> &mut PathMetadata {
         &mut self.metadata
     }
+
+    /// Append another path to this one.
+    ///
+    /// The underlying polylines are joined, and metadata is merged
+    /// (currently first path's metadata wins).
+    fn join(&mut self, other: &FlattenedPath, epsilon: f64) {
+        self.data.join(&other.data, epsilon);
+        self.metadata.merge(&other.metadata);
+    }
 }
 
 impl From<Polyline> for FlattenedPath {
@@ -164,17 +173,6 @@ impl From<Polyline> for FlattenedPath {
 impl From<Vec<Point>> for FlattenedPath {
     fn from(points: Vec<Point>) -> Self {
         Polyline::new(points).into()
-    }
-}
-
-impl FlattenedPath {
-    /// Append another path to this one.
-    ///
-    /// The underlying polylines are joined, and metadata is merged
-    /// (currently first path's metadata wins).
-    pub fn join(&mut self, other: &FlattenedPath, epsilon: f64) {
-        self.data.join(&other.data, epsilon);
-        self.metadata.merge(&other.metadata);
     }
 }
 

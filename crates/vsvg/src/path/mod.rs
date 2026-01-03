@@ -55,4 +55,13 @@ pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt
 
     fn metadata(&self) -> &PathMetadata;
     fn metadata_mut(&mut self) -> &mut PathMetadata;
+
+    /// Append another path to this one.
+    ///
+    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
+    /// the duplicate point is skipped (for polylines) or `MoveTo` is converted
+    /// to `LineTo` (for `BezPath`s) to create a continuous path.
+    ///
+    /// Metadata is merged (currently first path's metadata wins).
+    fn join(&mut self, other: &Self, epsilon: f64);
 }
