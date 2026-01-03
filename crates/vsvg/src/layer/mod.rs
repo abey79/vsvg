@@ -117,4 +117,18 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
     fn stats(&self) -> LayerStats {
         LayerStats::from_layer(self)
     }
+
+    /// Split all compound paths into individual subpaths.
+    ///
+    /// This is useful before [`Layer::join_paths`](crate::Layer::join_paths) to maximize
+    /// optimization opportunities. When paths contain multiple subpaths (e.g.,
+    /// from SVG imports or boolean operations), only the overall start/end
+    /// points are considered for joining. Exploding first exposes all subpath
+    /// endpoints.
+    ///
+    /// For [`FlattenedLayer`], this is a no-op since polylines cannot be compound.
+    fn explode(&mut self) {
+        let paths = std::mem::take(self.paths_mut());
+        *self.paths_mut() = paths.into_iter().flat_map(P::split).collect();
+    }
 }

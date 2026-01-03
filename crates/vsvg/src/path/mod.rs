@@ -58,10 +58,18 @@ pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt
 
     /// Append another path to this one.
     ///
-    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
-    /// the duplicate point is skipped (for polylines) or `MoveTo` is converted
-    /// to `LineTo` (for `BezPath`s) to create a continuous path.
+    /// If the endpoint of `self` and the start of `other` are within `epsilon`, the duplicate point
+    /// is skipped (for polylines) or `MoveTo` is converted to `LineTo` (for `BezPath`s) to create a
+    /// continuous path.
     ///
     /// Metadata is merged (currently first path's metadata wins).
     fn join(&mut self, other: &Self, epsilon: f64);
+
+    /// Split a compound path into its individual subpaths.
+    ///
+    /// For `BezPath`-based paths, each `MoveTo` element starts a new subpath. For polyline-based
+    /// paths, this returns the path unchanged (polylines cannot represent compound paths).
+    ///
+    /// Metadata is cloned to all resulting paths.
+    fn split(self) -> Vec<Self>;
 }
