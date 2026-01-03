@@ -156,7 +156,8 @@ pub(crate) fn document_to_svg_doc<
 
     if let Some(source) = document.metadata().source.as_ref() {
         let mut dc_source = svg::node::element::Element::new("dc:source");
-        dc_source.append(svg::node::Text::new(quick_xml::escape::escape(source)));
+        // Note: svg::node::Text automatically escapes special characters
+        dc_source.append(svg::node::Text::new(source));
         cc.append(dc_source);
     }
     let mut rdf = svg::node::element::Element::new("rdf:RDF");
@@ -199,7 +200,7 @@ mod tests {
     }
 
     #[test]
-    fn test_svg_source_escale() {
+    fn test_svg_source_escape() {
         let mut doc = Document::default();
         doc.metadata_mut().source = Some("<hello>".to_owned());
 
