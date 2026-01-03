@@ -14,3 +14,14 @@ impl Default for PathMetadata {
         }
     }
 }
+
+impl PathMetadata {
+    /// Merge another metadata into this one.
+    ///
+    /// Currently: the first one wins (self-unchanged).
+    //TODO: metadata should probably have `Option`, so the merge can be smart.
+    pub fn merge(&mut self, _other: &PathMetadata) {
+        // For now, keep self's values (first path wins)
+        // Future enhancement: if self.color.is_none() { self.color = other.color; }
+    }
+}
