@@ -43,9 +43,7 @@ gallery-serve: gallery-build
     python -m http.server -d crates/whiskers-gallery/web 8080
 
 test:
-    cargo test --workspace --all-features --bins --examples
+    cargo nextest run --workspace --all-features
+    cargo test --doc --workspace --all-features  # needed because nextest doesn't run doc-tests
 
-doc-test:
-    cargo test --doc --all-features
-
-lint: clippy clippy-wasm fmt-check toml-fmt-check test doc-test docs
+lint: clippy clippy-wasm fmt-check toml-fmt-check test docs
