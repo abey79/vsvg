@@ -141,9 +141,13 @@ impl LayerRenderData {
         self.vertex_count = flattened_layer.vertex_count();
 
         if self.line_painter_data.is_none() {
+            let layer_defaults = &self.document.layers[&self.layer_id]
+                .metadata()
+                .default_path_metadata;
             self.line_painter_data = Some(LinePainterData::new(
                 render_objects,
                 &flattened_layer.paths,
+                layer_defaults,
                 &self.display_options.line_display_options,
             ));
         }
