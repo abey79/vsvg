@@ -130,6 +130,9 @@ impl PathTrait<BezPath> for Path {
         self.metadata.merge(&other.metadata);
     }
 
+    /// Split a compound path into its individual paths.
+    ///
+    /// The returned paths always consist of a single, non-compound path.
     fn split(self) -> Vec<Self> {
         let elements = self.data.elements();
         if elements.is_empty() {
@@ -157,7 +160,7 @@ impl PathTrait<BezPath> for Path {
             }
         }
 
-        // Don't forget the last subpath
+        // Remember the last subpath
         if !current.elements().is_empty() {
             result.push(Path {
                 data: current,
