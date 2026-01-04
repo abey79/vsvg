@@ -1,3 +1,135 @@
+use crate::path_index::IndexBuilder;
+use crate::{PathDataTrait, PathTrait, Point};
+
+/// Sort paths to minimize pen-up travel distance.
+///
+/// Uses a greedy algorithm starting from the origin. Paths that cannot be
+/// spatially indexed (empty or degenerate) are moved to the end.
+///
+/// If `flip` is true, paths may be reversed to enable shorter travel.
+pub fn sort_paths<P, D>(paths: &mut Vec<P>, flip: bool)
+where
+    P: PathTrait<D>,
+    D: PathDataTrait,
+{
+    sort_paths_with_builder(paths, IndexBuilder::default().flip(flip));
+}
+
+/// Sort paths with custom [`IndexBuilder`] settings.
+#[allow(clippy::missing_panics_doc)]
+pub fn sort_paths_with_builder<P, D>(paths: &mut Vec<P>, builder: IndexBuilder)
+where
+    P: PathTrait<D>,
+    D: PathDataTrait,
+{
+    if paths.len() <= 1 {
+        return;
+    }
+
+    let mut new_paths = Vec::with_capacity(paths.len());
+    let mut index = builder.build(paths);
+
+    let mut pos = Point::ZERO;
+    while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
+        new_paths.push(path_item.path.clone());
+        if reverse {
+            pos = path_item.start.unwrap_or(pos);
+            new_paths
+                .last_mut()
+                .expect("just inserted")
+                .data_mut()
+                .flip();
+        } else {
+            pos = path_item.end.unwrap_or(pos);
+        }
+    }
+
+    // Add any remaining, unindexed paths
+    while let Some(path_item) = index.pop_first() {
+        new_paths.push(path_item.path.clone());
+    }
+
+    *paths = new_paths;
+}
+
+/// Join paths whose endpoints are within tolerance.
+///
+/// Uses greedy chain building: repeatedly extend the current path by joining
+/// the nearest path whose endpoint is within tolerance.
+///
+/// If `flip` is true, paths may be reversed to enable more joins.
+///
+/// Unlike [`sort_paths`] which reorders paths, `join_paths` concatenates
+/// them, reducing the total path count.
+pub fn join_paths<P, D>(paths: &mut Vec<P>, tolerance: f64, flip: bool)
+where
+    P: PathTrait<D>,
+    D: PathDataTrait,
+{
+    if paths.len() <= 1 {
+        return;
+    }
+
+    let taken_paths = std::mem::take(paths);
+    let mut index = IndexBuilder::default().flip(flip).build(&taken_paths);
+    let mut result: Vec<P> = Vec::new();
+
+    // Start first chain
+    let Some(first_item) = index.pop_first() else {
+        return;
+    };
+    let mut current = first_item.path.clone();
+
+    // Greedy chain building
+    loop {
+        let Some(current_end) = current.end() else {
+            result.push(current);
+            match index.pop_first() {
+                Some(item) => current = item.path.clone(),
+                None => break,
+            }
+            continue;
+        };
+
+        // Find nearest path within tolerance
+        if let Some((item, reversed)) = index.pop_nearest(&current_end) {
+            let candidate_start = if reversed {
+                item.end.unwrap_or(current_end)
+            } else {
+                item.start.unwrap_or(current_end)
+            };
+
+            if current_end.distance(&candidate_start) <= tolerance {
+                // Join this path
+                let mut next = item.path.clone();
+                if reversed {
+                    next.data_mut().flip();
+                }
+                current.join(&next, tolerance);
+                // Continue trying to extend
+            } else {
+                // Too far, start new chain
+                result.push(current);
+                current = item.path.clone();
+                if reversed {
+                    current.data_mut().flip();
+                }
+            }
+        } else {
+            // No more paths in index
+            result.push(current);
+            break;
+        }
+    }
+
+    // Add remaining paths from index (shouldn't happen normally)
+    while let Some(item) = index.pop_first() {
+        result.push(item.path.clone());
+    }
+
+    *paths = result;
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{

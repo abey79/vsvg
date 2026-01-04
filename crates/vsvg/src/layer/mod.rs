@@ -3,6 +3,7 @@ mod flattened_layer;
 mod layer;
 mod metadata;
 
+use crate::optimization;
 use crate::path_index::IndexBuilder;
 use crate::{PathDataTrait, PathTrait, Point, Transforms};
 
@@ -62,114 +63,25 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
         //TODO(#4): merge default path metadata and cascade difference to paths
     }
 
+    /// Sort paths to minimize pen-up travel distance.
+    ///
+    /// See [`optimization::sort_paths`] for details.
     fn sort(&mut self, flip: bool) {
-        self.sort_with_builder(IndexBuilder::default().flip(flip));
+        optimization::sort_paths(self.paths_mut(), flip);
     }
 
+    /// Sort paths with custom [`IndexBuilder`] settings.
+    ///
+    /// See [`optimization::sort_paths_with_builder`] for details.
     fn sort_with_builder(&mut self, builder: IndexBuilder) {
-        if self.paths().len() <= 1 {
-            return;
-        }
-
-        let mut new_paths = Vec::with_capacity(self.paths().len());
-        let mut index = builder.build(self.paths());
-
-        let mut pos = Point::ZERO;
-        while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
-            new_paths.push((*path_item.path).clone());
-            if reverse {
-                pos = path_item.start.unwrap_or(pos);
-                new_paths
-                    .last_mut()
-                    .expect("just inserted")
-                    .data_mut()
-                    .flip();
-            } else {
-                pos = path_item.end.unwrap_or(pos);
-            }
-        }
-
-        // add any remaining, unindexed paths
-        while let Some(path_item) = index.pop_first() {
-            new_paths.push((*path_item.path).clone());
-        }
-
-        *self.paths_mut() = new_paths;
+        optimization::sort_paths_with_builder(self.paths_mut(), builder);
     }
 
     /// Join paths whose endpoints are within tolerance.
     ///
-    /// If `flip` is true, paths may be reversed to enable more joins.
-    ///
-    /// Unlike [`sort`](LayerTrait::sort) which reorders paths, `join_paths` concatenates
-    /// them, reducing the total path count.
-    ///
-    /// Note: Currently joins are only made at path endpoints. A future enhancement
-    /// could re-loop closed paths when another path's endpoint touches any point
-    /// along the closed path, enabling more joins.
+    /// See [`optimization::join_paths`] for details.
     fn join_paths(&mut self, tolerance: f64, flip: bool) {
-        if self.paths().len() <= 1 {
-            return;
-        }
-
-        let taken_paths = std::mem::take(self.paths_mut());
-        let mut index = IndexBuilder::default().flip(flip).build(&taken_paths);
-        let mut result: Vec<P> = Vec::new();
-
-        // Start first chain
-        let Some(first_item) = index.pop_first() else {
-            return;
-        };
-        let mut current = first_item.path.clone();
-
-        // Greedy chain building
-        loop {
-            let Some(current_end) = current.end() else {
-                result.push(current);
-                match index.pop_first() {
-                    Some(item) => current = item.path.clone(),
-                    None => break,
-                }
-                continue;
-            };
-
-            // Find nearest path within tolerance
-            if let Some((item, reversed)) = index.pop_nearest(&current_end) {
-                let candidate_start = if reversed {
-                    item.end.unwrap_or(current_end)
-                } else {
-                    item.start.unwrap_or(current_end)
-                };
-
-                if current_end.distance(&candidate_start) <= tolerance {
-                    // Join this path
-                    let mut next = item.path.clone();
-                    if reversed {
-                        next.data_mut().flip();
-                    }
-                    current.join(&next, tolerance);
-                    // Continue trying to extend
-                } else {
-                    // Too far, start new chain
-                    result.push(current);
-                    current = item.path.clone();
-                    if reversed {
-                        current.data_mut().flip();
-                    }
-                }
-            } else {
-                // No more paths in index
-                result.push(current);
-                break;
-            }
-        }
-
-        // Add remaining paths from index (shouldn't happen normally)
-        while let Some(item) = index.pop_first() {
-            result.push(item.path.clone());
-        }
-
-        *self.paths_mut() = result;
+        optimization::join_paths(self.paths_mut(), tolerance, flip);
     }
 
     fn pen_up_trajectories(&self) -> Vec<(Point, Point)> {
