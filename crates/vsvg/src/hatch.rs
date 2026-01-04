@@ -151,25 +151,32 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     }
 
     let mut result: Vec<FlattenedPath> = Vec::new();
+    let inset_distance = -params.spacing / 2.0;
 
-    // Step 3: Inset and boundary extraction
+    // Step 3: Compute clipping polygon for scan lines
+    // - inset=false: clip against spacing/2 inset of original boundary
+    // - inset=true: clip against spacing/2 inset of the inset boundary (= spacing from original)
+    //   This prevents scan lines from overlapping with the boundary stroke.
     let work_polygon = if params.inset {
-        let inset_distance = -params.spacing / 2.0;
-        let multi = polygon.buffer(inset_distance);
-
-        // Buffer can return multiple polygons (if shape splits) or empty (eroded)
-        if multi.0.is_empty() {
+        // First inset: the boundary stroke position
+        let boundary_multi = polygon.buffer(inset_distance);
+        if boundary_multi.0.is_empty() {
             return vec![]; // Fully eroded
         }
 
-        // Convert all inset polygons to boundary paths, add to result
-        for poly in &multi.0 {
+        // Add boundary paths to result
+        for poly in &boundary_multi.0 {
             result.extend(polygon_to_boundary_paths(poly));
         }
 
-        // Use the largest polygon for hatching
-        // Safety: we checked is_empty() above, so max_by always returns Some
-        let Some(largest) = multi.0.into_iter().max_by(|a, b| {
+        // Second inset: clip region for scan lines (spacing/2 from boundary)
+        let clip_multi = polygon.buffer(2.0 * inset_distance);
+        if clip_multi.0.is_empty() {
+            return result; // Shape too small for hatch lines, but boundary exists
+        }
+
+        // Use largest polygon for clipping
+        let Some(largest) = clip_multi.0.into_iter().max_by(|a, b| {
             use geo::algorithm::area::Area;
             a.unsigned_area()
                 .partial_cmp(&b.unsigned_area())
@@ -179,7 +186,21 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
         };
         largest
     } else {
-        polygon.clone()
+        // Single inset: spacing/2 from original boundary
+        let multi = polygon.buffer(inset_distance);
+        if multi.0.is_empty() {
+            return vec![]; // Fully eroded
+        }
+
+        let Some(largest) = multi.0.into_iter().max_by(|a, b| {
+            use geo::algorithm::area::Area;
+            a.unsigned_area()
+                .partial_cmp(&b.unsigned_area())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        }) else {
+            return vec![]; // Should never happen, but handle gracefully
+        };
+        largest
     };
 
     // Get centroid for rotation
@@ -220,8 +241,8 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     let result_lines: geo::MultiLineString<f64> =
         clipped.rotate_around_point(params.angle.to_degrees(), centroid);
 
-    // Step 9: Convert clipped lines to FlattenedPath, add to result
-    let hatch_lines: Vec<FlattenedPath> = result_lines
+    // Step 9: Convert clipped lines to FlattenedPath
+    let mut hatch_lines: Vec<FlattenedPath> = result_lines
         .0
         .into_iter()
         .filter(|ls| ls.0.len() >= 2)
@@ -231,13 +252,14 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
         })
         .collect();
 
-    result.extend(hatch_lines);
-
     // Step 10: Optional line joining for efficiency
-    if params.join_lines && result.len() > 1 {
+    // Important: Only join hatch lines, not boundary paths (which are closed loops)
+    if params.join_lines && hatch_lines.len() > 1 {
         let join_tolerance = params.spacing * 5.0;
-        crate::optimization::join_paths(&mut result, join_tolerance, true);
+        crate::optimization::join_paths(&mut hatch_lines, join_tolerance, true);
     }
+
+    result.extend(hatch_lines);
 
     result
 }
