@@ -96,7 +96,6 @@ impl IntoBezPathTolerance for Polyline {
     }
 }
 
-#[cfg(feature = "geo")]
 pub mod geo_impl {
     #[allow(clippy::wildcard_imports)]
     use super::*;
@@ -350,7 +349,6 @@ mod test {
         );
     }
 
-    #[cfg(feature = "geo")]
     mod geo_tests {
         use super::super::geo_impl::*;
         use super::*;
