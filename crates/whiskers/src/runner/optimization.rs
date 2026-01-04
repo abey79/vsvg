@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use vsvg::DocumentTrait;
+use vsvg::{DocumentTrait, LayerTrait};
 use whiskers_widgets::collapsing_header;
 
 /// Options controlling the optimization pass before saving to files.

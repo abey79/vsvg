@@ -46,6 +46,24 @@ impl Polyline {
     pub fn into_points(self) -> Vec<Point> {
         self.0
     }
+
+    /// Append another polyline to this one.
+    ///
+    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
+    /// the duplicate point is skipped to avoid redundancy.
+    pub fn join(&mut self, other: &Polyline, epsilon: f64) {
+        if other.0.is_empty() {
+            return;
+        }
+
+        // Check if we should skip the first point of other (duplicate)
+        let skip = match (self.end(), other.start()) {
+            (Some(end), Some(start)) if end.distance(&start) < epsilon => 1,
+            _ => 0,
+        };
+
+        self.0.extend(other.0.iter().skip(skip).copied());
+    }
 }
 
 impl<P: Into<Point>> FromIterator<P> for Polyline {
@@ -131,6 +149,20 @@ impl PathTrait<Polyline> for FlattenedPath {
 
     fn metadata_mut(&mut self) -> &mut PathMetadata {
         &mut self.metadata
+    }
+
+    /// Append another path to this one.
+    ///
+    /// The underlying polylines are joined, and metadata is merged
+    /// (currently first path's metadata wins).
+    fn join(&mut self, other: &FlattenedPath, epsilon: f64) {
+        self.data.join(&other.data, epsilon);
+        self.metadata.merge(&other.metadata);
+    }
+
+    /// Returns `vec![self]` since polylines cannot represent compound paths.
+    fn split(self) -> Vec<Self> {
+        vec![self]
     }
 }
 

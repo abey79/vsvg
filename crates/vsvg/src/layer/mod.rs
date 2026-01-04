@@ -3,7 +3,9 @@ mod flattened_layer;
 mod layer;
 mod metadata;
 
-use crate::{IndexBuilder, PathDataTrait, PathTrait, Point, Transforms};
+use crate::optimization;
+use crate::path_index::IndexBuilder;
+use crate::{PathDataTrait, PathTrait, Point, Transforms};
 
 use crate::stats::LayerStats;
 pub use flattened_layer::FlattenedLayer;
@@ -61,39 +63,25 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
         //TODO(#4): merge default path metadata and cascade difference to paths
     }
 
+    /// Sort paths to minimize pen-up travel distance.
+    ///
+    /// See [`optimization::sort_paths`] for details.
     fn sort(&mut self, flip: bool) {
-        self.sort_with_builder(IndexBuilder::default().flip(flip));
+        optimization::sort_paths(self.paths_mut(), flip);
     }
 
+    /// Sort paths with custom [`IndexBuilder`] settings.
+    ///
+    /// See [`optimization::sort_paths_with_builder`] for details.
     fn sort_with_builder(&mut self, builder: IndexBuilder) {
-        if self.paths().len() <= 1 {
-            return;
-        }
+        optimization::sort_paths_with_builder(self.paths_mut(), builder);
+    }
 
-        let mut new_paths = Vec::with_capacity(self.paths().len());
-        let mut index = builder.build(self.paths());
-
-        let mut pos = Point::ZERO;
-        while let Some((path_item, reverse)) = index.pop_nearest(&pos) {
-            new_paths.push((*path_item.path).clone());
-            if reverse {
-                pos = path_item.start.unwrap_or(pos);
-                new_paths
-                    .last_mut()
-                    .expect("just inserted")
-                    .data_mut()
-                    .flip();
-            } else {
-                pos = path_item.end.unwrap_or(pos);
-            }
-        }
-
-        // add any remaining, unindexed paths
-        while let Some(path_item) = index.pop_first() {
-            new_paths.push((*path_item.path).clone());
-        }
-
-        *self.paths_mut() = new_paths;
+    /// Join paths whose endpoints are within tolerance.
+    ///
+    /// See [`optimization::join_paths`] for details.
+    fn join_paths(&mut self, tolerance: f64, flip: bool) {
+        optimization::join_paths(self.paths_mut(), tolerance, flip);
     }
 
     fn pen_up_trajectories(&self) -> Vec<(Point, Point)> {
@@ -116,5 +104,19 @@ pub trait LayerTrait<P: PathTrait<D>, D: PathDataTrait>: Default + Transforms {
 
     fn stats(&self) -> LayerStats {
         LayerStats::from_layer(self)
+    }
+
+    /// Split all compound paths into individual subpaths.
+    ///
+    /// This is useful before [`Layer::join_paths`](crate::Layer::join_paths) to maximize
+    /// optimization opportunities. When paths contain multiple subpaths (e.g.,
+    /// from SVG imports or boolean operations), only the overall start/end
+    /// points are considered for joining. Exploding first exposes all subpath
+    /// endpoints.
+    ///
+    /// For [`FlattenedLayer`], this is a no-op since polylines cannot be compound.
+    fn explode(&mut self) {
+        let paths = std::mem::take(self.paths_mut());
+        *self.paths_mut() = paths.into_iter().flat_map(P::split).collect();
     }
 }
