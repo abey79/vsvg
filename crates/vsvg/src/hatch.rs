@@ -22,7 +22,7 @@ use geo::algorithm::centroid::Centroid;
 use geo::algorithm::rotate::Rotate;
 
 use crate::Length;
-use crate::path::{FlattenedPath, Point, Polyline};
+use crate::path::{FlattenedPath, Point, Polyline, polygon_to_flattened_paths};
 
 /// Parameters for hatching a closed shape.
 #[derive(Debug, Clone, Copy)]
@@ -105,32 +105,6 @@ impl HatchParams {
     }
 }
 
-/// Convert a polygon to boundary paths (exterior + holes).
-fn polygon_to_boundary_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
-    let mut paths = Vec::new();
-
-    // Exterior ring
-    let exterior_points: Vec<Point> = polygon
-        .exterior()
-        .0
-        .iter()
-        .map(|c| Point::new(c.x, c.y))
-        .collect();
-    if exterior_points.len() >= 3 {
-        paths.push(FlattenedPath::from(Polyline::new(exterior_points)));
-    }
-
-    // Interior rings (holes)
-    for interior in polygon.interiors() {
-        let hole_points: Vec<Point> = interior.0.iter().map(|c| Point::new(c.x, c.y)).collect();
-        if hole_points.len() >= 3 {
-            paths.push(FlattenedPath::from(Polyline::new(hole_points)));
-        }
-    }
-
-    paths
-}
-
 /// Generate hatching for a `geo::Polygon`.
 ///
 /// This is the core algorithm. Use [`crate::Path::hatch`] or [`Polyline::hatch`] for
@@ -166,7 +140,7 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
 
         // Add boundary paths to result
         for poly in &boundary_multi.0 {
-            result.extend(polygon_to_boundary_paths(poly));
+            result.extend(polygon_to_flattened_paths(poly));
         }
 
         // Second inset: clip region for scan lines (spacing/2 from boundary)
@@ -237,7 +211,7 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     // invert=false means keep the parts INSIDE the polygon
     let clipped: geo::MultiLineString<f64> = rotated_poly.clip(&scan_lines, false);
 
-    // Step 8: Rotate clipped lines back to original orientation
+    // Step 8: Rotate clipped lines back to the original orientation
     let result_lines: geo::MultiLineString<f64> =
         clipped.rotate_around_point(params.angle.to_degrees(), centroid);
 
