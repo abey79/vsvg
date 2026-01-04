@@ -20,6 +20,7 @@ mod path_index;
 mod stats;
 mod svg;
 mod test_utils;
+pub mod text;
 mod traits;
 #[cfg(feature = "egui")]
 pub mod ui;

@@ -3,7 +3,20 @@ use crate::{Point, Polyline};
 use kurbo::Vec2;
 
 pub trait Draw {
+    /// Draw a single path.
     fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self;
+
+    /// Draw a sequence of paths.
+    #[inline]
+    fn add_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = impl IntoBezPathTolerance>,
+    ) -> &mut Self {
+        paths.into_iter().for_each(|path| {
+            self.add_path(path);
+        });
+        self
+    }
 
     /// Draw a cubic Bézier curve from (`x1`, `y1`) to (`x4`, `y4`) with control points at (`x2`,
     /// `y2`) and (`x3`, `y3`).
