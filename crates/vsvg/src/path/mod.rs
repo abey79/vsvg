@@ -7,7 +7,9 @@ mod point;
 
 use crate::{SvgPathWriter, Transforms};
 
-pub use flattened_path::{FlattenedPath, Polyline};
+pub use flattened_path::{
+    FlattenedPath, Polyline, multi_polygon_to_flattened_paths, polygon_to_flattened_paths,
+};
 pub use into_bezpath::{IntoBezPath, IntoBezPathTolerance};
 pub use metadata::PathMetadata;
 pub use path::Path;

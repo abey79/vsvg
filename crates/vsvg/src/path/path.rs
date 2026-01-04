@@ -1,4 +1,7 @@
-use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
+use super::{
+    FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline,
+    multi_polygon_to_flattened_paths,
+};
 use crate::Transforms;
 use crate::crop::{Crop, QuadCropResult, crop_quad_bezier};
 use crate::path::into_bezpath::{
@@ -472,39 +475,6 @@ impl Path {
 
         Ok(result)
     }
-}
-
-/// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
-fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
-    mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
-}
-
-/// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
-///
-/// Returns one path for the exterior and one for each interior (hole).
-fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
-    let mut result = Vec::new();
-
-    // Exterior ring
-    let exterior_points: Vec<Point> = polygon
-        .exterior()
-        .0
-        .iter()
-        .map(|c| Point::new(c.x, c.y))
-        .collect();
-    if exterior_points.len() >= 3 {
-        result.push(FlattenedPath::from(Polyline::new(exterior_points)));
-    }
-
-    // Interior rings (holes) as separate paths
-    for interior in polygon.interiors() {
-        let hole_points: Vec<Point> = interior.0.iter().map(|c| Point::new(c.x, c.y)).collect();
-        if hole_points.len() >= 3 {
-            result.push(FlattenedPath::from(Polyline::new(hole_points)));
-        }
-    }
-
-    result
 }
 
 impl<T: IntoBezPath> From<T> for Path {

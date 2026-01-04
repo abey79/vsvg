@@ -141,12 +141,18 @@ impl Polyline {
 }
 
 /// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
-fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
+///
+/// Returns one path for each polygon's exterior and interior rings.
+#[must_use]
+pub fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
     mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
 }
 
 /// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
-fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
+///
+/// Returns one path for the exterior and one for each interior (hole).
+#[must_use]
+pub fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
     let mut result = Vec::new();
 
     // Exterior ring
