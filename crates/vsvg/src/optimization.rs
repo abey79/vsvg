@@ -1,3 +1,4 @@
+use crate::SAME_POINT_EPSILON;
 use crate::path_index::IndexBuilder;
 use crate::{PathDataTrait, PathTrait, Point};
 
@@ -105,7 +106,10 @@ where
                 if reversed {
                     next.data_mut().flip();
                 }
-                current.join(&next, tolerance);
+                // Use small EPSILON for duplicate detection, not tolerance
+                // (tolerance is for deciding IF paths should join, EPSILON is for skipping
+                // true duplicate points at the junction)
+                current.join(&next, SAME_POINT_EPSILON);
                 // Continue trying to extend
             } else {
                 // Too far, start new chain
@@ -261,6 +265,58 @@ mod tests {
         // With flip: should join into 1 path
         layer.join_paths(0.1, true);
         assert_eq!(layer.paths.len(), 1);
+    }
+
+    #[test]
+    fn test_join_paths_parallel_horizontal_lines_zigzag() {
+        // Simulates hatching scenario: parallel horizontal lines should join in zigzag pattern
+        let mut layer = FlattenedLayer::default();
+
+        // Three parallel horizontal lines, all going left to right
+        // Line 1: (0, 0) -> (100, 0)
+        // Line 2: (0, 10) -> (100, 10)
+        // Line 3: (0, 20) -> (100, 20)
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(0.0, 0.0),
+            Point::new(100.0, 0.0),
+        ]));
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(0.0, 10.0),
+            Point::new(100.0, 10.0),
+        ]));
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(0.0, 20.0),
+            Point::new(100.0, 20.0),
+        ]));
+
+        // With flip=true and tolerance=15 (> 10), should join into zigzag:
+        // (0, 0) -> (100, 0) -> (100, 10) -> (0, 10) -> (0, 20) -> (100, 20)
+        layer.join_paths(15.0, true);
+
+        assert_eq!(layer.paths.len(), 1, "Should join into single path");
+
+        let points = layer.paths[0].data.points();
+        assert_eq!(points.len(), 6, "Should have 6 points");
+
+        // Verify zigzag pattern
+        assert_eq!(points[0], Point::new(0.0, 0.0), "Start at (0, 0)");
+        assert_eq!(points[1], Point::new(100.0, 0.0), "Then (100, 0)");
+        assert_eq!(
+            points[2],
+            Point::new(100.0, 10.0),
+            "Then (100, 10) - line 2 end"
+        );
+        assert_eq!(
+            points[3],
+            Point::new(0.0, 10.0),
+            "Then (0, 10) - line 2 start (flipped)"
+        );
+        assert_eq!(
+            points[4],
+            Point::new(0.0, 20.0),
+            "Then (0, 20) - line 3 start"
+        );
+        assert_eq!(points[5], Point::new(100.0, 20.0), "End at (100, 20)");
     }
 
     #[test]
