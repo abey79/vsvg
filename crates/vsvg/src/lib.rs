@@ -57,6 +57,9 @@ pub mod exports {
     pub use ::usvg;
 }
 
+/// Epsilon for considering two points as coincident.
+pub const SAME_POINT_EPSILON: f64 = 1e-10;
+
 #[macro_export]
 macro_rules! trace_function {
     () => {

@@ -15,9 +15,6 @@ pub use point::Point;
 
 pub const DEFAULT_TOLERANCE: f64 = 0.05;
 
-/// Epsilon for considering two points as coincident.
-pub const EPSILON: f64 = 1e-10;
-
 pub trait PathDataTrait:
     Transforms + SvgPathWriter + Default + Clone + PartialEq + std::fmt::Debug
 {
@@ -27,10 +24,10 @@ pub trait PathDataTrait:
     fn is_point(&self) -> bool;
     fn flip(&mut self);
 
-    /// Returns true if the path is closed (start ≈ end within [`EPSILON`]).
+    /// Returns true if the path is closed (start ≈ end within [`crate::SAME_POINT_EPSILON`]).
     fn is_closed(&self) -> bool {
         match (self.start(), self.end()) {
-            (Some(start), Some(end)) => start.distance(&end) < EPSILON,
+            (Some(start), Some(end)) => start.distance(&end) < crate::SAME_POINT_EPSILON,
             _ => false,
         }
     }
