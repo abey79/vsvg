@@ -39,16 +39,19 @@ impl Path {
         };
 
         // extract metadata
+        // Note: usvg resolves all inherited styles, so we always get concrete values.
+        // We set them as Some() on the path. A future enhancement could detect when
+        // values match SVG defaults and leave them as None.
         if let Some(stroke) = &svg_path.stroke() {
             if let usvg::Paint::Color(c) = stroke.paint() {
-                res.metadata_mut().color = Color {
+                res.metadata_mut().color = Some(Color {
                     r: c.red,
                     g: c.green,
                     b: c.blue,
                     a: stroke.opacity().to_u8(),
-                };
+                });
             }
-            res.metadata_mut().stroke_width = f64::from(stroke.width().get());
+            res.metadata_mut().stroke_width = Some(f64::from(stroke.width().get()));
         }
 
         res
@@ -148,6 +151,13 @@ impl Document {
             doc.load_tree_multilayer(&tree);
         }
 
+        // Promote common metadata to layer defaults to reduce SVG bloat on re-export.
+        // usvg resolves inherited styles onto each path, so we extract common values back
+        // to layer defaults.
+        for layer in doc.layers.values_mut() {
+            layer.promote_common_metadata_to_defaults();
+        }
+
         doc.crop(0., 0., w, h);
         Ok(doc)
     }
@@ -245,7 +255,7 @@ impl Document {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Document, DocumentTrait, LayerTrait, PathDataTrait, test_file};
+    use crate::{Color, Document, DocumentTrait, LayerTrait, PathDataTrait, PathTrait, test_file};
     use kurbo::BezPath;
 
     #[test]
@@ -493,5 +503,153 @@ mod tests {
             doc.try_get(3).unwrap().paths[0].data,
             BezPath::from_svg("M 0 0 L 0 200 Q 300 100 0 0").unwrap()
         );
+    }
+
+    #[test]
+    fn test_read_path_metadata_color() {
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <path d="M 0,0 L 10,10" stroke="#ff0000" />
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        // With a single path, metadata is promoted to layer defaults
+        let layer = doc.try_get(0).unwrap();
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::RED)
+        );
+        assert_eq!(layer.paths[0].metadata().color, None); // cleared from path
+    }
+
+    #[test]
+    fn test_read_path_metadata_stroke_width() {
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <path d="M 0,0 L 10,10" stroke="#000000" stroke-width="2.5" />
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        // With a single path, metadata is promoted to layer defaults
+        let layer = doc.try_get(0).unwrap();
+        assert_eq!(
+            layer.metadata().default_path_metadata.stroke_width,
+            Some(2.5)
+        );
+        assert_eq!(layer.paths[0].metadata().stroke_width, None); // cleared from path
+    }
+
+    #[test]
+    fn test_read_path_metadata_with_opacity() {
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <path d="M 0,0 L 10,10" stroke="#0000ff" stroke-opacity="0.5" />
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        // With a single path, metadata is promoted to layer defaults
+        let layer = doc.try_get(0).unwrap();
+        let color = layer.metadata().default_path_metadata.color.unwrap();
+        assert_eq!(color.r, 0);
+        assert_eq!(color.g, 0);
+        assert_eq!(color.b, 255);
+        assert_eq!(color.a, 128); // ~50% opacity (0.5 * 255 = 127.5, rounds to 128)
+        assert_eq!(layer.paths[0].metadata().color, None); // cleared from path
+    }
+
+    #[test]
+    fn test_read_inherits_from_group() {
+        // usvg resolves inherited styles, so path should have the group's stroke
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <g stroke="#00ff00" stroke-width="3">
+                    <path d="M 0,0 L 10,10" />
+                </g>
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        // With promotion, common metadata moves to layer defaults
+        let layer = doc.try_get(1).unwrap();
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::GREEN)
+        );
+        assert_eq!(
+            layer.metadata().default_path_metadata.stroke_width,
+            Some(3.0)
+        );
+        // And path metadata is cleared
+        assert_eq!(layer.paths[0].metadata().color, None);
+        assert_eq!(layer.paths[0].metadata().stroke_width, None);
+    }
+
+    #[test]
+    fn test_read_promotes_common_metadata() {
+        // Multiple paths with same color should have it promoted to layer default
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <g>
+                    <path d="M 0,0 L 10,10" stroke="#ff0000" stroke-width="2" />
+                    <path d="M 10,10 L 20,20" stroke="#ff0000" stroke-width="2" />
+                </g>
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        let layer = doc.try_get(1).unwrap();
+        // Common values promoted to layer defaults
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::RED)
+        );
+        assert_eq!(
+            layer.metadata().default_path_metadata.stroke_width,
+            Some(2.0)
+        );
+        // Path metadata cleared
+        assert_eq!(layer.paths[0].metadata().color, None);
+        assert_eq!(layer.paths[1].metadata().color, None);
+    }
+
+    #[test]
+    fn test_read_no_promote_when_different() {
+        // Paths with different colors should NOT be promoted
+        let doc = Document::from_string(
+            r##"<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <g>
+                    <path d="M 0,0 L 10,10" stroke="#ff0000" stroke-width="2" />
+                    <path d="M 10,10 L 20,20" stroke="#0000ff" stroke-width="2" />
+                </g>
+            </svg>"##,
+            false,
+        )
+        .unwrap();
+
+        let layer = doc.try_get(1).unwrap();
+        // Color NOT promoted (different values)
+        assert_eq!(layer.metadata().default_path_metadata.color, None);
+        // stroke_width IS promoted (same values)
+        assert_eq!(
+            layer.metadata().default_path_metadata.stroke_width,
+            Some(2.0)
+        );
+        // Paths keep their different colors
+        assert_eq!(layer.paths[0].metadata().color, Some(Color::RED));
+        assert_eq!(layer.paths[1].metadata().color, Some(Color::BLUE));
     }
 }
