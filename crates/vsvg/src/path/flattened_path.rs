@@ -124,15 +124,35 @@ impl Polyline {
 
         Ok(multi_polygon_to_flattened_paths(&multi_polygon))
     }
+
+    /// Generate hatching for this closed polyline.
+    ///
+    /// Same as [`crate::Path::hatch`] but for already-flattened paths (no tolerance needed).
+    ///
+    /// # Errors
+    /// Returns error if the polyline is not closed or cannot form a valid polygon.
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let polygon = self.to_geo_polygon()?;
+        Ok(crate::hatch_polygon(&polygon, params))
+    }
 }
 
 /// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
-fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
+///
+/// Returns one path for each polygon's exterior and interior rings.
+#[must_use]
+pub fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
     mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
 }
 
 /// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
-fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
+///
+/// Returns one path for the exterior and one for each interior (hole).
+#[must_use]
+pub fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
     let mut result = Vec::new();
 
     // Exterior ring
@@ -368,6 +388,24 @@ impl kurbo::ParamCurveFit for PolylineCurveFit<'_> {
 }
 
 impl FlattenedPath {
+    /// Generate hatching (parallel fill lines) for this closed path.
+    ///
+    /// See [`crate::HatchParams`] for configuration options.
+    ///
+    /// # Errors
+    /// Returns error if the path is not closed or cannot form a valid polygon.
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let mut result = self.data.hatch(params)?;
+
+        for path in &mut result {
+            *path.metadata_mut() = self.metadata.clone();
+        }
+        Ok(result)
+    }
+
     /// Fit smooth Bézier curves to this polyline.
     ///
     /// This is the inverse of [`Path::flatten`]: it converts a sequence of points back into
