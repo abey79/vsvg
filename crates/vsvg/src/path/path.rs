@@ -429,6 +429,49 @@ impl Path {
 
         Ok(multi_polygon_to_flattened_paths(&multi_polygon))
     }
+
+    /// Generate hatching (boundary + fill lines) for this closed path.
+    ///
+    /// Returns a `Vec<FlattenedPath>` containing:
+    /// - The inset boundary path(s) if `params.inset` is true
+    /// - The parallel fill lines clipped to the boundary
+    ///
+    /// Returns an empty vec if the shape is too small or fully eroded by inset.
+    ///
+    /// # Arguments
+    /// * `params` - Hatching parameters (spacing, angle, inset, `join_lines`)
+    /// * `tolerance` - Curve flattening tolerance
+    ///
+    /// # Errors
+    /// Returns error if the path cannot be converted to a polygon
+    /// (not closed, self-intersecting, etc.).
+    ///
+    /// # Example
+    /// ```
+    /// use vsvg::{Path, HatchParams, Unit};
+    /// use kurbo::Circle;
+    ///
+    /// let circle = Path::from(Circle::new((50.0, 50.0), 25.0));
+    /// let params = HatchParams::new(0.5 * Unit::Mm)
+    ///     .with_angle(std::f64::consts::FRAC_PI_4);
+    /// let paths = circle.hatch(&params, 0.1).unwrap();
+    /// // paths contains inset boundary + diagonal fill lines
+    /// ```
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+        tolerance: f64,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let polygon = self.to_geo_polygon(tolerance)?;
+        let mut result = crate::hatch_polygon(&polygon, params);
+
+        // Copy metadata to all generated paths
+        for path in &mut result {
+            *path.metadata_mut() = self.metadata.clone();
+        }
+
+        Ok(result)
+    }
 }
 
 /// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.

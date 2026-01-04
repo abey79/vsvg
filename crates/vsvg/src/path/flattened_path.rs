@@ -124,6 +124,20 @@ impl Polyline {
 
         Ok(multi_polygon_to_flattened_paths(&multi_polygon))
     }
+
+    /// Generate hatching for this closed polyline.
+    ///
+    /// Same as [`crate::Path::hatch`] but for already-flattened paths (no tolerance needed).
+    ///
+    /// # Errors
+    /// Returns error if the polyline is not closed or cannot form a valid polygon.
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let polygon = self.to_geo_polygon()?;
+        Ok(crate::hatch_polygon(&polygon, params))
+    }
 }
 
 /// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.

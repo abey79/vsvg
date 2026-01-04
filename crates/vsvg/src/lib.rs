@@ -11,6 +11,7 @@ mod catmull_rom;
 mod color;
 mod crop;
 mod document;
+mod hatch;
 mod layer;
 mod length;
 mod optimization;
@@ -32,6 +33,7 @@ pub use catmull_rom::*;
 pub use color::*;
 pub use crop::*;
 pub use document::*;
+pub use hatch::{HatchParams, hatch_polygon};
 pub use layer::*;
 pub use length::*;
 #[allow(unused_imports)]
