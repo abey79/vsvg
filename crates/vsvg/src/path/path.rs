@@ -321,6 +321,147 @@ impl Path {
         self.data = new_bezpath;
         self
     }
+
+    /// Convert path to `geo::Polygon`, flattening curves with given tolerance.
+    ///
+    /// For compound paths (multiple subpaths):
+    /// - First subpath becomes the exterior ring
+    /// - Subsequent closed subpaths become interior rings (holes)
+    /// - Unclosed interior subpaths return an error
+    ///
+    /// # Errors
+    ///
+    /// See [`super::ToGeoPolygonError`]
+    pub fn to_geo_polygon(
+        &self,
+        tolerance: f64,
+    ) -> Result<geo::Polygon<f64>, super::ToGeoPolygonError> {
+        use super::ToGeoPolygonError;
+        use geo::algorithm::validation::Validation;
+
+        // Flatten curves to polylines (one per subpath)
+        let flattened = self.flatten(tolerance);
+
+        let mut iter = flattened.into_iter();
+
+        // First subpath is exterior ring
+        let Some(exterior_polyline) = iter.next() else {
+            return Err(ToGeoPolygonError::EmptyPath);
+        };
+        let exterior_points = exterior_polyline.data.points();
+
+        if exterior_points.len() < 3 {
+            return Err(ToGeoPolygonError::ExteriorTooFewPoints);
+        }
+
+        if !exterior_polyline.data.is_closed() {
+            return Err(ToGeoPolygonError::ExteriorNotClosed);
+        }
+
+        let exterior_coords: Vec<geo::Coord<f64>> = exterior_points
+            .iter()
+            .map(|p| geo::Coord { x: p.x(), y: p.y() })
+            .collect();
+        let exterior = geo::LineString::new(exterior_coords);
+
+        // Remaining subpaths are holes (interior rings)
+        let mut interiors = Vec::new();
+        for (i, hole_path) in iter.enumerate() {
+            let hole_points = hole_path.data.points();
+
+            if hole_points.len() < 3 {
+                return Err(ToGeoPolygonError::InteriorTooFewPoints(i));
+            }
+
+            if !hole_path.data.is_closed() {
+                return Err(ToGeoPolygonError::InteriorNotClosed(i));
+            }
+
+            let hole_coords: Vec<geo::Coord<f64>> = hole_points
+                .iter()
+                .map(|p| geo::Coord { x: p.x(), y: p.y() })
+                .collect();
+            interiors.push(geo::LineString::new(hole_coords));
+        }
+
+        let polygon = geo::Polygon::new(exterior, interiors);
+
+        // Validate the resulting polygon (checks self-intersection, etc.)
+        polygon.check_validation()?;
+
+        Ok(polygon)
+    }
+
+    /// Buffer (expand or shrink) this closed path.
+    ///
+    /// - Positive distance = expand outward
+    /// - Negative distance = shrink inward
+    ///
+    /// Returns flattened paths since buffer operations work on polygons.
+    /// May return multiple paths if the shape splits, or empty if fully eroded.
+    ///
+    /// # Errors
+    /// Returns error if path cannot be converted to polygon (not closed, etc.)
+    ///
+    /// # Example
+    /// ```
+    /// use vsvg::{Path, Unit};
+    /// use kurbo::Circle;
+    ///
+    /// let circle = Path::from(Circle::new((0.0, 0.0), 10.0));
+    ///
+    /// // Expand by 1 unit
+    /// let expanded = circle.buffer(1.0, 0.1).unwrap();
+    ///
+    /// // Shrink by 0.5 units (for hatching inset)
+    /// let shrunk = circle.buffer(-0.5, 0.1).unwrap();
+    /// ```
+    pub fn buffer(
+        &self,
+        distance: impl Into<crate::Length>,
+        tolerance: f64,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        use geo::Buffer;
+
+        let polygon = self.to_geo_polygon(tolerance)?;
+        let distance_f64: f64 = distance.into().into();
+        let multi_polygon = polygon.buffer(distance_f64);
+
+        Ok(multi_polygon_to_flattened_paths(&multi_polygon))
+    }
+}
+
+/// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
+fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
+    mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
+}
+
+/// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
+///
+/// Returns one path for the exterior and one for each interior (hole).
+fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
+    let mut result = Vec::new();
+
+    // Exterior ring
+    let exterior_points: Vec<Point> = polygon
+        .exterior()
+        .0
+        .iter()
+        .map(|c| Point::new(c.x, c.y))
+        .collect();
+    if exterior_points.len() >= 3 {
+        result.push(FlattenedPath::from(Polyline::new(exterior_points)));
+    }
+
+    // Interior rings (holes) as separate paths
+    for interior in polygon.interiors() {
+        let hole_points: Vec<Point> = interior.0.iter().map(|c| Point::new(c.x, c.y)).collect();
+        if hole_points.len() >= 3 {
+            result.push(FlattenedPath::from(Polyline::new(hole_points)));
+        }
+    }
+
+    result
 }
 
 impl<T: IntoBezPath> From<T> for Path {
@@ -344,7 +485,118 @@ impl From<FlattenedPath> for Path {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::ToGeoPolygonError;
     use kurbo::Line;
+
+    #[test]
+    fn test_path_to_geo_polygon_circle() {
+        let path = Path::from(kurbo::Circle::new((0.0, 0.0), 10.0));
+
+        let polygon = path.to_geo_polygon(0.1).expect("should convert");
+        // Circle flattened should have many points
+        assert!(polygon.exterior().0.len() > 10);
+        assert!(polygon.interiors().is_empty());
+    }
+
+    #[test]
+    fn test_path_to_geo_polygon_square() {
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10 L 0,10 Z").unwrap();
+
+        let polygon = path.to_geo_polygon(0.1).expect("should convert");
+        assert_eq!(polygon.exterior().0.len(), 5); // 4 corners + closing point
+        assert!(polygon.interiors().is_empty());
+    }
+
+    #[test]
+    fn test_path_to_geo_polygon_with_hole() {
+        // Exterior square with interior square hole
+        let path =
+            Path::from_svg("M 0,0 L 10,0 L 10,10 L 0,10 Z M 3,3 L 7,3 L 7,7 L 3,7 Z").unwrap();
+
+        let polygon = path.to_geo_polygon(0.1).expect("should convert");
+        assert_eq!(polygon.interiors().len(), 1); // One hole
+    }
+
+    #[test]
+    fn test_path_to_geo_polygon_open_path_error() {
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10").unwrap();
+
+        let result = path.to_geo_polygon(0.1);
+        assert!(matches!(result, Err(ToGeoPolygonError::ExteriorNotClosed)));
+    }
+
+    #[test]
+    fn test_path_to_geo_polygon_unclosed_hole_error() {
+        // Closed exterior, unclosed interior
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10 L 0,10 Z M 3,3 L 7,3 L 7,7").unwrap();
+
+        let result = path.to_geo_polygon(0.1);
+        assert!(matches!(
+            result,
+            Err(ToGeoPolygonError::InteriorNotClosed(0))
+        ));
+    }
+
+    #[test]
+    fn test_path_to_geo_polygon_empty_path() {
+        let path = Path::default();
+        let result = path.to_geo_polygon(0.1);
+        assert!(matches!(result, Err(ToGeoPolygonError::EmptyPath)));
+    }
+
+    #[test]
+    fn test_path_buffer_shrink_square() {
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10 L 0,10 Z").unwrap();
+        let result = path.buffer(-1.0, 0.1).expect("should buffer");
+
+        assert_eq!(result.len(), 1); // Still one path
+
+        // Shrunk square should have smaller bounds
+        let bounds = result[0].bounds();
+        // 10x10 shrunk by 1 on each side ≈ 8x8
+        assert!((bounds.width() - 8.0).abs() < 0.5);
+        assert!((bounds.height() - 8.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn test_path_buffer_expand_square() {
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10 L 0,10 Z").unwrap();
+        let result = path.buffer(1.0, 0.1).expect("should buffer");
+
+        assert!(!result.is_empty());
+
+        // Expanded square should have larger bounds
+        let bounds = result[0].bounds();
+        assert!(bounds.width() > 10.0);
+        assert!(bounds.height() > 10.0);
+    }
+
+    #[test]
+    fn test_path_buffer_completely_erodes() {
+        let path = Path::from_svg("M 0,0 L 2,0 L 2,2 L 0,2 Z").unwrap();
+        let result = path.buffer(-2.0, 0.1).expect("should buffer");
+
+        // Should be empty (fully eroded)
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_path_buffer_circle() {
+        let path = Path::from(kurbo::Circle::new((0.0, 0.0), 10.0));
+        let result = path.buffer(-1.0, 0.1).expect("should buffer");
+
+        assert_eq!(result.len(), 1);
+        // Shrunk circle should have smaller bounds
+        let bounds = result[0].bounds();
+        assert!(bounds.width() < 20.0); // Original diameter was 20
+    }
+
+    #[test]
+    fn test_path_buffer_open_path_error() {
+        let path = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let result = path.buffer(-1.0, 0.1);
+        assert!(result.is_err());
+    }
 
     #[test]
     fn test_path_crop() {

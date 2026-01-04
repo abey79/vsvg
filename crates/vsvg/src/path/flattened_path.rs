@@ -64,6 +64,97 @@ impl Polyline {
 
         self.0.extend(other.0.iter().skip(skip).copied());
     }
+
+    /// Convert to `geo::Polygon`.
+    ///
+    /// # Errors
+    /// - [`super::ToGeoPolygonError::ExteriorNotClosed`] if the polyline is not closed
+    /// - [`super::ToGeoPolygonError::ExteriorTooFewPoints`] if fewer than 3 distinct points
+    /// - [`super::ToGeoPolygonError::InvalidPolygon`] if geo validation fails (e.g., self-intersection)
+    pub fn to_geo_polygon(&self) -> Result<geo::Polygon<f64>, super::ToGeoPolygonError> {
+        use super::ToGeoPolygonError;
+        use geo::algorithm::validation::Validation;
+
+        let points = self.points();
+
+        // Need at least 3 points for a valid polygon (triangle)
+        if points.len() < 3 {
+            return Err(ToGeoPolygonError::ExteriorTooFewPoints);
+        }
+
+        // Must be closed
+        if !self.is_closed() {
+            return Err(ToGeoPolygonError::ExteriorNotClosed);
+        }
+
+        // Convert points to geo::Coord
+        let coords: Vec<geo::Coord<f64>> = points
+            .iter()
+            .map(|p| geo::Coord { x: p.x(), y: p.y() })
+            .collect();
+
+        // Create LineString (geo requires the ring to be explicitly closed)
+        let exterior = geo::LineString::new(coords);
+        let polygon = geo::Polygon::new(exterior, vec![]);
+
+        // Validate the resulting polygon
+        polygon.check_validation()?;
+
+        Ok(polygon)
+    }
+
+    /// Buffer (expand or shrink) this closed polyline.
+    ///
+    /// - Positive distance = expand outward
+    /// - Negative distance = shrink inward
+    ///
+    /// May return multiple paths if the shape splits, or empty if fully eroded.
+    ///
+    /// # Errors
+    /// Returns error if polyline cannot be converted to polygon (not closed, etc.)
+    pub fn buffer(
+        &self,
+        distance: impl Into<crate::Length>,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        use geo::Buffer;
+
+        let polygon = self.to_geo_polygon()?;
+        let distance_f64: f64 = distance.into().into();
+        let multi_polygon = polygon.buffer(distance_f64);
+
+        Ok(multi_polygon_to_flattened_paths(&multi_polygon))
+    }
+}
+
+/// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
+fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
+    mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
+}
+
+/// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
+fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
+    let mut result = Vec::new();
+
+    // Exterior ring
+    let exterior_points: Vec<Point> = polygon
+        .exterior()
+        .0
+        .iter()
+        .map(|c| Point::new(c.x, c.y))
+        .collect();
+    if exterior_points.len() >= 3 {
+        result.push(FlattenedPath::from(Polyline::new(exterior_points)));
+    }
+
+    // Interior rings (holes) as separate paths
+    for interior in polygon.interiors() {
+        let hole_points: Vec<Point> = interior.0.iter().map(|c| Point::new(c.x, c.y)).collect();
+        if hole_points.len() >= 3 {
+            result.push(FlattenedPath::from(Polyline::new(hole_points)));
+        }
+    }
+
+    result
 }
 
 impl<P: Into<Point>> FromIterator<P> for Polyline {
@@ -328,6 +419,45 @@ impl FlattenedPath {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ToGeoPolygonError;
+
+    #[test]
+    fn test_polyline_to_geo_polygon_triangle() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 0.0),
+            Point::new(0.5, 1.0),
+            Point::new(0.0, 0.0), // Closed
+        ]);
+
+        let polygon = polyline.to_geo_polygon().expect("should convert");
+        assert_eq!(polygon.exterior().0.len(), 4); // 3 points + closing point
+        assert!(polygon.interiors().is_empty());
+    }
+
+    #[test]
+    fn test_polyline_to_geo_polygon_not_closed() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 0.0),
+            Point::new(0.5, 1.0),
+            // Not closed
+        ]);
+
+        let result = polyline.to_geo_polygon();
+        assert!(matches!(result, Err(ToGeoPolygonError::ExteriorNotClosed)));
+    }
+
+    #[test]
+    fn test_polyline_to_geo_polygon_too_few_points() {
+        let polyline = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 0.0)]);
+
+        let result = polyline.to_geo_polygon();
+        assert!(matches!(
+            result,
+            Err(ToGeoPolygonError::ExteriorTooFewPoints)
+        ));
+    }
 
     #[test]
     fn test_flattened_path_bounds() {
