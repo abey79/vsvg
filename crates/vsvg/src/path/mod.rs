@@ -13,6 +13,52 @@ pub use metadata::PathMetadata;
 pub use path::Path;
 pub use point::Point;
 
+/// Error type for path-to-polygon conversion.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ToGeoPolygonError {
+    /// The exterior ring (first subpath) is not closed.
+    ExteriorNotClosed,
+
+    /// The exterior ring has fewer than 3 distinct points.
+    ExteriorTooFewPoints,
+
+    /// An interior ring (hole) is not closed. Contains the ring index (0-based).
+    InteriorNotClosed(usize),
+
+    /// An interior ring (hole) has fewer than 3 points. Contains the ring index (0-based).
+    InteriorTooFewPoints(usize),
+
+    /// The path is empty (no subpaths).
+    EmptyPath,
+
+    /// The resulting polygon failed geo validation.
+    /// Wraps geo's `InvalidPolygon` for details (self-intersection, etc.)
+    InvalidPolygon(geo::algorithm::validation::InvalidPolygon),
+}
+
+impl std::fmt::Display for ToGeoPolygonError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ExteriorNotClosed => write!(f, "exterior ring is not closed"),
+            Self::ExteriorTooFewPoints => write!(f, "exterior ring has fewer than 3 points"),
+            Self::InteriorNotClosed(i) => write!(f, "interior ring {i} is not closed"),
+            Self::InteriorTooFewPoints(i) => {
+                write!(f, "interior ring {i} has fewer than 3 points")
+            }
+            Self::EmptyPath => write!(f, "path is empty"),
+            Self::InvalidPolygon(e) => write!(f, "invalid polygon: {e:?}"),
+        }
+    }
+}
+
+impl std::error::Error for ToGeoPolygonError {}
+
+impl From<geo::algorithm::validation::InvalidPolygon> for ToGeoPolygonError {
+    fn from(e: geo::algorithm::validation::InvalidPolygon) -> Self {
+        Self::InvalidPolygon(e)
+    }
+}
+
 pub const DEFAULT_TOLERANCE: f64 = 0.05;
 
 pub trait PathDataTrait:
