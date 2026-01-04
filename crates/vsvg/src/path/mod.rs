@@ -62,7 +62,8 @@ pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt
     /// is skipped (for polylines) or `MoveTo` is converted to `LineTo` (for `BezPath`s) to create a
     /// continuous path.
     ///
-    /// Metadata is merged (currently first path's metadata wins).
+    /// Metadata is merged via [`PathMetadata::merge`] (compatible values are kept, conflicts
+    /// become `None`).
     fn join(&mut self, other: &Self, epsilon: f64);
 
     /// Split a compound path into its individual subpaths.

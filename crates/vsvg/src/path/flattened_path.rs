@@ -154,7 +154,7 @@ impl PathTrait<Polyline> for FlattenedPath {
     /// Append another path to this one.
     ///
     /// The underlying polylines are joined, and metadata is merged
-    /// (currently first path's metadata wins).
+    /// Metadata is merged via [`PathMetadata::merge`].
     fn join(&mut self, other: &FlattenedPath, epsilon: f64) {
         self.data.join(&other.data, epsilon);
         self.metadata.merge(&other.metadata);

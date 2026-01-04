@@ -107,7 +107,7 @@ impl PathTrait<BezPath> for Path {
     /// the initial `MoveTo` of `other` is converted to `LineTo` to create a continuous path.
     /// Otherwise, the `MoveTo` is kept, creating a compound path with multiple subpaths.
     ///
-    /// Metadata is merged (currently first path's metadata wins).
+    /// Metadata is merged via [`PathMetadata::merge`].
     fn join(&mut self, other: &Path, epsilon: f64) {
         let should_connect = match (self.data.end(), other.data.start()) {
             (Some(end), Some(start)) => end.distance(&start) < epsilon,
@@ -130,6 +130,9 @@ impl PathTrait<BezPath> for Path {
         self.metadata.merge(&other.metadata);
     }
 
+    /// Split a compound path into its individual paths.
+    ///
+    /// The returned paths always consist of a single, non-compound path.
     fn split(self) -> Vec<Self> {
         let elements = self.data.elements();
         if elements.is_empty() {
@@ -157,7 +160,7 @@ impl PathTrait<BezPath> for Path {
             }
         }
 
-        // Don't forget the last subpath
+        // Remember the last subpath
         if !current.elements().is_empty() {
             result.push(Path {
                 data: current,
