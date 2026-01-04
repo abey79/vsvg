@@ -382,6 +382,24 @@ impl kurbo::ParamCurveFit for PolylineCurveFit<'_> {
 }
 
 impl FlattenedPath {
+    /// Generate hatching (parallel fill lines) for this closed path.
+    ///
+    /// See [`crate::HatchParams`] for configuration options.
+    ///
+    /// # Errors
+    /// Returns error if the path is not closed or cannot form a valid polygon.
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let mut result = self.data.hatch(params)?;
+
+        for path in &mut result {
+            *path.metadata_mut() = self.metadata.clone();
+        }
+        Ok(result)
+    }
+
     /// Fit smooth Bézier curves to this polyline.
     ///
     /// This is the inverse of [`Path::flatten`]: it converts a sequence of points back into
