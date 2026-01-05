@@ -91,9 +91,8 @@ fn apply_stroke_attrs_to_group(
 }
 
 fn path_to_svg_path<P: PathTrait<D>, D: PathDataTrait>(path: &P) -> svg::node::element::Path {
-    let mut elem = svg::node::element::Path::new()
-        .set("fill", "none")
-        .set("d", path.data().to_svg_path_data());
+    // fill="none" is inherited from parent <g>, so we don't set it here
+    let mut elem = svg::node::element::Path::new().set("d", path.data().to_svg_path_data());
 
     // Only write path-level metadata if set (non-None)
     elem = apply_stroke_attrs_to_path(elem, path.metadata());
