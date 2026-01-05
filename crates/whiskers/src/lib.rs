@@ -110,7 +110,7 @@ pub use grid_helpers::{
     hex_grid::{HexGrid, cell::HexGridCell},
 };
 pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
-pub use sketch::Sketch;
+pub use sketch::{LayerHandle, Sketch};
 
 /// This is a convenience alias to the [`anyhow::Result`] type, which you can use for your sketch's
 /// main function.
