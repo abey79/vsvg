@@ -1,4 +1,7 @@
-use super::{FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline};
+use super::{
+    FlattenedPath, PathDataTrait, PathMetadata, PathTrait, Point, Polyline,
+    multi_polygon_to_flattened_paths,
+};
 use crate::Transforms;
 use crate::crop::{Crop, QuadCropResult, crop_quad_bezier};
 use crate::path::into_bezpath::{
@@ -429,39 +432,49 @@ impl Path {
 
         Ok(multi_polygon_to_flattened_paths(&multi_polygon))
     }
-}
 
-/// Convert `geo::MultiPolygon` to `Vec<FlattenedPath>`.
-fn multi_polygon_to_flattened_paths(mp: &geo::MultiPolygon<f64>) -> Vec<FlattenedPath> {
-    mp.0.iter().flat_map(polygon_to_flattened_paths).collect()
-}
+    /// Generate hatching (boundary + fill lines) for this closed path.
+    ///
+    /// Returns a `Vec<FlattenedPath>` containing:
+    /// - The inset boundary path(s) if `params.inset` is true
+    /// - The parallel fill lines clipped to the boundary
+    ///
+    /// Returns an empty vec if the shape is too small or fully eroded by inset.
+    ///
+    /// # Arguments
+    /// * `params` - Hatching parameters (spacing, angle, inset, `join_lines`)
+    /// * `tolerance` - Curve flattening tolerance
+    ///
+    /// # Errors
+    /// Returns error if the path cannot be converted to a polygon
+    /// (not closed, self-intersecting, etc.).
+    ///
+    /// # Example
+    /// ```
+    /// use vsvg::{Path, HatchParams, Unit};
+    /// use kurbo::Circle;
+    ///
+    /// let circle = Path::from(Circle::new((50.0, 50.0), 25.0));
+    /// let params = HatchParams::new(0.5 * Unit::Mm)
+    ///     .with_angle(std::f64::consts::FRAC_PI_4);
+    /// let paths = circle.hatch(&params, 0.1).unwrap();
+    /// // paths contains inset boundary + diagonal fill lines
+    /// ```
+    pub fn hatch(
+        &self,
+        params: &crate::HatchParams,
+        tolerance: f64,
+    ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
+        let polygon = self.to_geo_polygon(tolerance)?;
+        let mut result = crate::hatch_polygon(&polygon, params);
 
-/// Convert `geo::Polygon` to `Vec<FlattenedPath>`.
-///
-/// Returns one path for the exterior and one for each interior (hole).
-fn polygon_to_flattened_paths(polygon: &geo::Polygon<f64>) -> Vec<FlattenedPath> {
-    let mut result = Vec::new();
-
-    // Exterior ring
-    let exterior_points: Vec<Point> = polygon
-        .exterior()
-        .0
-        .iter()
-        .map(|c| Point::new(c.x, c.y))
-        .collect();
-    if exterior_points.len() >= 3 {
-        result.push(FlattenedPath::from(Polyline::new(exterior_points)));
-    }
-
-    // Interior rings (holes) as separate paths
-    for interior in polygon.interiors() {
-        let hole_points: Vec<Point> = interior.0.iter().map(|c| Point::new(c.x, c.y)).collect();
-        if hole_points.len() >= 3 {
-            result.push(FlattenedPath::from(Polyline::new(hole_points)));
+        // Copy metadata to all generated paths
+        for path in &mut result {
+            *path.metadata_mut() = self.metadata.clone();
         }
-    }
 
-    result
+        Ok(result)
+    }
 }
 
 impl<T: IntoBezPath> From<T> for Path {
