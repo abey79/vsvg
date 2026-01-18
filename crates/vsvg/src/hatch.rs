@@ -125,15 +125,17 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     }
 
     let mut result: Vec<FlattenedPath> = Vec::new();
-    let inset_distance = -params.spacing / 2.0;
+
+    // Inset distances:
+    // - Boundary stroke is drawn at `spacing/2` inset from original polygon
+    // - Hatch lines are clipped at `spacing` inset (spacing/2 from boundary) to avoid overlap
+    let boundary_inset = -params.spacing / 2.0;
+    let clip_inset = -params.spacing;
 
     // Step 3: Compute clipping polygon for scan lines
-    // - inset=false: clip against spacing/2 inset of original boundary
-    // - inset=true: clip against spacing/2 inset of the inset boundary (= spacing from original)
-    //   This prevents scan lines from overlapping with the boundary stroke.
     let work_polygon = if params.inset {
         // First inset: the boundary stroke position
-        let boundary_multi = polygon.buffer(inset_distance);
+        let boundary_multi = polygon.buffer(boundary_inset);
         if boundary_multi.0.is_empty() {
             return vec![]; // Fully eroded
         }
@@ -143,8 +145,8 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
             result.extend(polygon_to_flattened_paths(poly));
         }
 
-        // Second inset: clip region for scan lines (spacing/2 from boundary)
-        let clip_multi = polygon.buffer(2.0 * inset_distance);
+        // Second inset: clip region for scan lines
+        let clip_multi = polygon.buffer(clip_inset);
         if clip_multi.0.is_empty() {
             return result; // Shape too small for hatch lines, but boundary exists
         }
@@ -160,8 +162,9 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
         };
         largest
     } else {
-        // Single inset: spacing/2 from original boundary
-        let multi = polygon.buffer(inset_distance);
+        // No boundary: clip scan lines at spacing/2 from original (line edges touch boundary)
+        let no_boundary_clip = -params.spacing / 2.0;
+        let multi = polygon.buffer(no_boundary_clip);
         if multi.0.is_empty() {
             return vec![]; // Fully eroded
         }
@@ -189,17 +192,34 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     };
     let (x_min, x_max) = (bounds.min().x - 1.0, bounds.max().x + 1.0);
     let (y_min, y_max) = (bounds.min().y, bounds.max().y);
+    let height = y_max - y_min;
 
     // Step 6: Generate horizontal scan lines as MultiLineString
-    let mut lines: Vec<geo::LineString<f64>> = Vec::new();
-    let mut y = y_min + params.spacing / 2.0; // Start half-spacing from edge
-
-    while y < y_max {
-        let line =
-            geo::LineString::new(vec![geo::Coord { x: x_min, y }, geo::Coord { x: x_max, y }]);
-        lines.push(line);
-        y += params.spacing;
+    // Calculate number of lines needed to cover the height, then center them.
+    // This ensures complete coverage even when height isn't a multiple of spacing.
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "height and spacing are positive, result fits in usize"
+    )]
+    let n_lines = (height / params.spacing).ceil() as usize;
+    if n_lines == 0 {
+        return result;
     }
+
+    // Distance from first to last line
+    #[expect(clippy::cast_precision_loss, reason = "n_lines is small")]
+    let span = (n_lines - 1) as f64 * params.spacing;
+    // Center the lines: first offset is half the remaining margin
+    let first_offset = (height - span) / 2.0;
+
+    let lines: Vec<geo::LineString<f64>> = (0..n_lines)
+        .map(|i| {
+            #[expect(clippy::cast_precision_loss, reason = "i is small")]
+            let y = y_min + first_offset + i as f64 * params.spacing;
+            geo::LineString::new(vec![geo::Coord { x: x_min, y }, geo::Coord { x: x_max, y }])
+        })
+        .collect();
 
     if lines.is_empty() {
         return result; // Shape too small for any hatch lines
