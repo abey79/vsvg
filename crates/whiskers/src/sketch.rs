@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use kurbo::Affine;
 use vsvg::{
     DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathTolerance, LayerID, LayerTrait, Length,
-    PageSize, Path, PathDataTrait, PathMetadata, PathTrait, Transforms,
+    PageSize, Path, PathMetadata, Transforms,
 };
 
 /// Captured style state for push/pop operations.
@@ -466,30 +466,30 @@ impl vsvg::Draw for Sketch {
         }
 
         // Route to fill layer (hatching)
+        // Try to hatch - will fail gracefully for open paths
         if let Some(fill_layer_id) = self.fill_layer {
-            // Only hatch closed paths
-            if path.data().is_closed() {
-                // Get spacing from layer's pen_width
-                let spacing = self
-                    .document
-                    .try_get(fill_layer_id)
-                    .and_then(|layer| layer.metadata().default_path_metadata.stroke_width)
-                    .unwrap_or(1.0);
+            // Get spacing from layer's pen_width
+            let spacing = self
+                .document
+                .try_get(fill_layer_id)
+                .and_then(|layer| layer.metadata().default_path_metadata.stroke_width)
+                .unwrap_or(1.0);
 
-                // Get hatch angle from sketch state
-                let angle = self
-                    .hatch_angles
-                    .get(&fill_layer_id)
-                    .copied()
-                    .unwrap_or(0.0);
+            // Get hatch angle from sketch state
+            let angle = self
+                .hatch_angles
+                .get(&fill_layer_id)
+                .copied()
+                .unwrap_or(0.0);
 
-                let params = vsvg::HatchParams::new(spacing).with_angle(angle);
+            let params = vsvg::HatchParams::new(spacing)
+                .with_angle(angle)
+                .with_inset(true);
 
-                if let Ok(hatch_paths) = path.hatch(&params, self.tolerance) {
-                    for hatch_path in hatch_paths {
-                        self.document
-                            .push_path(fill_layer_id, Path::from(hatch_path));
-                    }
+            if let Ok(hatch_paths) = path.hatch(&params, self.tolerance) {
+                for hatch_path in hatch_paths {
+                    self.document
+                        .push_path(fill_layer_id, Path::from(hatch_path));
                 }
             }
         }
