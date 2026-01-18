@@ -136,7 +136,10 @@ impl Sketch {
             tolerance: DEFAULT_TOLERANCE,
             transform_stack: vec![Affine::default()],
             target_layer,
-            path_metadata: PathMetadata::default(),
+            // Initialize with explicit defaults for backwards compatibility
+            path_metadata: PathMetadata::default()
+                .with_color(vsvg::Color::BLACK)
+                .with_stroke_width(1.0),
         }
     }
 
@@ -169,13 +172,13 @@ impl Sketch {
 
     /// Sets the path color for subsequent draw calls.
     pub fn color(&mut self, color: impl Into<vsvg::Color>) -> &mut Self {
-        self.path_metadata.color = color.into();
+        self.path_metadata.color = Some(color.into());
         self
     }
 
     /// Sets the path stroke width for subsequent draw calls.
     pub fn stroke_width(&mut self, width: impl Into<f64>) -> &mut Self {
-        self.path_metadata.stroke_width = width.into();
+        self.path_metadata.stroke_width = Some(width.into());
         self
     }
 

@@ -130,7 +130,7 @@ use wgpu::{
     util::DeviceExt, vertex_attr_array,
 };
 
-use vsvg::{FlattenedPath, PathTrait};
+use vsvg::{FlattenedPath, PathMetadata, PathTrait};
 
 use crate::engine::EngineRenderObjects;
 use crate::painters::{Painter, Vertex};
@@ -170,6 +170,7 @@ impl LinePainterData {
     pub fn new<'b, I>(
         render_objects: &EngineRenderObjects,
         paths: I,
+        layer_defaults: &PathMetadata,
         display_options: &LineDisplayOptions,
     ) -> Self
     where
@@ -177,7 +178,7 @@ impl LinePainterData {
     {
         vsvg::trace_function!();
 
-        let (vertices, attribs) = Self::build_buffers(paths, display_options);
+        let (vertices, attribs) = Self::build_buffers(paths, layer_defaults, display_options);
 
         // prepare point buffer
         let points_buffer =
@@ -209,6 +210,7 @@ impl LinePainterData {
 
     fn build_buffers<'b, I>(
         paths: I,
+        layer_defaults: &PathMetadata,
         display_options: &LineDisplayOptions,
     ) -> (Vec<Vertex>, Vec<Attribute>)
     where
@@ -216,6 +218,7 @@ impl LinePainterData {
     {
         fn add_path(
             path: &FlattenedPath,
+            layer_defaults: &PathMetadata,
             vertices: &mut Vec<Vertex>,
             attribs: &mut Vec<Attribute>,
             display_options: &LineDisplayOptions,
@@ -234,7 +237,9 @@ impl LinePainterData {
                     vertices.push(points.last().expect("length checked").into());
                 }
 
-                let mut color = path.metadata().color.to_rgba();
+                // Resolve metadata against layer defaults (falls back to SVG defaults)
+                let resolved = path.metadata().resolve(layer_defaults);
+                let mut color = resolved.color.to_rgba();
                 #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                 if let Some(opacity) = display_options.override_opacity {
                     color = (color & 0x00_FF_FF_FF)
@@ -246,7 +251,7 @@ impl LinePainterData {
                     color,
                     width: display_options
                         .override_width
-                        .unwrap_or(path.metadata().stroke_width as f32),
+                        .unwrap_or(resolved.stroke_width as f32),
                 };
 
                 for _ in 0..path.data().points().len() - 1 {
@@ -265,12 +270,24 @@ impl LinePainterData {
         let mut attribs = Vec::with_capacity(min_size);
 
         if let Some(path) = iter.next() {
-            add_path(path, &mut vertices, &mut attribs, display_options);
+            add_path(
+                path,
+                layer_defaults,
+                &mut vertices,
+                &mut attribs,
+                display_options,
+            );
             for path in iter {
                 attribs.push(Attribute::empty());
                 attribs.push(Attribute::empty());
                 attribs.push(Attribute::empty());
-                add_path(path, &mut vertices, &mut attribs, display_options);
+                add_path(
+                    path,
+                    layer_defaults,
+                    &mut vertices,
+                    &mut attribs,
+                    display_options,
+                );
             }
         }
 

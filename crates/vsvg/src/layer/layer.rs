@@ -1,5 +1,5 @@
 use super::{FlattenedLayer, LayerMetadata, LayerTrait, Transforms};
-use crate::{Draw, IntoBezPathTolerance, Path, PathMetadata, Point};
+use crate::{Draw, IntoBezPathTolerance, Path, PathMetadata, PathTrait, Point};
 use rayon::prelude::*;
 
 #[derive(Default, Clone, Debug)]
@@ -123,6 +123,53 @@ impl Layer {
 
         self
     }
+
+    /// Promote common metadata from paths to layer defaults.
+    ///
+    /// If all paths share the same value for a metadata field, that value is
+    /// moved to `default_path_metadata` and cleared (`None`) from individual paths.
+    /// This reduces redundancy and produces smaller SVG files on export.
+    ///
+    /// This is typically called after loading an SVG, since parsers like usvg
+    /// resolve inherited styles onto each path individually.
+    pub fn promote_common_metadata_to_defaults(&mut self) {
+        if self.paths.is_empty() {
+            return;
+        }
+
+        let PathMetadata {
+            color: first_color,
+            stroke_width: first_width,
+        } = self.paths[0].metadata().clone();
+
+        // Check if all paths have the same color
+        if first_color.is_some() {
+            let all_same_color = self.paths.iter().all(|p| p.metadata().color == first_color);
+            if all_same_color {
+                self.metadata.default_path_metadata.color = first_color;
+                for path in &mut self.paths {
+                    path.metadata_mut().color = None;
+                }
+            }
+        }
+
+        // Check if all paths have the same stroke_width
+        if first_width.is_some() {
+            let all_same_width =
+                self.paths
+                    .iter()
+                    .all(|p| match (p.metadata().stroke_width, first_width) {
+                        (Some(a), Some(b)) => (a - b).abs() < f64::EPSILON,
+                        _ => false,
+                    });
+            if all_same_width {
+                self.metadata.default_path_metadata.stroke_width = first_width;
+                for path in &mut self.paths {
+                    path.metadata_mut().stroke_width = None;
+                }
+            }
+        }
+    }
 }
 
 impl From<FlattenedLayer> for Layer {
@@ -137,6 +184,7 @@ impl From<FlattenedLayer> for Layer {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{Color, PathTrait};
 
     #[test]
     fn test_layer_bounds() {
@@ -162,5 +210,112 @@ mod test {
             layer.paths[0],
             Path::from(kurbo::Rect::new(0.0, 0.0, 10.0, 10.0))
         );
+    }
+
+    #[test]
+    fn test_promote_common_color() {
+        let mut layer = Layer::new();
+
+        // Add paths with the same color
+        let mut path1 = Path::from(kurbo::Line::new((0.0, 0.0), (10., 10.)));
+        path1.metadata_mut().color = Some(Color::RED);
+        let mut path2 = Path::from(kurbo::Line::new((10.0, 10.0), (20., 20.)));
+        path2.metadata_mut().color = Some(Color::RED);
+        layer.push_path(path1);
+        layer.push_path(path2);
+
+        layer.promote_common_metadata_to_defaults();
+
+        // Color should be promoted to layer defaults
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::RED)
+        );
+        // And cleared from paths
+        assert_eq!(layer.paths[0].metadata().color, None);
+        assert_eq!(layer.paths[1].metadata().color, None);
+    }
+
+    #[test]
+    fn test_promote_common_stroke_width() {
+        let mut layer = Layer::new();
+
+        // Add paths with the same stroke_width
+        let mut path1 = Path::from(kurbo::Line::new((0.0, 0.0), (10., 10.)));
+        path1.metadata_mut().stroke_width = Some(2.5);
+        let mut path2 = Path::from(kurbo::Line::new((10.0, 10.0), (20., 20.)));
+        path2.metadata_mut().stroke_width = Some(2.5);
+        layer.push_path(path1);
+        layer.push_path(path2);
+
+        layer.promote_common_metadata_to_defaults();
+
+        // stroke_width should be promoted to layer defaults
+        assert_eq!(
+            layer.metadata().default_path_metadata.stroke_width,
+            Some(2.5)
+        );
+        // And cleared from paths
+        assert_eq!(layer.paths[0].metadata().stroke_width, None);
+        assert_eq!(layer.paths[1].metadata().stroke_width, None);
+    }
+
+    #[test]
+    fn test_no_promote_when_different_colors() {
+        let mut layer = Layer::new();
+
+        // Add paths with different colors
+        let mut path1 = Path::from(kurbo::Line::new((0.0, 0.0), (10., 10.)));
+        path1.metadata_mut().color = Some(Color::RED);
+        let mut path2 = Path::from(kurbo::Line::new((10.0, 10.0), (20., 20.)));
+        path2.metadata_mut().color = Some(Color::BLUE);
+        layer.push_path(path1);
+        layer.push_path(path2);
+
+        layer.promote_common_metadata_to_defaults();
+
+        // Color should NOT be promoted (different values)
+        assert_eq!(layer.metadata().default_path_metadata.color, None);
+        // Paths keep their colors
+        assert_eq!(layer.paths[0].metadata().color, Some(Color::RED));
+        assert_eq!(layer.paths[1].metadata().color, Some(Color::BLUE));
+    }
+
+    #[test]
+    fn test_promote_empty_layer() {
+        let mut layer = Layer::new();
+        // Should not panic on empty layer
+        layer.promote_common_metadata_to_defaults();
+        assert_eq!(layer.metadata().default_path_metadata.color, None);
+    }
+
+    #[test]
+    fn test_promote_partial_metadata() {
+        let mut layer = Layer::new();
+
+        // All paths have same color, but different stroke_widths
+        let mut path1 = Path::from(kurbo::Line::new((0.0, 0.0), (10., 10.)));
+        path1.metadata_mut().color = Some(Color::GREEN);
+        path1.metadata_mut().stroke_width = Some(1.0);
+        let mut path2 = Path::from(kurbo::Line::new((10.0, 10.0), (20., 20.)));
+        path2.metadata_mut().color = Some(Color::GREEN);
+        path2.metadata_mut().stroke_width = Some(2.0);
+        layer.push_path(path1);
+        layer.push_path(path2);
+
+        layer.promote_common_metadata_to_defaults();
+
+        // Color should be promoted (same)
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::GREEN)
+        );
+        assert_eq!(layer.paths[0].metadata().color, None);
+        assert_eq!(layer.paths[1].metadata().color, None);
+
+        // stroke_width should NOT be promoted (different)
+        assert_eq!(layer.metadata().default_path_metadata.stroke_width, None);
+        assert_eq!(layer.paths[0].metadata().stroke_width, Some(1.0));
+        assert_eq!(layer.paths[1].metadata().stroke_width, Some(2.0));
     }
 }

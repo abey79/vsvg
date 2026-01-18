@@ -3,7 +3,7 @@
 
 use svg::Node;
 
-use crate::{DocumentTrait, LayerTrait, PathDataTrait, PathTrait, Polyline};
+use crate::{DocumentTrait, LayerTrait, PathDataTrait, PathMetadata, PathTrait, Polyline};
 
 // private trait in public types, see https://github.com/rust-lang/rust/issues/34537
 
@@ -56,35 +56,66 @@ impl SvgPathWriter for Polyline {
     }
 }
 
-fn path_to_svg_path<P: PathTrait<D>, D: PathDataTrait>(path: &P) -> svg::node::element::Path {
-    let mut elem = svg::node::element::Path::new()
-        .set("fill", "none")
-        .set("stroke", path.metadata().color.to_rgb_string())
-        .set("stroke-width", path.metadata().stroke_width)
-        .set("d", path.data().to_svg_path_data());
-
-    if path.metadata().color.opacity() < 1.0 {
-        elem = elem.set(
-            "stroke-opacity",
-            format!("{:0.1}%", path.metadata().color.opacity() * 100.),
-        );
+/// Apply stroke attributes from metadata to a Path element, only if they are Some.
+fn apply_stroke_attrs_to_path(
+    mut elem: svg::node::element::Path,
+    metadata: &PathMetadata,
+) -> svg::node::element::Path {
+    if let Some(color) = metadata.color {
+        elem = elem.set("stroke", color.to_rgb_string());
+        if color.opacity() < 1.0 {
+            elem = elem.set("stroke-opacity", format!("{:0.1}%", color.opacity() * 100.));
+        }
     }
+    if let Some(width) = metadata.stroke_width {
+        elem = elem.set("stroke-width", width);
+    }
+    elem
+}
+
+/// Apply stroke attributes from metadata to a Group element, only if they are Some.
+fn apply_stroke_attrs_to_group(
+    mut elem: svg::node::element::Group,
+    metadata: &PathMetadata,
+) -> svg::node::element::Group {
+    if let Some(color) = metadata.color {
+        elem = elem.set("stroke", color.to_rgb_string());
+        if color.opacity() < 1.0 {
+            elem = elem.set("stroke-opacity", format!("{:0.1}%", color.opacity() * 100.));
+        }
+    }
+    if let Some(width) = metadata.stroke_width {
+        elem = elem.set("stroke-width", width);
+    }
+    elem
+}
+
+fn path_to_svg_path<P: PathTrait<D>, D: PathDataTrait>(path: &P) -> svg::node::element::Path {
+    // fill="none" is inherited from parent <g>, so we don't set it here
+    let mut elem = svg::node::element::Path::new().set("d", path.data().to_svg_path_data());
+
+    // Only write path-level metadata if set (non-None)
+    elem = apply_stroke_attrs_to_path(elem, path.metadata());
 
     elem
-
-    // TODO: do not add metadata if it is the default
-    // TODO: promote common attributes to group level
 }
 
 fn layer_to_svg_group<L: LayerTrait<P, D>, P: PathTrait<D>, D: PathDataTrait + SvgPathWriter>(
     layer: &L,
 ) -> svg::node::element::Group {
-    let mut group = svg::node::element::Group::new().set("inkscape:groupmode", "layer");
+    let mut group = svg::node::element::Group::new()
+        .set("inkscape:groupmode", "layer")
+        .set("fill", "none");
 
     if let Some(name) = &layer.metadata().name {
         group = group.set("inkscape:label", name.as_str());
     }
 
+    // Write layer defaults on <g> element
+    let layer_defaults = &layer.metadata().default_path_metadata;
+    group = apply_stroke_attrs_to_group(group, layer_defaults);
+
+    // Paths only get their own overrides (non-None values)
     for path in layer.paths() {
         group = group.add(path_to_svg_path(path));
     }
@@ -178,8 +209,7 @@ pub(crate) fn document_to_svg_doc<
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::Document;
+    use crate::{Color, Document, DocumentTrait, LayerTrait, PathTrait};
 
     #[test]
     fn test_svg_out() {
@@ -207,5 +237,97 @@ mod tests {
         let svg = doc.to_svg_string().unwrap();
         assert!(svg.contains("&lt;hello&gt;"));
         assert!(!svg.contains("<hello>"));
+    }
+
+    #[test]
+    fn test_svg_write_layer_defaults_on_group() {
+        let mut doc = Document::default();
+        let layer = doc.get_mut(1);
+
+        // Set layer defaults
+        layer.metadata_mut().default_path_metadata.color = Some(Color::RED);
+        layer.metadata_mut().default_path_metadata.stroke_width = Some(2.5);
+
+        // Add a path with no overrides
+        layer.push_path(vec![(0., 0.), (10., 10.)]);
+
+        let svg = doc.to_svg_string().unwrap();
+
+        // Layer defaults should be on <g>
+        assert!(
+            svg.contains(r##"stroke="#ff0000""##),
+            "group should have stroke color"
+        );
+        assert!(
+            svg.contains(r#"stroke-width="2.5""#),
+            "group should have stroke-width"
+        );
+
+        // Path should NOT have stroke attrs (they inherit from group)
+        // Extract just the path element
+        let path_start = svg.find("<path").unwrap();
+        let path_end = svg[path_start..].find("/>").unwrap() + path_start + 2;
+        let path_elem = &svg[path_start..path_end];
+        assert!(
+            !path_elem.contains("stroke="),
+            "path should not have stroke attr"
+        );
+        assert!(
+            !path_elem.contains("stroke-width"),
+            "path should not have stroke-width attr"
+        );
+    }
+
+    #[test]
+    fn test_svg_write_path_overrides() {
+        let mut doc = Document::default();
+        let layer = doc.get_mut(1);
+
+        // Set layer defaults
+        layer.metadata_mut().default_path_metadata.color = Some(Color::RED);
+        layer.metadata_mut().default_path_metadata.stroke_width = Some(2.0);
+
+        // Add a path that overrides color but not stroke_width
+        let mut path = crate::Path::from(vec![(0., 0.), (10., 10.)]);
+        path.metadata_mut().color = Some(Color::BLUE);
+        layer.push_path(path);
+
+        let svg = doc.to_svg_string().unwrap();
+
+        // Group should have layer defaults
+        assert!(
+            svg.contains(r##"stroke="#ff0000""##),
+            "group should have red stroke"
+        );
+
+        // Path should only have its override (blue color)
+        assert!(
+            svg.contains(r##"stroke="#0000ff""##),
+            "path should have blue stroke override"
+        );
+    }
+
+    #[test]
+    fn test_svg_write_none_metadata_not_written() {
+        let mut doc = Document::default();
+        let layer = doc.get_mut(1);
+
+        // Layer has no defaults set (all None)
+        // Path has no metadata set (all None)
+        layer.push_path(vec![(0., 0.), (10., 10.)]);
+
+        let svg = doc.to_svg_string().unwrap();
+
+        // Should not contain stroke or stroke-width on either group or path
+        // (they should inherit from SVG defaults)
+        let group_part = svg.split("<path").next().unwrap();
+        assert!(
+            !group_part.contains("stroke="),
+            "group should not have stroke when None"
+        );
+        assert!(
+            !group_part.contains("stroke-width"),
+            "group should not have stroke-width when None"
+        );
     }
 }
