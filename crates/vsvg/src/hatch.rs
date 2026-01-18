@@ -118,6 +118,7 @@ impl HatchParams {
 /// A `Vec<FlattenedPath>` containing boundary paths (if inset enabled) and hatch lines.
 /// Returns empty vec if shape is fully eroded.
 #[must_use]
+#[expect(clippy::too_many_lines)]
 pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<FlattenedPath> {
     // Early return for invalid spacing
     if params.spacing <= 0.0 {
@@ -231,11 +232,25 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     // invert=false means keep the parts INSIDE the polygon
     let clipped: geo::MultiLineString<f64> = rotated_poly.clip(&scan_lines, false);
 
-    // Step 8: Rotate clipped lines back to the original orientation
-    let result_lines: geo::MultiLineString<f64> =
-        clipped.rotate_around_point(params.angle.to_degrees(), centroid);
+    // Step 8: Sort clipped lines by Y coordinate (scan position).
+    // The clip operation may reorder lines, so we sort them to restore scan order.
+    // This is done BEFORE rotating back, when lines are still horizontal,
+    // so we can simply sort by Y coordinate of the midpoint.
+    let mut clipped_lines = clipped.0;
+    clipped_lines.sort_by(|a, b| {
+        let mid_y_a = a.0.first().map_or(0.0, |p| p.y);
+        let mid_y_b = b.0.first().map_or(0.0, |p| p.y);
+        mid_y_a
+            .partial_cmp(&mid_y_b)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
-    // Step 9: Convert clipped lines to FlattenedPath
+    // Step 9: Rotate clipped lines back to the original orientation
+    let sorted_clipped = geo::MultiLineString::new(clipped_lines);
+    let result_lines: geo::MultiLineString<f64> =
+        sorted_clipped.rotate_around_point(params.angle.to_degrees(), centroid);
+
+    // Step 10: Convert clipped lines to FlattenedPath
     let mut hatch_lines: Vec<FlattenedPath> = result_lines
         .0
         .into_iter()
@@ -246,7 +261,7 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
         })
         .collect();
 
-    // Step 10: Optional line joining for efficiency
+    // Step 11: Optional line joining for efficiency
     // Important: Only join hatch lines, not boundary paths (which are closed loops)
     if params.join_lines && hatch_lines.len() > 1 {
         let join_tolerance = params.spacing * 5.0;
