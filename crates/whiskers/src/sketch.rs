@@ -749,4 +749,47 @@ mod tests {
             "open paths should not be hatched"
         );
     }
+
+    /// Test that hatch lines are optimally joined into a single zigzag path.
+    /// Uses 14° angle which previously caused suboptimal joining.
+    #[test]
+    fn test_hatch_joining_14_degrees() {
+        let mut sketch = Sketch::new();
+
+        let pen_width: Length = 2.0 * Unit::Mm;
+        sketch
+            .layer(1)
+            .pen_width(pen_width)
+            .hatch_angle(14.0_f64.to_radians());
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        let size: Length = 50.0 * Unit::Mm;
+        let size_px: f64 = size.into();
+        sketch.rect(size_px / 2.0, size_px / 2.0, size_px, size_px);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        // Expect exactly 2 paths: 1 boundary + 1 joined hatch zigzag
+        assert_eq!(layer1.paths().len(), 2);
+    }
+
+    /// Test that 45° hatch lines are optimally joined into a single zigzag path.
+    #[test]
+    fn test_hatch_joining_45_degrees() {
+        let mut sketch = Sketch::new();
+
+        let pen_width: Length = 2.0 * Unit::Mm;
+        sketch
+            .layer(1)
+            .pen_width(pen_width)
+            .hatch_angle(45.0_f64.to_radians());
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        let size: Length = 50.0 * Unit::Mm;
+        let size_px: f64 = size.into();
+        sketch.rect(size_px / 2.0, size_px / 2.0, size_px, size_px);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        // Expect exactly 2 paths: 1 boundary + 1 joined hatch zigzag
+        assert_eq!(layer1.paths().len(), 2);
+    }
 }
