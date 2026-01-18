@@ -464,6 +464,63 @@ mod tests {
     }
 
     #[test]
+    fn test_polyline_buffer_shrink_square() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(10.0, 0.0),
+            Point::new(10.0, 10.0),
+            Point::new(0.0, 10.0),
+            Point::new(0.0, 0.0),
+        ]);
+        let result = polyline.buffer(-1.0).expect("should buffer");
+        assert_eq!(result.len(), 1);
+
+        // 10x10 shrunk by 1 on each side => ~8x8
+        let bounds = result[0].bounds();
+        assert!((bounds.width() - 8.0).abs() < 0.5);
+        assert!((bounds.height() - 8.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn test_polyline_buffer_expand_square() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(10.0, 0.0),
+            Point::new(10.0, 10.0),
+            Point::new(0.0, 10.0),
+            Point::new(0.0, 0.0),
+        ]);
+        let result = polyline.buffer(1.0).expect("should buffer");
+        assert!(!result.is_empty());
+        let bounds = result[0].bounds();
+        assert!(bounds.width() > 10.0);
+        assert!(bounds.height() > 10.0);
+    }
+
+    #[test]
+    fn test_polyline_buffer_completely_erodes() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(2.0, 0.0),
+            Point::new(2.0, 2.0),
+            Point::new(0.0, 2.0),
+            Point::new(0.0, 0.0),
+        ]);
+        let result = polyline.buffer(-2.0).expect("should buffer");
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_polyline_buffer_open_polyline_error() {
+        let polyline = Polyline::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(10.0, 0.0),
+            Point::new(10.0, 10.0),
+        ]);
+        assert!(polyline.buffer(-1.0).is_err());
+    }
+
+    #[test]
     fn test_flattened_path_bounds() {
         let points = vec![
             Point::new(0.0, 0.0),
