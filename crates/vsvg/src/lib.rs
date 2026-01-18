@@ -48,7 +48,6 @@ pub use unit::*;
 pub mod exports {
     #[cfg(feature = "egui")]
     pub use ::egui;
-    #[cfg(feature = "geo")]
     pub use ::geo;
     pub use ::kurbo;
     #[cfg(feature = "puffin")]

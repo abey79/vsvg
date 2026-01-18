@@ -36,8 +36,10 @@ usvg.workspace = true
 whiskers-widgets = { workspace = true, optional = true }
 egui = { workspace = true, optional = true }
 
+# geo is required for polygon operations
+geo.workspace = true
+
 # optional dependencies, mainly for Point interop.
-geo = { workspace = true, optional = true }
 glam = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -48,7 +50,7 @@ rand_chacha.workspace = true
 criterion.workspace = true
 
 [features]
-default = ["geo"]
+default = []
 puffin = ["dep:puffin", "profiling/profile-with-puffin"]
 whiskers-widgets = ["dep:whiskers-widgets", "dep:egui"]
 egui = ["dep:egui"]

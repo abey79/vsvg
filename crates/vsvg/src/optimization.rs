@@ -62,6 +62,7 @@ where
 ///
 /// Unlike [`sort_paths`] which reorders paths, `join_paths` concatenates
 /// them, reducing the total path count.
+#[allow(clippy::cognitive_complexity)]
 pub fn join_paths<P, D>(paths: &mut Vec<P>, tolerance: f64, flip: bool)
 where
     P: PathTrait<D>,
@@ -81,54 +82,94 @@ where
     };
     let mut current = first_item.path.clone();
 
-    // Greedy chain building
-    loop {
-        let Some(current_end) = current.end() else {
-            result.push(current);
-            match index.pop_first() {
-                Some(item) => current = item.path.clone(),
-                None => break,
-            }
-            continue;
-        };
+    // Greedy chain building with append and prepend phases (like vpype)
+    'outer: loop {
+        // Append phase: extend from current end
+        loop {
+            let Some(current_end) = current.end() else {
+                break;
+            };
 
-        // Find nearest path within tolerance
-        if let Some((item, reversed)) = index.pop_nearest(&current_end) {
-            let candidate_start = if reversed {
+            let Some((item, reversed)) = index.pop_nearest(&current_end) else {
+                break;
+            };
+
+            let candidate_pt = if reversed {
                 item.end.unwrap_or(current_end)
             } else {
                 item.start.unwrap_or(current_end)
             };
 
-            if current_end.distance(&candidate_start) <= tolerance {
-                // Join this path
+            if current_end.distance(&candidate_pt) <= tolerance {
                 let mut next = item.path.clone();
                 if reversed {
                     next.data_mut().flip();
                 }
-                // Use small EPSILON for duplicate detection, not tolerance
-                // (tolerance is for deciding IF paths should join, EPSILON is for skipping
-                // true duplicate points at the junction)
                 current.join(&next, SAME_POINT_EPSILON);
-                // Continue trying to extend
             } else {
-                // Too far, start new chain
-                result.push(current);
-                current = item.path.clone();
+                // Candidate was too far - save current, use candidate as new current
+                let mut next = item.path.clone();
                 if reversed {
-                    current.data_mut().flip();
+                    next.data_mut().flip();
                 }
+                result.push(current);
+                current = next;
+                continue 'outer; // Restart both phases with new current
             }
+        }
+
+        // Prepend phase: extend from current start
+        loop {
+            let Some(current_start) = current.start() else {
+                break;
+            };
+
+            let Some((item, reversed)) = index.pop_nearest(&current_start) else {
+                break;
+            };
+
+            // For prepend, we want candidate's END near our START
+            // - If reversed=true (matched END), check item.end (the connection point, no flip)
+            // - If reversed=false (matched START), check item.start (becomes END after flip)
+            let candidate_pt = if reversed {
+                item.end.unwrap_or(current_start)
+            } else {
+                item.start.unwrap_or(current_start)
+            };
+
+            if current_start.distance(&candidate_pt) <= tolerance {
+                let mut prev = item.path.clone();
+                // For prepend: flip if we matched START (reversed=false)
+                // so that original START becomes new END (connection point)
+                if !reversed {
+                    prev.data_mut().flip();
+                }
+                prev.join(&current, SAME_POINT_EPSILON);
+                current = prev;
+            } else {
+                // Too far - save current, use candidate as new current
+                // Keep the candidate in its natural orientation for now
+                let mut next = item.path.clone();
+                // Note: for the "else" branch, we're starting a new chain,
+                // so we orient the path based on what was matched
+                if reversed {
+                    next.data_mut().flip();
+                }
+                result.push(current);
+                current = next;
+                continue 'outer; // Restart both phases with new current
+            }
+        }
+
+        // Both phases done - save current chain
+        result.push(current);
+
+        // Start new chain if index not empty
+        if let Some(next_item) = index.pop_first() {
+            current = next_item.path.clone();
         } else {
-            // No more paths in index
-            result.push(current);
             break;
         }
-    }
-
-    // Add remaining paths from index (shouldn't happen normally)
-    while let Some(item) = index.pop_first() {
-        result.push(item.path.clone());
     }
 
     *paths = result;
@@ -383,10 +424,130 @@ mod tests {
     }
 
     #[test]
+    fn test_join_paths_prepend() {
+        // Test that prepending works: B's end connects to A's start
+        let mut layer = FlattenedLayer::default();
+
+        // A: (10, 0) -> (20, 0) - will be popped first (paths are reversed on insert)
+        // B: (0, 0) -> (10, 0) - B's end matches A's start
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(0.0, 0.0),
+            Point::new(10.0, 0.0),
+        ]));
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(10.0, 0.0),
+            Point::new(20.0, 0.0),
+        ]));
+
+        // With flip=true, should join via prepending
+        layer.join_paths(0.1, true);
+
+        assert_eq!(layer.paths.len(), 1, "Should join into single path");
+        let points = layer.paths[0].data.points();
+        assert_eq!(points.len(), 3, "Should have 3 points");
+
+        // Result should be: (0, 0) -> (10, 0) -> (20, 0)
+        // or: (20, 0) -> (10, 0) -> (0, 0) depending on order
+        // Either is valid as long as they're joined
+        let is_forward = points[0] == Point::new(0.0, 0.0);
+        let is_backward = points[0] == Point::new(20.0, 0.0);
+        assert!(
+            is_forward || is_backward,
+            "Path should start at (0,0) or (20,0)"
+        );
+    }
+
+    #[test]
+    fn test_join_paths_prepend_only() {
+        // Scenario where ONLY prepending can join, not appending
+        // A is processed first but nothing connects to A's end
+        // B's end connects to A's start
+        let mut layer = FlattenedLayer::default();
+
+        // A: (50, 0) -> (100, 0)
+        // B: (0, 0) -> (50, 0) - B's end matches A's start, nothing matches A's end
+        // Paths are reversed on insert, so A will be popped first
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(0.0, 0.0),
+            Point::new(50.0, 0.0),
+        ]));
+        layer.paths.push(FlattenedPath::from(vec![
+            Point::new(50.0, 0.0),
+            Point::new(100.0, 0.0),
+        ]));
+
+        layer.join_paths(0.1, true);
+
+        assert_eq!(
+            layer.paths.len(),
+            1,
+            "Should join into single path via prepend"
+        );
+        assert_eq!(layer.paths[0].data.points().len(), 3);
+    }
+
+    #[test]
     fn test_join_paths_empty_layer() {
         let mut layer = FlattenedLayer::default();
         layer.join_paths(1.0, true);
         assert_eq!(layer.paths.len(), 0);
+    }
+
+    #[test]
+    fn test_join_paths_angled_hatch_lines() {
+        // Simulates hatch lines at ~14° angle in a square
+        // At this angle, lines clip to the square boundary at different points
+        // This tests that the zigzag joining works correctly
+        let mut layer = FlattenedLayer::default();
+
+        // Approximate 14° hatch lines in a 100x100 square
+        // The lines are nearly horizontal but endpoints are staggered
+        // Spacing ~10 units vertically
+        let lines = vec![
+            // (start_x, start_y) -> (end_x, end_y)
+            ((0.0, 5.0), (80.0, 25.0)),
+            ((0.0, 15.0), (100.0, 40.0)),
+            ((0.0, 25.0), (100.0, 50.0)),
+            ((0.0, 35.0), (100.0, 60.0)),
+            ((0.0, 45.0), (100.0, 70.0)),
+            ((20.0, 55.0), (100.0, 75.0)),
+        ];
+
+        for ((x1, y1), (x2, y2)) in &lines {
+            layer.paths.push(FlattenedPath::from(vec![
+                Point::new(*x1, *y1),
+                Point::new(*x2, *y2),
+            ]));
+        }
+
+        let original_count = layer.paths.len();
+
+        // Tolerance of 50 should allow zigzag connections (endpoints are ~25-30 apart)
+        layer.join_paths(50.0, true);
+
+        // Should join into fewer paths (ideally 1 or 2)
+        assert!(
+            layer.paths.len() < original_count,
+            "Should join at least some paths: had {}, now {}",
+            original_count,
+            layer.paths.len()
+        );
+
+        // Print results for debugging
+        println!(
+            "Angled hatch: {} paths -> {} paths",
+            original_count,
+            layer.paths.len()
+        );
+        for (i, path) in layer.paths.iter().enumerate() {
+            println!(
+                "  Path {}: {} points, start={:?}, end={:?}",
+                i,
+                path.data.points().len(),
+                path.data.start(),
+                path.data.end()
+            );
+        }
     }
 
     #[test]
