@@ -1,7 +1,7 @@
 //! Demonstrates the fill/hatching feature with stroke and fill layer routing.
 //!
-//! Shows a grid of shapes (circle, square, non-convex polygon, polygon with holes)
-//! across three rows: no fill, horizontal fill, and 45° fill.
+//! Shows a grid of shapes (circle, square, non-convex L-shape, irregular polygon with
+//! round and polygon holes) across three rows: no fill, horizontal fill, and angled fill.
 
 use vsvg::LayerID;
 use whiskers::prelude::*;
@@ -13,9 +13,6 @@ struct FillDemoSketch {
 
     #[param(slider, min = 0.0, max = 180.0)]
     hatch_angle: f64,
-
-    /// Use 85% pen width for display to inspect hatching pattern
-    inspect_hatching: bool,
 }
 
 impl Default for FillDemoSketch {
@@ -23,7 +20,6 @@ impl Default for FillDemoSketch {
         Self {
             pen_width: 0.35 * Unit::Mm,
             hatch_angle: 45.0,
-            inspect_hatching: false,
         }
     }
 }
@@ -44,13 +40,7 @@ impl App for FillDemoSketch {
             .color(Color::DARK_RED)
             .name("Fill");
 
-        // Set stroke width for display
-        let display_width = if self.inspect_hatching {
-            self.pen_width * 0.85
-        } else {
-            self.pen_width
-        };
-        sketch.stroke_width(display_width);
+        sketch.stroke_width(self.pen_width);
 
         // Grid layout with margins
         let margin = 10.0;
@@ -104,34 +94,55 @@ impl App for FillDemoSketch {
                 true,
             );
 
-            // Column 3: Polygon with 2 holes
+            // Column 3: Irregular polygon with round hole and irregular polygon hole
             let cx = offset_x + cell_size * 3.5;
             let s = shape_size / 2.0;
 
-            // Create a geo polygon with holes
+            // Non-convex irregular exterior polygon (with indentations)
             let exterior = geo::LineString::from(vec![
-                (cx - s, cy - s),
-                (cx + s, cy - s),
-                (cx + s, cy + s),
-                (cx - s, cy + s),
-                (cx - s, cy - s),
+                (cx - s * 0.3, cy - s),
+                (cx + s * 0.5, cy - s * 0.8),
+                (cx + s * 0.2, cy - s * 0.3), // indentation
+                (cx + s, cy - s * 0.2),
+                (cx + s * 0.8, cy + s * 0.4),
+                (cx + s * 0.4, cy + s * 0.5), // indentation
+                (cx + s * 0.3, cy + s),
+                (cx - s * 0.5, cy + s * 0.7),
+                (cx - s, cy + s * 0.1),
+                (cx - s * 0.5, cy - s * 0.2), // indentation
+                (cx - s * 0.7, cy - s * 0.5),
+                (cx - s * 0.3, cy - s),
             ]);
 
-            let hole_size = s * 0.3;
-            let hole1 = geo::LineString::from(vec![
-                (cx - s * 0.5 - hole_size, cy - hole_size),
-                (cx - s * 0.5 + hole_size, cy - hole_size),
-                (cx - s * 0.5 + hole_size, cy + hole_size),
-                (cx - s * 0.5 - hole_size, cy + hole_size),
-                (cx - s * 0.5 - hole_size, cy - hole_size),
-            ]);
+            // Hole 1: Circle (center-upper area)
+            let hole1_cx = cx;
+            let hole1_cy = cy - s * 0.45;
+            let hole1_r = s * 0.2;
+            let n_points = 32;
+            let circle_points: Vec<(f64, f64)> = (0..=n_points)
+                .map(|i| {
+                    let theta =
+                        2.0 * std::f64::consts::PI * (i % n_points) as f64 / n_points as f64;
+                    (
+                        hole1_cx + hole1_r * theta.cos(),
+                        hole1_cy + hole1_r * theta.sin(),
+                    )
+                })
+                .collect();
+            let hole1 = geo::LineString::from(circle_points);
 
+            // Hole 2: Irregular non-convex polygon (center-lower area)
+            let hole2_cx = cx - s * 0.1;
+            let hole2_cy = cy + s * 0.35;
             let hole2 = geo::LineString::from(vec![
-                (cx + s * 0.5 - hole_size, cy - hole_size),
-                (cx + s * 0.5 + hole_size, cy - hole_size),
-                (cx + s * 0.5 + hole_size, cy + hole_size),
-                (cx + s * 0.5 - hole_size, cy + hole_size),
-                (cx + s * 0.5 - hole_size, cy - hole_size),
+                (hole2_cx, hole2_cy - s * 0.2),
+                (hole2_cx + s * 0.15, hole2_cy - s * 0.1),
+                (hole2_cx + s * 0.1, hole2_cy), // indentation for non-convex
+                (hole2_cx + s * 0.2, hole2_cy + s * 0.15),
+                (hole2_cx, hole2_cy + s * 0.2),
+                (hole2_cx - s * 0.15, hole2_cy + s * 0.1),
+                (hole2_cx - s * 0.1, hole2_cy - s * 0.1),
+                (hole2_cx, hole2_cy - s * 0.2),
             ]);
 
             let polygon_with_holes = geo::Polygon::new(exterior, vec![hole1, hole2]);
