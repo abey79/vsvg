@@ -1,8 +1,18 @@
+use std::collections::HashMap;
+
 use kurbo::Affine;
 use vsvg::{
-    DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathTolerance, LayerID, PageSize, Path,
-    PathMetadata, Transforms,
+    DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathTolerance, LayerID, LayerTrait, Length,
+    PageSize, Path, PathMetadata, Transforms,
 };
+
+/// Captured style state for push/pop operations.
+#[derive(Clone)]
+struct StyleState {
+    stroke_layer: Option<LayerID>,
+    fill_layer: Option<LayerID>,
+    path_metadata: PathMetadata,
+}
 
 /// Primary interface for drawing.
 ///
@@ -110,9 +120,16 @@ use vsvg::{
 pub struct Sketch {
     document: Document,
     transform_stack: Vec<Affine>,
-    target_layer: LayerID,
+    style_stack: Vec<StyleState>,
     tolerance: f64,
     path_metadata: PathMetadata,
+
+    // Layer routing
+    stroke_layer: Option<LayerID>,
+    fill_layer: Option<LayerID>,
+
+    // Per-layer hatch angles (in radians)
+    hatch_angles: HashMap<LayerID, f64>,
 }
 
 impl Default for Sketch {
@@ -128,26 +145,22 @@ impl Sketch {
 
     /// Create a [`Sketch`] from an existing [`Document`].
     pub fn with_document(mut document: Document) -> Self {
-        let target_layer = 0;
-        document.ensure_exists(target_layer);
+        document.ensure_exists(0);
 
         Self {
             document,
             tolerance: DEFAULT_TOLERANCE,
             transform_stack: vec![Affine::default()],
-            target_layer,
-            // Initialize with explicit defaults for backwards compatibility
+            style_stack: vec![],
+            // Default: black, 1px stroke width
             path_metadata: PathMetadata::default()
                 .with_color(vsvg::Color::BLACK)
                 .with_stroke_width(1.0),
+            // Default: stroke to layer 0, no fill
+            stroke_layer: Some(0),
+            fill_layer: None,
+            hatch_angles: HashMap::new(),
         }
-    }
-
-    /// Sets the target layer for subsequent draw calls.
-    pub fn set_layer(&mut self, layer_id: LayerID) -> &mut Self {
-        self.document.ensure_exists(layer_id);
-        self.target_layer = layer_id;
-        self
     }
 
     /// Returns the sketch's width in pixels.
@@ -181,6 +194,154 @@ impl Sketch {
         self.path_metadata.stroke_width = Some(width.into());
         self
     }
+
+    // =========================================================================
+    // Layer configuration
+    // =========================================================================
+
+    /// Configure a layer's properties.
+    ///
+    /// Returns a [`LayerHandle`] for setting `pen_width`, `color`, `name`, and `hatch_angle`.
+    ///
+    /// # Example
+    /// ```
+    /// # use whiskers::prelude::*;
+    /// # let mut sketch = Sketch::new();
+    /// sketch
+    ///     .layer(0).pen_width(0.5 * Unit::Mm).color(Color::BLACK)
+    ///     .layer(1).pen_width(0.3 * Unit::Mm).hatch_angle(std::f64::consts::FRAC_PI_4);
+    /// ```
+    pub fn layer(&mut self, id: LayerID) -> LayerHandle<'_> {
+        self.document.ensure_exists(id);
+        LayerHandle {
+            sketch: self,
+            layer_id: id,
+        }
+    }
+
+    // =========================================================================
+    // Stroke/fill layer routing
+    // =========================================================================
+
+    /// Set which layer receives stroke (outline). `None` disables stroke.
+    ///
+    /// Default: `Some(0)`.
+    ///
+    /// # Example
+    /// ```
+    /// # use whiskers::prelude::*;
+    /// # let mut sketch = Sketch::new();
+    /// sketch
+    ///     .stroke_layer(Some(0))   // strokes go to layer 0
+    ///     .fill_layer(Some(1))     // fills go to layer 1
+    ///     .circle(50.0, 50.0, 25.0);
+    /// ```
+    pub fn stroke_layer(&mut self, layer: Option<LayerID>) -> &mut Self {
+        if let Some(id) = layer {
+            self.document.ensure_exists(id);
+        }
+        self.stroke_layer = layer;
+        self
+    }
+
+    /// Set which layer receives fill (hatching). `None` disables fill.
+    ///
+    /// Default: `None`.
+    ///
+    /// When enabled, closed shapes will be hatched using the fill layer's
+    /// `pen_width` as spacing and `hatch_angle` for orientation.
+    pub fn fill_layer(&mut self, layer: Option<LayerID>) -> &mut Self {
+        if let Some(id) = layer {
+            self.document.ensure_exists(id);
+        }
+        self.fill_layer = layer;
+        self
+    }
+
+    /// Shorthand: enable stroke on given layer, disable fill.
+    pub fn stroke_only(&mut self, layer: LayerID) -> &mut Self {
+        self.stroke_layer(Some(layer)).fill_layer(None)
+    }
+
+    /// Shorthand: enable fill on given layer, disable stroke.
+    pub fn fill_only(&mut self, layer: LayerID) -> &mut Self {
+        self.stroke_layer(None).fill_layer(Some(layer))
+    }
+
+    /// Shorthand: enable both stroke and fill on same layer.
+    pub fn stroke_and_fill(&mut self, layer: LayerID) -> &mut Self {
+        self.stroke_layer(Some(layer)).fill_layer(Some(layer))
+    }
+
+    // =========================================================================
+    // Style stack
+    // =========================================================================
+
+    /// Push the current style state onto the stack.
+    ///
+    /// Saves: `stroke_layer`, `fill_layer`, `color`, `stroke_width`.
+    /// Restore with [`pop_style`](Self::pop_style).
+    ///
+    /// # Example
+    /// ```
+    /// # use whiskers::prelude::*;
+    /// # let mut sketch = Sketch::new();
+    /// sketch
+    ///     .stroke_layer(Some(0))
+    ///     .push_style()
+    ///     .stroke_layer(None)  // temporarily disable stroke
+    ///     .fill_layer(Some(1))
+    ///     .circle(50.0, 50.0, 25.0)  // fill only
+    ///     .pop_style()
+    ///     .circle(100.0, 50.0, 25.0); // stroke restored
+    /// ```
+    pub fn push_style(&mut self) -> &mut Self {
+        self.style_stack.push(StyleState {
+            stroke_layer: self.stroke_layer,
+            fill_layer: self.fill_layer,
+            path_metadata: self.path_metadata.clone(),
+        });
+        self
+    }
+
+    /// Pop the style state from the stack, restoring previous settings.
+    pub fn pop_style(&mut self) -> &mut Self {
+        if let Some(state) = self.style_stack.pop() {
+            self.stroke_layer = state.stroke_layer;
+            self.fill_layer = state.fill_layer;
+            self.path_metadata = state.path_metadata;
+        } else {
+            log::warn!("pop_style: stack underflow");
+        }
+        self
+    }
+
+    /// Push style, apply closure, pop style.
+    ///
+    /// Convenience method for temporary style changes.
+    ///
+    /// # Example
+    /// ```
+    /// # use whiskers::prelude::*;
+    /// # let mut sketch = Sketch::new();
+    /// sketch
+    ///     .circle(50.0, 50.0, 25.0)  // default style
+    ///     .with_style(|s| {
+    ///         s.color(Color::RED)
+    ///          .circle(100.0, 50.0, 25.0);  // red
+    ///     })
+    ///     .circle(150.0, 50.0, 25.0); // back to default
+    /// ```
+    pub fn with_style(&mut self, f: impl FnOnce(&mut Self)) -> &mut Self {
+        self.push_style();
+        f(self);
+        self.pop_style();
+        self
+    }
+
+    // =========================================================================
+    // Transform stack
+    // =========================================================================
 
     /// Push the current matrix onto the stack.
     ///
@@ -299,7 +460,336 @@ impl vsvg::Draw for Sketch {
             log::warn!("add_path: no matrix on the stack");
         }
 
-        self.document.push_path(self.target_layer, path);
+        // Route to stroke layer
+        if let Some(layer_id) = self.stroke_layer {
+            self.document.push_path(layer_id, path.clone());
+        }
+
+        // Route to fill layer (hatching)
+        // Try to hatch - will fail gracefully for open paths
+        if let Some(fill_layer_id) = self.fill_layer {
+            // Get spacing from layer's pen_width
+            let spacing = self
+                .document
+                .try_get(fill_layer_id)
+                .and_then(|layer| layer.metadata().default_path_metadata.stroke_width)
+                .unwrap_or(1.0);
+
+            // Get hatch angle from sketch state
+            let angle = self
+                .hatch_angles
+                .get(&fill_layer_id)
+                .copied()
+                .unwrap_or(0.0);
+
+            let params = vsvg::HatchParams::new(spacing)
+                .with_angle(angle)
+                .with_inset(true);
+
+            if let Ok(hatch_paths) = path.hatch(&params, self.tolerance) {
+                for hatch_path in hatch_paths {
+                    self.document
+                        .push_path(fill_layer_id, Path::from(hatch_path));
+                }
+            }
+        }
+
         self
+    }
+}
+
+// =============================================================================
+// LayerHandle
+// =============================================================================
+
+/// Handle for configuring layer properties.
+///
+/// Obtained via [`Sketch::layer`]. Changes are applied immediately to the
+/// layer's metadata.
+///
+/// # Example
+/// ```
+/// # use whiskers::prelude::*;
+/// # let mut sketch = Sketch::new();
+/// sketch
+///     .layer(0).pen_width(0.5 * Unit::Mm).color(Color::BLACK)
+///     .layer(1).pen_width(0.3 * Unit::Mm).hatch_angle(std::f64::consts::FRAC_PI_4);
+/// ```
+pub struct LayerHandle<'a> {
+    sketch: &'a mut Sketch,
+    layer_id: LayerID,
+}
+
+#[expect(
+    clippy::return_self_not_must_use,
+    reason = "methods have side effects; return is for chaining"
+)]
+impl<'a> LayerHandle<'a> {
+    /// Set the pen width for this layer.
+    ///
+    /// This sets the layer's `default_path_metadata.stroke_width`.
+    /// When this layer is used as a fill layer, `pen_width` controls hatch spacing.
+    ///
+    /// Accepts any type that converts to [`Length`], including:
+    /// - `f64` (raw pixels)
+    /// - `0.5 * Unit::Mm` (millimeters)
+    /// - `Length::new(0.3, Unit::Cm)` (centimeters)
+    pub fn pen_width(self, width: impl Into<Length>) -> Self {
+        let width_px: f64 = width.into().into();
+        self.sketch
+            .document
+            .get_mut(self.layer_id)
+            .metadata_mut()
+            .default_path_metadata
+            .stroke_width = Some(width_px);
+        self
+    }
+
+    /// Set the default color for this layer.
+    pub fn color(self, color: impl Into<vsvg::Color>) -> Self {
+        self.sketch
+            .document
+            .get_mut(self.layer_id)
+            .metadata_mut()
+            .default_path_metadata
+            .color = Some(color.into());
+        self
+    }
+
+    /// Set the layer name.
+    pub fn name(self, name: impl Into<String>) -> Self {
+        self.sketch
+            .document
+            .get_mut(self.layer_id)
+            .metadata_mut()
+            .name = Some(name.into());
+        self
+    }
+
+    /// Set the hatch angle for this layer (in radians).
+    ///
+    /// When this layer is used as a fill layer, closed shapes will be
+    /// hatched at this angle. Default: 0 (horizontal).
+    pub fn hatch_angle(self, angle: f64) -> Self {
+        self.sketch.hatch_angles.insert(self.layer_id, angle);
+        self
+    }
+
+    /// Start configuring a different layer (chaining).
+    pub fn layer(self, id: LayerID) -> LayerHandle<'a> {
+        self.sketch.layer(id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vsvg::{Color, Draw, Unit};
+
+    #[test]
+    fn test_layer_pen_width() {
+        let mut sketch = Sketch::new();
+        sketch.layer(0).pen_width(0.5 * Unit::Mm);
+
+        let layer = sketch.document().try_get(0).unwrap();
+        let expected = 0.5 * 96.0 / 25.4; // mm to pixels
+        let actual = layer.metadata().default_path_metadata.stroke_width.unwrap();
+        assert!((actual - expected).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_layer_color() {
+        let mut sketch = Sketch::new();
+        sketch.layer(0).color(Color::RED);
+
+        let layer = sketch.document().try_get(0).unwrap();
+        assert_eq!(
+            layer.metadata().default_path_metadata.color,
+            Some(Color::RED)
+        );
+    }
+
+    #[test]
+    fn test_layer_hatch_angle() {
+        let mut sketch = Sketch::new();
+        sketch.layer(1).hatch_angle(std::f64::consts::FRAC_PI_4);
+
+        let angle = sketch.hatch_angles.get(&1).copied().unwrap();
+        assert!((angle - std::f64::consts::FRAC_PI_4).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_layer_chaining() {
+        let mut sketch = Sketch::new();
+        sketch
+            .layer(0)
+            .pen_width(0.5 * Unit::Mm)
+            .color(Color::BLACK)
+            .layer(1)
+            .pen_width(0.3 * Unit::Mm)
+            .color(Color::RED);
+
+        let layer0 = sketch.document().try_get(0).unwrap();
+        let layer1 = sketch.document().try_get(1).unwrap();
+
+        assert_eq!(
+            layer0.metadata().default_path_metadata.color,
+            Some(Color::BLACK)
+        );
+        assert_eq!(
+            layer1.metadata().default_path_metadata.color,
+            Some(Color::RED)
+        );
+    }
+
+    #[test]
+    fn test_stroke_layer_routing() {
+        let mut sketch = Sketch::new();
+        sketch.stroke_layer(Some(0)).fill_layer(None);
+        sketch.circle(50.0, 50.0, 25.0);
+
+        assert_eq!(sketch.document().try_get(0).unwrap().paths().len(), 1);
+    }
+
+    #[test]
+    fn test_stroke_only() {
+        let mut sketch = Sketch::new();
+        sketch.stroke_only(1);
+
+        assert_eq!(sketch.stroke_layer, Some(1));
+        assert_eq!(sketch.fill_layer, None);
+    }
+
+    #[test]
+    fn test_fill_only() {
+        let mut sketch = Sketch::new();
+        sketch.fill_only(1);
+
+        assert_eq!(sketch.stroke_layer, None);
+        assert_eq!(sketch.fill_layer, Some(1));
+    }
+
+    #[test]
+    fn test_stroke_and_fill() {
+        let mut sketch = Sketch::new();
+        sketch.stroke_and_fill(2);
+
+        assert_eq!(sketch.stroke_layer, Some(2));
+        assert_eq!(sketch.fill_layer, Some(2));
+    }
+
+    #[test]
+    fn test_push_pop_style() {
+        let mut sketch = Sketch::new();
+        sketch.stroke_layer(Some(0)).color(Color::BLACK);
+
+        sketch.push_style();
+        sketch.stroke_layer(Some(1)).color(Color::RED);
+
+        assert_eq!(sketch.stroke_layer, Some(1));
+
+        sketch.pop_style();
+
+        assert_eq!(sketch.stroke_layer, Some(0));
+        assert_eq!(sketch.path_metadata.color, Some(Color::BLACK));
+    }
+
+    #[test]
+    fn test_with_style() {
+        let mut sketch = Sketch::new();
+        sketch.stroke_layer(Some(0));
+
+        sketch.with_style(|s| {
+            s.stroke_layer(Some(1));
+            assert_eq!(s.stroke_layer, Some(1));
+        });
+
+        assert_eq!(sketch.stroke_layer, Some(0));
+    }
+
+    #[test]
+    fn test_style_stack_underflow_warning() {
+        let mut sketch = Sketch::new();
+        // Should warn but not panic
+        sketch.pop_style();
+    }
+
+    #[test]
+    fn test_fill_layer_hatching() {
+        let mut sketch = Sketch::new();
+        sketch
+            .layer(1)
+            .pen_width(5.0) // Large spacing for visible hatching
+            .hatch_angle(0.0);
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        // Draw a closed rectangle - should produce hatch lines
+        sketch.rect(0.0, 0.0, 50.0, 50.0);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        // Should have at least one hatch line
+        assert!(
+            !layer1.paths().is_empty(),
+            "fill layer should have hatch paths"
+        );
+    }
+
+    #[test]
+    fn test_open_path_not_hatched() {
+        let mut sketch = Sketch::new();
+        sketch.layer(1).pen_width(2.0);
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        // Draw an open line - should NOT produce hatch lines
+        sketch.line(0.0, 0.0, 100.0, 100.0);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        assert!(
+            layer1.paths().is_empty(),
+            "open paths should not be hatched"
+        );
+    }
+
+    /// Test that hatch lines are optimally joined into a single zigzag path.
+    /// Uses 14° angle which previously caused suboptimal joining.
+    #[test]
+    fn test_hatch_joining_14_degrees() {
+        let mut sketch = Sketch::new();
+
+        let pen_width: Length = 2.0 * Unit::Mm;
+        sketch
+            .layer(1)
+            .pen_width(pen_width)
+            .hatch_angle(14.0_f64.to_radians());
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        let size: Length = 50.0 * Unit::Mm;
+        let size_px: f64 = size.into();
+        sketch.rect(size_px / 2.0, size_px / 2.0, size_px, size_px);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        // Expect exactly 2 paths: 1 boundary + 1 joined hatch zigzag
+        assert_eq!(layer1.paths().len(), 2);
+    }
+
+    /// Test that 45° hatch lines are optimally joined into a single zigzag path.
+    #[test]
+    fn test_hatch_joining_45_degrees() {
+        let mut sketch = Sketch::new();
+
+        let pen_width: Length = 2.0 * Unit::Mm;
+        sketch
+            .layer(1)
+            .pen_width(pen_width)
+            .hatch_angle(45.0_f64.to_radians());
+        sketch.stroke_layer(None).fill_layer(Some(1));
+
+        let size: Length = 50.0 * Unit::Mm;
+        let size_px: f64 = size.into();
+        sketch.rect(size_px / 2.0, size_px / 2.0, size_px, size_px);
+
+        let layer1 = sketch.document().try_get(1).unwrap();
+        // Expect exactly 2 paths: 1 boundary + 1 joined hatch zigzag
+        assert_eq!(layer1.paths().len(), 2);
     }
 }
