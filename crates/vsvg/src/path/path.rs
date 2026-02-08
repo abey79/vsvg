@@ -470,20 +470,22 @@ impl Path {
     /// let circle = Path::from(Circle::new((50.0, 50.0), 25.0));
     /// let params = HatchParams::new(0.5 * Unit::Mm)
     ///     .with_angle(std::f64::consts::FRAC_PI_4);
-    /// let paths = circle.hatch(&params, 0.1).unwrap();
+    /// let paths = circle.hatch(&params, 0.1, true).unwrap();
     /// // paths contains inset boundary + diagonal fill lines
     /// ```
     pub fn hatch(
         &self,
         params: &crate::HatchParams,
         tolerance: f64,
+        inherit_metadata: bool,
     ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
         let polygon = self.to_geo_polygon(tolerance)?;
         let mut result = crate::hatch_polygon(&polygon, params);
 
-        // Copy metadata to all generated paths
-        for path in &mut result {
-            *path.metadata_mut() = self.metadata.clone();
+        if inherit_metadata {
+            for path in &mut result {
+                *path.metadata_mut() = self.metadata.clone();
+            }
         }
 
         Ok(result)

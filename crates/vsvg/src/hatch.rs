@@ -11,7 +11,7 @@
 //! let circle = Path::from(Circle::new((50.0, 50.0), 25.0));
 //! let params = HatchParams::new(0.5 * Unit::Mm)
 //!     .with_angle(std::f64::consts::FRAC_PI_4);
-//! let paths = circle.hatch(&params, 0.1).unwrap();
+//! let paths = circle.hatch(&params, 0.1, true).unwrap();
 //! // paths contains inset boundary + diagonal fill lines
 //! ```
 

@@ -18,13 +18,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a circle and hatch it with horizontal lines
     let circle = Path::from(kurbo::Circle::new((100.0, 100.0), 50.0));
     let params = HatchParams::new(1.0 * Unit::Mm);
-    let hatched = circle.hatch(&params, 0.1)?;
+    let hatched = circle.hatch(&params, 0.1, true)?;
     add_outline_and_hatches(circle, hatched);
 
     // Create a square with diagonal hatching (45 degrees)
     let square = Path::from_svg("M 200,50 L 300,50 L 300,150 L 200,150 Z")?;
     let params = HatchParams::new(1.0 * Unit::Mm).with_angle(std::f64::consts::FRAC_PI_4);
-    let hatched = square.hatch(&params, 0.1)?;
+    let hatched = square.hatch(&params, 0.1, true)?;
     add_outline_and_hatches(square, hatched);
 
     // Create a shape with a hole using kurbo shapes
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let params = HatchParams::new(1.0 * Unit::Mm)
         .with_angle(std::f64::consts::FRAC_PI_6) // 30 degrees
         .with_inset(true); // Include boundary stroke (default)
-    let hatched = donut.hatch(&params, 0.1)?;
+    let hatched = donut.hatch(&params, 0.1, true)?;
 
     add_outline_and_hatches(donut, hatched);
 
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let params = HatchParams::new(1.0 * Unit::Mm)
         .with_inset(false) // No boundary inset
         .with_join_lines(false); // Keep lines separate (no joining)
-    let hatched = triangle.hatch(&params, 0.1)?;
+    let hatched = triangle.hatch(&params, 0.1, true)?;
 
     add_outline_and_hatches(triangle, hatched);
 

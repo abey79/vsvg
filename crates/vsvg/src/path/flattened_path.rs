@@ -401,11 +401,14 @@ impl FlattenedPath {
     pub fn hatch(
         &self,
         params: &crate::HatchParams,
+        inherit_metadata: bool,
     ) -> Result<Vec<FlattenedPath>, super::ToGeoPolygonError> {
         let mut result = self.data.hatch(params)?;
 
-        for path in &mut result {
-            *path.metadata_mut() = self.metadata.clone();
+        if inherit_metadata {
+            for path in &mut result {
+                *path.metadata_mut() = self.metadata.clone();
+            }
         }
         Ok(result)
     }
