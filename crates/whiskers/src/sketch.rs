@@ -486,7 +486,7 @@ impl vsvg::Draw for Sketch {
                 .with_angle(angle)
                 .with_inset(true);
 
-            if let Ok(hatch_paths) = path.hatch(&params, self.tolerance) {
+            if let Ok(hatch_paths) = path.hatch(&params, self.tolerance, false) {
                 for hatch_path in hatch_paths {
                     self.document
                         .push_path(fill_layer_id, Path::from(hatch_path));
