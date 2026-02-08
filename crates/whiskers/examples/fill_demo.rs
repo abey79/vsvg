@@ -42,27 +42,27 @@ impl App for FillDemoSketch {
 
         sketch.stroke_width(self.pen_width);
 
+        // Row configurations: (fill_layer, hatch_angle)
+        let row_configs: [(Option<LayerID>, f64); 3] = [
+            (None, 0.0),
+            (Some(1), 0.0),
+            (Some(1), self.hatch_angle.to_radians()),
+        ];
+
         // Grid layout with margins
         let margin = 10.0;
         let cols = 4;
-        let rows = 3;
+        let rows = row_configs.len();
         let grid_w = sketch.width() - 2.0 * margin;
         let grid_h = sketch.height() - 2.0 * margin;
         let cell_size = (grid_w / cols as f64).min(grid_h / rows as f64);
-        let shape_size = cell_size * 0.7;
+        let shape_size = cell_size * 0.8;
 
         // Center the grid
         let grid_total_w = cell_size * cols as f64;
         let grid_total_h = cell_size * rows as f64;
         let offset_x = margin + (grid_w - grid_total_w) / 2.0;
         let offset_y = margin + (grid_h - grid_total_h) / 2.0;
-
-        // Row configurations: (fill_layer, hatch_angle)
-        let row_configs: [(Option<LayerID>, f64); 3] = [
-            (None, 0.0),                              // No fill
-            (Some(1), 0.0),                           // Horizontal fill
-            (Some(1), self.hatch_angle.to_radians()), // Angled fill
-        ];
 
         for (row, (fill_layer, hatch_angle)) in row_configs.iter().enumerate() {
             let cy = offset_y + cell_size * (row as f64 + 0.5);
@@ -156,5 +156,11 @@ impl App for FillDemoSketch {
 fn main() -> Result {
     FillDemoSketch::runner()
         .with_page_size_options(PageSize::A5H)
+        .with_info_options(InfoOptions::default().description(
+            "Hatch filling demo.\n\n\
+            Hint: use the pen width and/or opacity override to better visualize the hatching \
+            pattern.",
+        ))
+        .with_display_options(DisplayOptions::default())
         .run()
 }
