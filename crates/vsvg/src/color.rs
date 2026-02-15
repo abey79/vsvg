@@ -123,7 +123,8 @@ impl From<Color> for [f32; 4] {
     }
 }
 
-pub const COLORS: [Color; 19] = [
+//TODO: use a crate for that.
+pub const COLORS: [Color; 21] = [
     Color::BLACK,
     Color::DARK_GRAY,
     Color::GRAY,
@@ -132,6 +133,7 @@ pub const COLORS: [Color; 19] = [
     Color::BROWN,
     Color::DARK_RED,
     Color::RED,
+    Color::MAGENTA,
     Color::LIGHT_RED,
     Color::YELLOW,
     Color::LIGHT_YELLOW,
@@ -142,5 +144,6 @@ pub const COLORS: [Color; 19] = [
     Color::DARK_BLUE,
     Color::BLUE,
     Color::LIGHT_BLUE,
+    Color::CYAN,
     Color::GOLD,
 ];
