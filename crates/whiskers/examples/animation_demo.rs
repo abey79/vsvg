@@ -34,19 +34,22 @@ impl App for AnimationDemoSketch {
 
         let angle = TAU * ctx.normalized_time();
 
-        sketch.color(Color::KHAKI).stroke_width(1.0).polyline(
-            (0..self.ngon_sides).map(|i| {
-                let angle = angle + i as f64 * TAU / self.ngon_sides as f64;
-                Point::new(
-                    angle.cos() * self.ngon_radius,
-                    angle.sin() * self.ngon_radius,
-                )
-            }),
-            true,
-        );
+        sketch
+            .override_color(Color::KHAKI)
+            .override_stroke_width(1.0)
+            .polyline(
+                (0..self.ngon_sides).map(|i| {
+                    let angle = angle + i as f64 * TAU / self.ngon_sides as f64;
+                    Point::new(
+                        angle.cos() * self.ngon_radius,
+                        angle.sin() * self.ngon_radius,
+                    )
+                }),
+                true,
+            );
 
         // inner bars
-        sketch.color(Color::BLACK);
+        sketch.override_color(Color::BLACK);
         for i in 0..8 {
             let angle = -angle + i as f64 * TAU / 8.0;
             let x = angle.cos() * self.bars_radius;
@@ -59,8 +62,8 @@ impl App for AnimationDemoSketch {
             let x = angle.cos() * self.circles_radius;
             let y = angle.sin() * self.circles_radius;
             sketch
-                .color(Color::DARK_GREEN)
-                .stroke_width(1.0)
+                .override_color(Color::DARK_GREEN)
+                .override_stroke_width(1.0)
                 .circle(x, y, 5.0);
         }
 
@@ -68,14 +71,14 @@ impl App for AnimationDemoSketch {
             let radius = self.outer_radius - i as f64 * 15.0;
             let angle = angle * if i % 2 == 0 { 1.0 } else { -1.0 };
             sketch
-                .color(Color::DARK_RED)
-                .stroke_width(3.0)
+                .override_color(Color::DARK_RED)
+                .override_stroke_width(3.0)
                 .circle(0.0, 0.0, radius);
             let x = angle.cos() * radius;
             let y = angle.sin() * radius;
             sketch
-                .color(Color::DARK_BLUE)
-                .stroke_width(1.0)
+                .override_color(Color::DARK_BLUE)
+                .override_stroke_width(1.0)
                 .circle(x, y, 5.0);
         }
 

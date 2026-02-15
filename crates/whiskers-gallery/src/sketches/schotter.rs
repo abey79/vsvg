@@ -42,7 +42,7 @@ impl Default for SchotterSketch {
 
 impl App for SchotterSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.stroke_width(self.stroke_width);
+        sketch.layer(0).pen_width(self.stroke_width);
 
         for (i, j) in iproduct!(0..self.col_count, 0..self.row_count) {
             sketch.push_matrix_and(|sketch| {

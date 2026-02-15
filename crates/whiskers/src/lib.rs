@@ -30,9 +30,7 @@
 //! impl App for MySketch {
 //!     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
 //!         // draw code goes here
-//!         sketch
-//!             .color(Color::DARK_RED)
-//!             .rect(200., 200., 150., 50.);
+//!         sketch.rect(200., 200., 150., 50.);
 //!
 //!         Ok(())
 //!     }

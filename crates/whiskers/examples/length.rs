@@ -20,7 +20,10 @@ impl Default for LengthSketch {
 
 impl App for LengthSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(Color::DARK_RED).stroke_width(self.pen_width);
+        sketch
+            .layer(0)
+            .color(Color::DARK_RED)
+            .pen_width(self.pen_width);
 
         let u = self.unit;
 

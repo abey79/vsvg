@@ -23,7 +23,7 @@ impl Default for CatmullRomSketch {
 
 impl App for CatmullRomSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(Color::DARK_RED);
+        sketch.layer(0).color(Color::DARK_RED);
 
         let points = (0..self.num_points)
             .map(|_| ctx.rng_point(50.0..sketch.width() - 50.0, 50.0..sketch.height() - 50.0))

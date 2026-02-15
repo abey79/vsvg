@@ -49,10 +49,11 @@ impl App for AsteroidSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         vsvg::trace_function!();
 
+        sketch.layer(0).color(Color::DARK_BLUE);
+
         sketch
             .translate(sketch.width() / 2., sketch.height() / 2.)
-            .scale(4.0 * Unit::Cm)
-            .color(Color::DARK_BLUE);
+            .scale(4.0 * Unit::Cm);
 
         let poly = generate_polygon(
             1.0,

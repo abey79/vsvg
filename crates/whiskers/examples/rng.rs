@@ -21,7 +21,7 @@ impl Default for RngSketch {
 
 impl App for RngSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.stroke_width(3.0);
+        sketch.override_stroke_width(3.0);
 
         let w = sketch.width();
         let h = sketch.height();
@@ -51,8 +51,8 @@ impl App for RngSketch {
         let some_point = ctx.rng_point(x_range, y_range);
 
         sketch
-            .color(*chosen_color)
-            .stroke_width(stroke_width)
+            .override_color(*chosen_color)
+            .override_stroke_width(stroke_width)
             .translate(w / 2.0, h / 2.0)
             .rect(0., 0., self.width, self.height);
 

@@ -34,8 +34,9 @@ impl Default for ParticleSketch {
 impl App for ParticleSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
         sketch
-            .stroke_width(self.pen_width)
-            .color(Color::new(0, 0, 20, 220));
+            .layer(0)
+            .color(Color::new(0, 0, 20, 220))
+            .pen_width(self.pen_width);
 
         let mut circles = vec![];
 

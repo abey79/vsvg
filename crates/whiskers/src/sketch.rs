@@ -11,7 +11,7 @@ use vsvg::{
 struct StyleState {
     stroke_layer: Option<LayerID>,
     fill_layer: Option<LayerID>,
-    path_metadata: PathMetadata,
+    path_metadata_override: PathMetadata,
 }
 
 /// Primary interface for drawing.
@@ -122,7 +122,7 @@ pub struct Sketch {
     transform_stack: Vec<Affine>,
     style_stack: Vec<StyleState>,
     tolerance: f64,
-    path_metadata: PathMetadata,
+    path_metadata_override: PathMetadata,
 
     // Layer routing
     stroke_layer: Option<LayerID>,
@@ -152,10 +152,10 @@ impl Sketch {
             tolerance: DEFAULT_TOLERANCE,
             transform_stack: vec![Affine::default()],
             style_stack: vec![],
-            // Default: black, 1px stroke width
-            path_metadata: PathMetadata::default()
-                .with_color(vsvg::Color::BLACK)
-                .with_stroke_width(1.0),
+
+            // Default: inherit from layer (None/None)
+            path_metadata_override: PathMetadata::default(),
+
             // Default: stroke to layer 0, no fill
             stroke_layer: Some(0),
             fill_layer: None,
@@ -183,15 +183,27 @@ impl Sketch {
         self
     }
 
-    /// Sets the path color for subsequent draw calls.
-    pub fn color(&mut self, color: impl Into<vsvg::Color>) -> &mut Self {
-        self.path_metadata.color = Some(color.into());
+    /// Sets a per-path color override for subsequent draw calls.
+    ///
+    /// This overrides the layer's default color. To set the layer default instead,
+    /// use [`Self::layer`]`.color(...)`. To reset the override, use [`Self::clear_overrides`].
+    pub fn override_color(&mut self, color: impl Into<vsvg::Color>) -> &mut Self {
+        self.path_metadata_override.color = Some(color.into());
         self
     }
 
-    /// Sets the path stroke width for subsequent draw calls.
-    pub fn stroke_width(&mut self, width: impl Into<f64>) -> &mut Self {
-        self.path_metadata.stroke_width = Some(width.into());
+    /// Sets a per-path stroke width override for subsequent draw calls.
+    ///
+    /// This overrides the layer's default pen width. To set the layer default instead,
+    /// use [`Self::layer`]`.pen_width(...)`. To reset the override, use [`Self::clear_overrides`].
+    pub fn override_stroke_width(&mut self, width: impl Into<f64>) -> &mut Self {
+        self.path_metadata_override.stroke_width = Some(width.into());
+        self
+    }
+
+    /// Clears all per-path overrides, so subsequent paths inherit from the layer.
+    pub fn clear_overrides(&mut self) -> &mut Self {
+        self.path_metadata_override = PathMetadata::default();
         self
     }
 
@@ -279,7 +291,7 @@ impl Sketch {
 
     /// Push the current style state onto the stack.
     ///
-    /// Saves: `stroke_layer`, `fill_layer`, `color`, `stroke_width`.
+    /// Saves: `stroke_layer`, `fill_layer`, and per-path overrides.
     /// Restore with [`pop_style`](Self::pop_style).
     ///
     /// # Example
@@ -299,8 +311,9 @@ impl Sketch {
         self.style_stack.push(StyleState {
             stroke_layer: self.stroke_layer,
             fill_layer: self.fill_layer,
-            path_metadata: self.path_metadata.clone(),
+            path_metadata_override: self.path_metadata_override.clone(),
         });
+
         self
     }
 
@@ -309,10 +322,11 @@ impl Sketch {
         if let Some(state) = self.style_stack.pop() {
             self.stroke_layer = state.stroke_layer;
             self.fill_layer = state.fill_layer;
-            self.path_metadata = state.path_metadata;
+            self.path_metadata_override = state.path_metadata_override;
         } else {
             log::warn!("pop_style: stack underflow");
         }
+
         self
     }
 
@@ -327,7 +341,7 @@ impl Sketch {
     /// sketch
     ///     .circle(50.0, 50.0, 25.0)  // default style
     ///     .with_style(|s| {
-    ///         s.color(Color::RED)
+    ///         s.override_color(Color::RED)
     ///          .circle(100.0, 50.0, 25.0);  // red
     ///     })
     ///     .circle(150.0, 50.0, 25.0); // back to default
@@ -451,8 +465,11 @@ impl Transforms for Sketch {
 
 impl vsvg::Draw for Sketch {
     fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
-        let mut path: Path =
-            Path::from_tolerance_metadata(path, self.tolerance, self.path_metadata.clone());
+        let mut path: Path = Path::from_tolerance_metadata(
+            path,
+            self.tolerance,
+            self.path_metadata_override.clone(),
+        );
 
         if let Some(&matrix) = self.transform_stack.last() {
             path.apply_transform(matrix);
@@ -681,17 +698,17 @@ mod tests {
     #[test]
     fn test_push_pop_style() {
         let mut sketch = Sketch::new();
-        sketch.stroke_layer(Some(0)).color(Color::BLACK);
+        sketch.stroke_layer(Some(0)).override_color(Color::BLACK);
 
         sketch.push_style();
-        sketch.stroke_layer(Some(1)).color(Color::RED);
+        sketch.stroke_layer(Some(1)).override_color(Color::RED);
 
         assert_eq!(sketch.stroke_layer, Some(1));
 
         sketch.pop_style();
 
         assert_eq!(sketch.stroke_layer, Some(0));
-        assert_eq!(sketch.path_metadata.color, Some(Color::BLACK));
+        assert_eq!(sketch.path_metadata_override.color, Some(Color::BLACK));
     }
 
     #[test]

@@ -53,7 +53,10 @@ impl Default for NoiseSketch {
 
 impl App for NoiseSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(self.color).stroke_width(self.stroke_width);
+        sketch
+            .layer(0)
+            .color(self.color)
+            .pen_width(self.stroke_width);
 
         let dx = (sketch.width() - 2.0 * self.margin) / (self.points_per_line - 1) as f64;
         let dy = (sketch.height() - 2.0 * self.margin) / (self.line_count - 1) as f64;

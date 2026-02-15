@@ -40,8 +40,6 @@ impl App for FillDemoSketch {
             .color(Color::DARK_RED)
             .name("Fill");
 
-        sketch.stroke_width(self.pen_width);
-
         // Row configurations: (fill_layer, hatch_angle)
         let row_configs: [(Option<LayerID>, f64); 3] = [
             (None, 0.0),
