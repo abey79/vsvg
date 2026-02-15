@@ -17,6 +17,7 @@ impl Color {
     pub const BROWN: Self = Self::rgb(165, 42, 42);
     pub const DARK_RED: Self = Self::rgb(0x8B, 0, 0);
     pub const RED: Self = Self::rgb(255, 0, 0);
+    pub const MAGENTA: Self = Self::rgb(255, 0, 255);
     pub const LIGHT_RED: Self = Self::rgb(255, 128, 128);
     pub const YELLOW: Self = Self::rgb(255, 255, 0);
     pub const LIGHT_YELLOW: Self = Self::rgb(255, 255, 0xE0);
@@ -27,6 +28,7 @@ impl Color {
     pub const DARK_BLUE: Self = Self::rgb(0, 0, 0x8B);
     pub const BLUE: Self = Self::rgb(0, 0, 255);
     pub const LIGHT_BLUE: Self = Self::rgb(0xAD, 0xD8, 0xE6);
+    pub const CYAN: Self = Self::rgb(0, 255, 255);
     pub const GOLD: Self = Self::rgb(255, 215, 0);
 
     #[must_use]
@@ -121,7 +123,8 @@ impl From<Color> for [f32; 4] {
     }
 }
 
-pub const COLORS: [Color; 19] = [
+//TODO: use a crate for that.
+pub const COLORS: [Color; 21] = [
     Color::BLACK,
     Color::DARK_GRAY,
     Color::GRAY,
@@ -130,6 +133,7 @@ pub const COLORS: [Color; 19] = [
     Color::BROWN,
     Color::DARK_RED,
     Color::RED,
+    Color::MAGENTA,
     Color::LIGHT_RED,
     Color::YELLOW,
     Color::LIGHT_YELLOW,
@@ -140,5 +144,6 @@ pub const COLORS: [Color; 19] = [
     Color::DARK_BLUE,
     Color::BLUE,
     Color::LIGHT_BLUE,
+    Color::CYAN,
     Color::GOLD,
 ];
