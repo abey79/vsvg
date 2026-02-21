@@ -2,7 +2,8 @@
 
 use kurbo::Affine;
 use vsvg::{
-    DEFAULT_TOLERANCE, Draw, IntoBezPathsTolerance, Layer, Path, PathMetadata, PathTrait, Transforms,
+    DEFAULT_TOLERANCE, Draw, IntoBezPathsTolerance, Layer, Path, PathMetadata, PathTrait,
+    Transforms,
 };
 
 #[derive(Debug)]

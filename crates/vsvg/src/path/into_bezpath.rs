@@ -244,13 +244,9 @@ pub mod geo_impl {
                 geo::Geometry::LineString(ls) => vec![ls.into_bezpath_with_tolerance(tolerance)],
                 geo::Geometry::Polygon(p) => vec![p.into_bezpath_with_tolerance(tolerance)],
                 geo::Geometry::MultiPoint(mp) => mp.into_bezpaths_with_tolerance(tolerance),
-                geo::Geometry::MultiLineString(mls) => {
-                    mls.into_bezpaths_with_tolerance(tolerance)
-                }
+                geo::Geometry::MultiLineString(mls) => mls.into_bezpaths_with_tolerance(tolerance),
                 geo::Geometry::MultiPolygon(mp) => mp.into_bezpaths_with_tolerance(tolerance),
-                geo::Geometry::GeometryCollection(gc) => {
-                    gc.into_bezpaths_with_tolerance(tolerance)
-                }
+                geo::Geometry::GeometryCollection(gc) => gc.into_bezpaths_with_tolerance(tolerance),
                 geo::Geometry::Rect(r) => vec![r.into_bezpath_with_tolerance(tolerance)],
                 geo::Geometry::Triangle(t) => vec![t.into_bezpath_with_tolerance(tolerance)],
             }
