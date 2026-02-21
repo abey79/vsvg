@@ -23,6 +23,33 @@ impl<T: IntoBezPathTolerance> IntoBezPath for T {
     }
 }
 
+/// Converts into one or more `BezPath`s, preserving structural boundaries.
+///
+/// Single-geometry types get this via blanket impl from [`IntoBezPathTolerance`].
+/// Multi-geometry types (e.g. `geo::MultiPolygon`) override to return one `BezPath`
+/// per constituent, which is critical for correct hatching.
+pub trait IntoBezPathsTolerance {
+    fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath>;
+}
+
+/// Convenience trait; blanket-implemented via [`IntoBezPathsTolerance`] with default tolerance.
+pub trait IntoBezPaths {
+    fn into_bezpaths(self) -> Vec<BezPath>;
+}
+
+impl<T: IntoBezPathsTolerance> IntoBezPaths for T {
+    fn into_bezpaths(self) -> Vec<BezPath> {
+        <Self as IntoBezPathsTolerance>::into_bezpaths_with_tolerance(self, DEFAULT_TOLERANCE)
+    }
+}
+
+/// Blanket: any single-BezPath type automatically yields a one-element Vec.
+impl<T: IntoBezPathTolerance> IntoBezPathsTolerance for T {
+    fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+        vec![self.into_bezpath_with_tolerance(tolerance)]
+    }
+}
+
 impl IntoBezPathTolerance for &[(f64, f64)] {
     fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
         points_to_bezpath(self.iter().copied())
@@ -197,6 +224,31 @@ pub mod geo_impl {
         }
     }
 
+    // Macro to implement `IntoBezPathTolerance` for non-reference types (e.g., `geo::Polygon`),
+    // by taking a reference and delegating to the implementations given above.
+    macro_rules! geo_object_into_bezpath {
+        ( $ t: ty) => {
+            impl IntoBezPathTolerance for $t {
+                #[inline]
+                fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
+                    (&self).into_bezpath_with_tolerance(tolerance)
+                }
+            }
+        };
+    }
+
+    geo_object_into_bezpath!(geo::Point<f64>);
+    geo_object_into_bezpath!(geo::Line<f64>);
+    geo_object_into_bezpath!(geo::LineString<f64>);
+    geo_object_into_bezpath!(geo::Polygon<f64>);
+    geo_object_into_bezpath!(geo::MultiPoint<f64>);
+    geo_object_into_bezpath!(geo::MultiLineString<f64>);
+    geo_object_into_bezpath!(geo::MultiPolygon<f64>);
+    geo_object_into_bezpath!(geo::Rect<f64>);
+    geo_object_into_bezpath!(geo::Triangle<f64>);
+    geo_object_into_bezpath!(geo::Geometry<f64>);
+    geo_object_into_bezpath!(geo::GeometryCollection<f64>);
+
     impl IntoBezPathTolerance for &geo::Geometry<f64> {
         fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
             match self {
@@ -225,31 +277,6 @@ pub mod geo_impl {
             }
         }
     }
-
-    // Macro to implement `IntoBezPathTolerance` for non-reference types (e.g., `geo::Polygon`),
-    // by taking a reference and delegating to the implementations given above.
-    macro_rules! geo_object_into_bezpath {
-        ( $ t: ty) => {
-            impl IntoBezPathTolerance for $t {
-                #[inline]
-                fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
-                    (&self).into_bezpath_with_tolerance(tolerance)
-                }
-            }
-        };
-    }
-
-    geo_object_into_bezpath!(geo::Point<f64>);
-    geo_object_into_bezpath!(geo::Line<f64>);
-    geo_object_into_bezpath!(geo::LineString<f64>);
-    geo_object_into_bezpath!(geo::Polygon<f64>);
-    geo_object_into_bezpath!(geo::MultiPoint<f64>);
-    geo_object_into_bezpath!(geo::MultiLineString<f64>);
-    geo_object_into_bezpath!(geo::MultiPolygon<f64>);
-    geo_object_into_bezpath!(geo::Rect<f64>);
-    geo_object_into_bezpath!(geo::Triangle<f64>);
-    geo_object_into_bezpath!(geo::Geometry<f64>);
-    geo_object_into_bezpath!(geo::GeometryCollection<f64>);
 
     pub(super) fn linestring_to_path_el(
         ls: &geo::LineString<f64>,
