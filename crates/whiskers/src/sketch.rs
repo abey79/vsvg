@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use kurbo::Affine;
 use vsvg::{
-    DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathTolerance, LayerID, LayerTrait, Length,
+    DEFAULT_TOLERANCE, Document, DocumentTrait, IntoBezPathsTolerance, LayerID, LayerTrait, Length,
     PageSize, Path, PathMetadata, Transforms,
 };
 
@@ -32,7 +32,7 @@ struct StyleState {
 ///
 /// In addition to the basic, primitive draw calls, the [`vsvg::Draw`] trait also provides a more
 /// flexible [`vsvg::Draw::add_path`] function that accepts any type which implements the
-/// [`IntoBezPathTolerance`] trait. This currently includes many types from the [`::kurbo`] and
+/// [`IntoBezPathsTolerance`] trait. This currently includes many types from the [`::kurbo`] and
 /// [`vsvg::exports::geo`] crates.
 ///
 /// # Transformations
@@ -464,49 +464,48 @@ impl Transforms for Sketch {
 }
 
 impl vsvg::Draw for Sketch {
-    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
-        let mut path: Path = Path::from_tolerance_metadata(
-            path,
-            self.tolerance,
-            self.path_metadata_override.clone(),
-        );
+    fn add_path<T: IntoBezPathsTolerance>(&mut self, path: T) -> &mut Self {
+        for bezpath in path.into_bezpaths_with_tolerance(self.tolerance) {
+            let mut path: Path = Path::from_tolerance_metadata(
+                bezpath,
+                self.tolerance,
+                self.path_metadata_override.clone(),
+            );
 
-        if let Some(&matrix) = self.transform_stack.last() {
-            path.apply_transform(matrix);
-        } else {
-            log::warn!("add_path: no matrix on the stack");
-        }
+            if let Some(&matrix) = self.transform_stack.last() {
+                path.apply_transform(matrix);
+            } else {
+                log::warn!("add_path: no matrix on the stack");
+            }
 
-        // Route to stroke layer
-        if let Some(layer_id) = self.stroke_layer {
-            self.document.push_path(layer_id, path.clone());
-        }
+            // Route to stroke layer
+            if let Some(layer_id) = self.stroke_layer {
+                self.document.push_path(layer_id, path.clone());
+            }
 
-        // Route to fill layer (hatching)
-        // Try to hatch - will fail gracefully for open paths
-        if let Some(fill_layer_id) = self.fill_layer {
-            // Get spacing from layer's pen_width
-            let spacing = self
-                .document
-                .try_get(fill_layer_id)
-                .and_then(|layer| layer.metadata().default_path_metadata.stroke_width)
-                .unwrap_or(1.0);
+            // Route to fill layer (hatching)
+            if let Some(fill_layer_id) = self.fill_layer {
+                let spacing = self
+                    .document
+                    .try_get(fill_layer_id)
+                    .and_then(|layer| layer.metadata().default_path_metadata.stroke_width)
+                    .unwrap_or(1.0);
 
-            // Get hatch angle from sketch state
-            let angle = self
-                .hatch_angles
-                .get(&fill_layer_id)
-                .copied()
-                .unwrap_or(0.0);
+                let angle = self
+                    .hatch_angles
+                    .get(&fill_layer_id)
+                    .copied()
+                    .unwrap_or(0.0);
 
-            let params = vsvg::HatchParams::new(spacing)
-                .with_angle(angle)
-                .with_inset(true);
+                let params = vsvg::HatchParams::new(spacing)
+                    .with_angle(angle)
+                    .with_inset(true);
 
-            if let Ok(hatch_paths) = path.hatch(&params, self.tolerance, false) {
-                for hatch_path in hatch_paths {
-                    self.document
-                        .push_path(fill_layer_id, Path::from(hatch_path));
+                if let Ok(hatch_paths) = path.hatch(&params, self.tolerance, false) {
+                    for hatch_path in hatch_paths {
+                        self.document
+                            .push_path(fill_layer_id, Path::from(hatch_path));
+                    }
                 }
             }
         }

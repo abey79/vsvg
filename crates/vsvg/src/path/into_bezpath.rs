@@ -270,35 +270,6 @@ pub mod geo_impl {
     geo_object_into_bezpaths!(geo::Geometry<f64>);
     geo_object_into_bezpaths!(geo::GeometryCollection<f64>);
 
-    impl IntoBezPathTolerance for &geo::Geometry<f64> {
-        fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
-            match self {
-                geo::Geometry::Point(point) => point.into_bezpath_with_tolerance(tolerance),
-                geo::Geometry::Line(line) => line.into_bezpath_with_tolerance(tolerance),
-                geo::Geometry::LineString(line_string) => {
-                    line_string.into_bezpath_with_tolerance(tolerance)
-                }
-                geo::Geometry::Polygon(polygon) => polygon.into_bezpath_with_tolerance(tolerance),
-                geo::Geometry::MultiPoint(multi_point) => {
-                    multi_point.into_bezpath_with_tolerance(tolerance)
-                }
-                geo::Geometry::MultiLineString(multi_line_string) => {
-                    multi_line_string.into_bezpath_with_tolerance(tolerance)
-                }
-                geo::Geometry::MultiPolygon(multi_polygon) => {
-                    multi_polygon.into_bezpath_with_tolerance(tolerance)
-                }
-                geo::Geometry::GeometryCollection(geometry_collection) => {
-                    geometry_collection.into_bezpath_with_tolerance(tolerance)
-                }
-                geo::Geometry::Rect(rect) => rect.into_bezpath_with_tolerance(tolerance),
-                geo::Geometry::Triangle(triangle) => {
-                    triangle.into_bezpath_with_tolerance(tolerance)
-                }
-            }
-        }
-    }
-
     pub(super) fn linestring_to_path_el(
         ls: &geo::LineString<f64>,
     ) -> impl Iterator<Item = PathEl> + '_ {
