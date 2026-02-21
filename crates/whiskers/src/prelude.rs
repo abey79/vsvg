@@ -3,8 +3,8 @@ pub use crate::{
     LayoutOptions, PageSizeOptions, Result, Sketch, SketchApp, wasm_sketch,
 };
 pub use vsvg::{
-    Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, Length, PageSize, Point, Transforms,
-    Unit,
+    Angle, Color, Draw, IntoBezPath, IntoBezPathTolerance, IntoBezPaths, IntoBezPathsTolerance,
+    Length, PageSize, Point, Transforms, Unit,
 };
 pub use vsvg_viewer::DisplayOptions;
 pub use whiskers_widgets;

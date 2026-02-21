@@ -138,21 +138,6 @@ pub mod geo_impl {
         }
     }
 
-    impl IntoBezPathTolerance for &geo::MultiPoint<f64> {
-        fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
-            BezPath::from_vec(
-                self.into_iter()
-                    .flat_map(|pt| {
-                        [
-                            PathEl::MoveTo((pt.x(), pt.y()).into()),
-                            PathEl::LineTo((pt.x(), pt.y()).into()),
-                        ]
-                    })
-                    .collect(),
-            )
-        }
-    }
-
     impl IntoBezPathTolerance for &geo::Line<f64> {
         fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
             BezPath::from_path_segments(std::iter::once(PathSeg::Line(kurbo::Line::new(
@@ -168,35 +153,10 @@ pub mod geo_impl {
         }
     }
 
-    impl IntoBezPathTolerance for &geo::MultiLineString<f64> {
-        fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
-            self.into_iter().flat_map(linestring_to_path_el).collect()
-        }
-    }
-
     impl IntoBezPathTolerance for &geo::Polygon<f64> {
         fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
             linestring_to_path_el(self.exterior())
                 .chain(self.interiors().iter().flat_map(linestring_to_path_el))
-                .collect()
-        }
-    }
-
-    impl IntoBezPathTolerance for &geo::MultiPolygon<f64> {
-        fn into_bezpath_with_tolerance(self, _tolerance: f64) -> BezPath {
-            self.into_iter()
-                .flat_map(|poly| {
-                    linestring_to_path_el(poly.exterior())
-                        .chain(poly.interiors().iter().flat_map(linestring_to_path_el))
-                })
-                .collect()
-        }
-    }
-
-    impl IntoBezPathTolerance for &geo::GeometryCollection<f64> {
-        fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
-            self.into_iter()
-                .flat_map(|g| g.into_bezpath_with_tolerance(tolerance))
                 .collect()
         }
     }
@@ -241,13 +201,78 @@ pub mod geo_impl {
     geo_object_into_bezpath!(geo::Line<f64>);
     geo_object_into_bezpath!(geo::LineString<f64>);
     geo_object_into_bezpath!(geo::Polygon<f64>);
-    geo_object_into_bezpath!(geo::MultiPoint<f64>);
-    geo_object_into_bezpath!(geo::MultiLineString<f64>);
-    geo_object_into_bezpath!(geo::MultiPolygon<f64>);
     geo_object_into_bezpath!(geo::Rect<f64>);
     geo_object_into_bezpath!(geo::Triangle<f64>);
-    geo_object_into_bezpath!(geo::Geometry<f64>);
-    geo_object_into_bezpath!(geo::GeometryCollection<f64>);
+
+    impl IntoBezPathsTolerance for &geo::MultiPoint<f64> {
+        fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+            self.iter()
+                .map(|pt| pt.into_bezpath_with_tolerance(tolerance))
+                .collect()
+        }
+    }
+
+    impl IntoBezPathsTolerance for &geo::MultiLineString<f64> {
+        fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+            self.iter()
+                .map(|ls| ls.into_bezpath_with_tolerance(tolerance))
+                .collect()
+        }
+    }
+
+    impl IntoBezPathsTolerance for &geo::MultiPolygon<f64> {
+        fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+            self.iter()
+                .map(|poly| poly.into_bezpath_with_tolerance(tolerance))
+                .collect()
+        }
+    }
+
+    impl IntoBezPathsTolerance for &geo::GeometryCollection<f64> {
+        fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+            self.iter()
+                .flat_map(|g| g.into_bezpaths_with_tolerance(tolerance))
+                .collect()
+        }
+    }
+
+    impl IntoBezPathsTolerance for &geo::Geometry<f64> {
+        fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+            match self {
+                geo::Geometry::Point(p) => vec![p.into_bezpath_with_tolerance(tolerance)],
+                geo::Geometry::Line(l) => vec![l.into_bezpath_with_tolerance(tolerance)],
+                geo::Geometry::LineString(ls) => vec![ls.into_bezpath_with_tolerance(tolerance)],
+                geo::Geometry::Polygon(p) => vec![p.into_bezpath_with_tolerance(tolerance)],
+                geo::Geometry::MultiPoint(mp) => mp.into_bezpaths_with_tolerance(tolerance),
+                geo::Geometry::MultiLineString(mls) => {
+                    mls.into_bezpaths_with_tolerance(tolerance)
+                }
+                geo::Geometry::MultiPolygon(mp) => mp.into_bezpaths_with_tolerance(tolerance),
+                geo::Geometry::GeometryCollection(gc) => {
+                    gc.into_bezpaths_with_tolerance(tolerance)
+                }
+                geo::Geometry::Rect(r) => vec![r.into_bezpath_with_tolerance(tolerance)],
+                geo::Geometry::Triangle(t) => vec![t.into_bezpath_with_tolerance(tolerance)],
+            }
+        }
+    }
+
+    macro_rules! geo_object_into_bezpaths {
+        ($t:ty) => {
+            impl IntoBezPathsTolerance for $t {
+                #[inline]
+                fn into_bezpaths_with_tolerance(self, tolerance: f64) -> Vec<BezPath> {
+                    (&self).into_bezpaths_with_tolerance(tolerance)
+                }
+            }
+        };
+    }
+
+    geo_object_into_bezpaths!(geo::MultiPoint<f64>);
+    geo_object_into_bezpaths!(geo::MultiLineString<f64>);
+    geo_object_into_bezpaths!(geo::MultiPolygon<f64>);
+    geo_object_into_bezpaths!(geo::Geometry<f64>);
+    geo_object_into_bezpaths!(geo::GeometryCollection<f64>);
 
     impl IntoBezPathTolerance for &geo::Geometry<f64> {
         fn into_bezpath_with_tolerance(self, tolerance: f64) -> BezPath {
@@ -468,6 +493,78 @@ mod test {
 
             // We can reuse `poly` since we only used a reference to it earlier.
             assert_eq!(poly.into_bezpath(), bezpath);
+        }
+
+        #[test]
+        fn test_multi_polygon_into_bezpaths() {
+            let poly1 = geo::Polygon::new(
+                geo::LineString::new(vec![
+                    geo::Coord { x: 0.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 1.0 },
+                    geo::Coord { x: 0.0, y: 1.0 },
+                    geo::Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            );
+            let poly2 = geo::Polygon::new(
+                geo::LineString::new(vec![
+                    geo::Coord { x: 5.0, y: 5.0 },
+                    geo::Coord { x: 6.0, y: 5.0 },
+                    geo::Coord { x: 6.0, y: 6.0 },
+                    geo::Coord { x: 5.0, y: 6.0 },
+                    geo::Coord { x: 5.0, y: 5.0 },
+                ]),
+                vec![],
+            );
+            let mp = geo::MultiPolygon::new(vec![poly1, poly2]);
+            let bezpaths = (&mp).into_bezpaths_with_tolerance(0.1);
+            assert_eq!(bezpaths.len(), 2);
+        }
+
+        #[test]
+        fn test_single_polygon_blanket_yields_one() {
+            let poly = geo::Polygon::new(
+                geo::LineString::new(vec![
+                    geo::Coord { x: 0.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 1.0 },
+                    geo::Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            );
+            let bezpaths = (&poly).into_bezpaths_with_tolerance(0.1);
+            assert_eq!(bezpaths.len(), 1);
+        }
+
+        #[test]
+        fn test_geometry_enum_dispatches_correctly() {
+            let poly = geo::Polygon::new(
+                geo::LineString::new(vec![
+                    geo::Coord { x: 0.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 1.0 },
+                    geo::Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            );
+            let mp = geo::MultiPolygon::new(vec![poly.clone(), poly]);
+
+            // MultiPolygon wrapped in Geometry -> 2 bezpaths
+            let geom = geo::Geometry::MultiPolygon(mp);
+            assert_eq!((&geom).into_bezpaths_with_tolerance(0.1).len(), 2);
+
+            // Single Polygon wrapped in Geometry -> 1 bezpath
+            let single = geo::Geometry::Polygon(geo::Polygon::new(
+                geo::LineString::new(vec![
+                    geo::Coord { x: 0.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 0.0 },
+                    geo::Coord { x: 1.0, y: 1.0 },
+                    geo::Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            ));
+            assert_eq!((&single).into_bezpaths_with_tolerance(0.1).len(), 1);
         }
     }
 }

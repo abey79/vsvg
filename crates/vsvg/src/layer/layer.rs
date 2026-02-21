@@ -1,5 +1,5 @@
 use super::{FlattenedLayer, LayerMetadata, LayerTrait, Transforms};
-use crate::{Draw, IntoBezPathTolerance, Path, PathMetadata, PathTrait, Point};
+use crate::{Draw, IntoBezPathsTolerance, Path, PathMetadata, PathTrait, Point};
 use rayon::prelude::*;
 
 #[derive(Default, Clone, Debug)]
@@ -54,8 +54,10 @@ impl LayerTrait<Path, kurbo::BezPath> for Layer {
 /// layer.circle(5.0, 5.0, 10.0);
 /// ```
 impl Draw for Layer {
-    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
-        self.push_path(Path::from_metadata(path, PathMetadata::default()));
+    fn add_path<T: IntoBezPathsTolerance>(&mut self, path: T) -> &mut Self {
+        for bezpath in path.into_bezpaths_with_tolerance(crate::DEFAULT_TOLERANCE) {
+            self.push_path(Path::from_metadata(bezpath, PathMetadata::default()));
+        }
         self
     }
 }

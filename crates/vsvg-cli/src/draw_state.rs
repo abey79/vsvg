@@ -2,7 +2,7 @@
 
 use kurbo::Affine;
 use vsvg::{
-    DEFAULT_TOLERANCE, Draw, IntoBezPathTolerance, Layer, Path, PathMetadata, PathTrait, Transforms,
+    DEFAULT_TOLERANCE, Draw, IntoBezPathsTolerance, Layer, Path, PathMetadata, PathTrait, Transforms,
 };
 
 #[derive(Debug)]
@@ -37,11 +37,13 @@ pub struct LayerDrawer<'layer, 'state> {
 }
 
 impl<'layer, 'state> Draw for LayerDrawer<'layer, 'state> {
-    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self {
-        let mut path: Path = Path::from_tolerance(path, self.state.tolerance);
-        *path.metadata_mut() = self.state.metadata.clone();
-        path.apply_transform(self.state.transform);
-        self.layer.paths.push(path);
+    fn add_path<T: IntoBezPathsTolerance>(&mut self, path: T) -> &mut Self {
+        for bezpath in path.into_bezpaths_with_tolerance(self.state.tolerance) {
+            let mut path = Path::from(bezpath);
+            *path.metadata_mut() = self.state.metadata.clone();
+            path.apply_transform(self.state.transform);
+            self.layer.paths.push(path);
+        }
         self
     }
 }
