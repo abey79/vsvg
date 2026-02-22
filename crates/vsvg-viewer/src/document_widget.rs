@@ -329,6 +329,49 @@ impl DocumentWidget {
                 return;
             };
 
+            // Show All / Hide All buttons (disabled when they'd have no effect)
+            let opts = self.viewer_options.lock().unwrap();
+            let any_hidden = document
+                .layers
+                .keys()
+                .any(|lid| !*opts.layer_visibility.get(lid).unwrap_or(&true));
+            let any_visible = document
+                .layers
+                .keys()
+                .any(|lid| *opts.layer_visibility.get(lid).unwrap_or(&true));
+            drop(opts);
+
+            if ui
+                .add_enabled(any_hidden, egui::Button::new("Show All"))
+                .clicked()
+            {
+                let mut opts = self.viewer_options.lock().unwrap();
+                for lid in document.layers.keys() {
+                    opts.layer_visibility.insert(*lid, true);
+                }
+            }
+
+            if ui
+                .add_enabled(any_visible, egui::Button::new("Hide All"))
+                .clicked()
+            {
+                let mut opts = self.viewer_options.lock().unwrap();
+                for lid in document.layers.keys() {
+                    opts.layer_visibility.insert(*lid, false);
+                }
+            }
+
+            ui.separator();
+
+            ui.label(
+                egui::RichText::new("Hold alt to show only one layer")
+                    .weak()
+                    .italics(),
+            );
+
+            let alt_held = ui.input(|i| i.modifiers.alt);
+
+            // Per-layer rows
             for (lid, layer) in &document.layers {
                 let mut viewer_options = self.viewer_options.lock().unwrap();
                 let visibility = viewer_options.layer_visibility.entry(*lid).or_insert(true);
@@ -338,7 +381,18 @@ impl DocumentWidget {
                     let _ = write!(label, ": {name}");
                 }
 
-                ui.checkbox(visibility, label);
+                if alt_held {
+                    label.push_str(" only");
+                    drop(viewer_options);
+                    if ui.button(label).clicked() {
+                        let mut opts = self.viewer_options.lock().unwrap();
+                        for other_lid in document.layers.keys() {
+                            opts.layer_visibility.insert(*other_lid, other_lid == lid);
+                        }
+                    }
+                } else {
+                    ui.checkbox(visibility, label);
+                }
             }
         });
     }
