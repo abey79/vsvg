@@ -4,7 +4,7 @@ use crate::engine::{
 };
 use crate::painters::{BasicPainterData, LinePainterData, PointPainterData};
 use rayon::prelude::*;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use vsvg::{Document, FlattenedLayer, LayerID, LayerTrait, PathTrait, Point};
 
@@ -223,7 +223,7 @@ impl LayerRenderData {
 
 pub(crate) struct RenderData {
     document: Arc<Document>,
-    layers: HashMap<LayerID, LayerRenderData>,
+    layers: BTreeMap<LayerID, LayerRenderData>,
 }
 
 impl RenderData {
@@ -255,7 +255,7 @@ impl RenderData {
         }
     }
 
-    pub fn layers(&self) -> &HashMap<LayerID, LayerRenderData> {
+    pub fn layers(&self) -> &BTreeMap<LayerID, LayerRenderData> {
         &self.layers
     }
 }
