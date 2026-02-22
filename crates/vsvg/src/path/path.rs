@@ -103,13 +103,13 @@ impl PathTrait<BezPath> for Path {
 
     /// Append another path to this one.
     ///
-    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
-    /// the initial `MoveTo` of `other` is converted to `LineTo` to create a continuous path.
-    /// Otherwise, the `MoveTo` is kept, creating a compound path with multiple subpaths.
+    /// The initial `MoveTo` of `other` is either dropped (if within `epsilon` of `self`'s
+    /// endpoint, avoiding a degenerate segment) or converted to `LineTo` (bridging the gap).
     ///
     /// Metadata is merged via [`PathMetadata::merge`].
     fn join(&mut self, other: &Path, epsilon: f64) {
-        let should_connect = match (self.data.end(), other.data.start()) {
+        let self_is_empty = self.data.elements().is_empty();
+        let is_coincident = match (self.data.end(), other.data.start()) {
             (Some(end), Some(start)) => end.distance(&start) < epsilon,
             _ => false,
         };
@@ -117,7 +117,16 @@ impl PathTrait<BezPath> for Path {
         for (i, el) in other.data.elements().iter().enumerate() {
             if i == 0 {
                 match el {
-                    PathEl::MoveTo(pt) if should_connect => {
+                    PathEl::MoveTo(_) if is_coincident => {
+                        // Skip: points are coincident, no segment needed
+                    }
+
+                    PathEl::MoveTo(pt) if self_is_empty => {
+                        // Keep MoveTo: BezPath must start with MoveTo
+                        self.data.push(PathEl::MoveTo(*pt));
+                    }
+
+                    PathEl::MoveTo(pt) => {
                         self.data.push(PathEl::LineTo(*pt));
                     }
                     _ => self.data.push(*el),
@@ -431,6 +440,58 @@ mod test {
         let path = Path::default();
         let parts = path.split();
         assert!(parts.is_empty());
+    }
+
+    // ==================== join tests ====================
+
+    #[test]
+    fn test_path_join_coincident_drops_moveto() {
+        // When endpoints are coincident, MoveTo should be dropped (no degenerate LineTo)
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::from_svg("M 10,0 L 20,0").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // M 0,0 L 10,0 L 20,0 — 3 elements, no degenerate segment
+        assert_eq!(a.data.elements().len(), 3);
+        assert_eq!(a.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(a.data.end(), Some(Point::new(20.0, 0.0)));
+    }
+
+    #[test]
+    fn test_path_join_gap_inserts_lineto() {
+        // When endpoints have a gap, MoveTo should become LineTo to bridge it
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::from_svg("M 10,5 L 20,5").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // M 0,0 L 10,0 L 10,5 L 20,5 — 4 elements with bridging LineTo
+        assert_eq!(a.data.elements().len(), 4);
+        assert!(matches!(a.data.elements()[2], PathEl::LineTo(_)));
+        assert_eq!(a.data.end(), Some(Point::new(20.0, 5.0)));
+    }
+
+    #[test]
+    fn test_path_join_empty_other() {
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::default();
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.elements().len(), 2);
+    }
+
+    #[test]
+    fn test_path_join_empty_self() {
+        let mut a = Path::default();
+        let b = Path::from_svg("M 10,0 L 20,0").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // Empty self keeps MoveTo: M 10,0 L 20,0
+        assert_eq!(a.data.elements().len(), 2);
+        assert!(matches!(a.data.elements()[0], PathEl::MoveTo(_)));
     }
 
     #[test]

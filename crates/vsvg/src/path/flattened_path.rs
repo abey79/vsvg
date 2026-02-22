@@ -386,6 +386,65 @@ mod tests {
         );
     }
 
+    // ==================== join tests ====================
+
+    #[test]
+    fn test_polyline_join_coincident_skips_duplicate() {
+        // When endpoints are coincident, the duplicate point should be skipped
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![Point::new(10.0, 0.0), Point::new(20.0, 0.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 3);
+        assert_eq!(a.points()[0], Point::new(0.0, 0.0));
+        assert_eq!(a.points()[1], Point::new(10.0, 0.0));
+        assert_eq!(a.points()[2], Point::new(20.0, 0.0));
+    }
+
+    #[test]
+    fn test_polyline_join_gap_keeps_both_points() {
+        // When endpoints have a gap, both points should be kept (implicit bridge)
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![Point::new(10.0, 5.0), Point::new(20.0, 5.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 4);
+        assert_eq!(a.points()[1], Point::new(10.0, 0.0));
+        assert_eq!(a.points()[2], Point::new(10.0, 5.0));
+    }
+
+    #[test]
+    fn test_polyline_join_empty_other() {
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 2);
+    }
+
+    #[test]
+    fn test_flattenedpath_join_coincident() {
+        let mut a = FlattenedPath::from(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = FlattenedPath::from(vec![Point::new(10.0, 0.0), Point::new(20.0, 0.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.points().len(), 3);
+    }
+
+    #[test]
+    fn test_flattenedpath_join_gap() {
+        let mut a = FlattenedPath::from(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = FlattenedPath::from(vec![Point::new(10.0, 5.0), Point::new(20.0, 5.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.points().len(), 4);
+    }
+
     #[test]
     fn test_polyline_is_point() {
         let mut p = Polyline::from_iter([(0., 0.)]);

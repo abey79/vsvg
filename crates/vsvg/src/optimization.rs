@@ -413,8 +413,8 @@ mod tests {
         layer.join_paths(0.1, false);
 
         assert_eq!(layer.paths.len(), 1);
-        // BezPath join converts MoveTo to LineTo: M 0,0 L 10,0 + L 10,0 L 20,0 = 4 elements
-        assert_eq!(layer.paths[0].data.elements().len(), 4);
+        // BezPath join drops coincident MoveTo: M 0,0 L 10,0 L 20,0 = 3 elements
+        assert_eq!(layer.paths[0].data.elements().len(), 3);
     }
 
     // ==================== explode tests ====================
