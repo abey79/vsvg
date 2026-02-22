@@ -118,7 +118,6 @@ impl HatchParams {
 /// A `Vec<FlattenedPath>` containing boundary paths (if inset enabled) and hatch lines.
 /// Returns empty vec if shape is fully eroded.
 #[must_use]
-#[expect(clippy::too_many_lines)]
 pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<FlattenedPath> {
     // Early return for invalid spacing
     if params.spacing <= 0.0 {
@@ -133,8 +132,10 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
     let boundary_inset = -params.spacing / 2.0;
     let clip_inset = -params.spacing;
 
-    // Step 3: Compute clipping polygon for scan lines
-    let work_polygon = if params.inset {
+    // Step 3: Compute clipping region for scan lines.
+    // The buffer/inset may split the polygon into multiple disconnected pieces (islands),
+    // so we keep the full MultiPolygon to ensure all islands get hatch lines.
+    let work_multi = if params.inset {
         // First inset: the boundary stroke position
         let boundary_multi = polygon.buffer(boundary_inset);
         if boundary_multi.0.is_empty() {
@@ -152,16 +153,7 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
             return result; // Shape too small for hatch lines, but boundary exists
         }
 
-        // Use largest polygon for clipping
-        let Some(largest) = clip_multi.0.into_iter().max_by(|a, b| {
-            use geo::algorithm::area::Area;
-            a.unsigned_area()
-                .partial_cmp(&b.unsigned_area())
-                .unwrap_or(std::cmp::Ordering::Equal)
-        }) else {
-            return result; // Should never happen, but handle gracefully
-        };
-        largest
+        clip_multi
     } else {
         // No boundary: clip scan lines at spacing/2 from original (line edges touch boundary)
         let no_boundary_clip = -params.spacing / 2.0;
@@ -170,22 +162,14 @@ pub fn hatch_polygon(polygon: &geo::Polygon<f64>, params: &HatchParams) -> Vec<F
             return vec![]; // Fully eroded
         }
 
-        let Some(largest) = multi.0.into_iter().max_by(|a, b| {
-            use geo::algorithm::area::Area;
-            a.unsigned_area()
-                .partial_cmp(&b.unsigned_area())
-                .unwrap_or(std::cmp::Ordering::Equal)
-        }) else {
-            return vec![]; // Should never happen, but handle gracefully
-        };
-        largest
+        multi
     };
 
     // Get centroid for rotation
-    let centroid = work_polygon.centroid().unwrap_or(geo::Point::new(0.0, 0.0));
+    let centroid = work_multi.centroid().unwrap_or(geo::Point::new(0.0, 0.0));
 
     // Step 5: Rotate polygon so hatch lines become horizontal
-    let rotated_poly = work_polygon.rotate_around_point(-params.angle.to_degrees(), centroid);
+    let rotated_poly = work_multi.rotate_around_point(-params.angle.to_degrees(), centroid);
 
     // Get bounds of rotated polygon
     let Some(bounds) = rotated_poly.bounding_rect() else {
@@ -403,6 +387,343 @@ mod tests {
         let paths = hatch_polygon(&circle, &params);
 
         assert!(!paths.is_empty());
+    }
+
+    /// Helper: build the crescent polygon from the regression case.
+    fn make_crescent_polygon() -> geo::Polygon<f64> {
+        geo::Polygon::new(
+            geo::LineString::new(vec![
+                geo::Coord {
+                    x: 247.87514301547856,
+                    y: 156.80109891178108,
+                },
+                geo::Coord {
+                    x: 246.1818618417725,
+                    y: 156.19523319484688,
+                },
+                geo::Coord {
+                    x: 246.5739459634766,
+                    y: 156.05494317295052,
+                },
+                geo::Coord {
+                    x: 248.72240587482304,
+                    y: 155.5167821335981,
+                },
+                geo::Coord {
+                    x: 250.91326924571842,
+                    y: 155.19179829837776,
+                },
+                geo::Coord {
+                    x: 253.1254369855866,
+                    y: 155.08312138797737,
+                },
+                geo::Coord {
+                    x: 255.33760472545475,
+                    y: 155.19179829837776,
+                },
+                geo::Coord {
+                    x: 257.52846809635014,
+                    y: 155.5167821335981,
+                },
+                geo::Coord {
+                    x: 259.676927769278,
+                    y: 156.05494317295052,
+                },
+                geo::Coord {
+                    x: 261.76229330310673,
+                    y: 156.80109891178108,
+                },
+                geo::Coord {
+                    x: 263.76448079357,
+                    y: 157.7480631756971,
+                },
+                geo::Coord {
+                    x: 265.05235620746464,
+                    y: 158.5199857640455,
+                },
+                geo::Coord {
+                    x: 264.7895817399964,
+                    y: 158.95839866878487,
+                },
+                geo::Coord {
+                    x: 263.78258320102543,
+                    y: 161.087517826576,
+                },
+                geo::Coord {
+                    x: 262.9891240240082,
+                    y: 163.3050881314466,
+                },
+                geo::Coord {
+                    x: 262.41684528598637,
+                    y: 165.58975252391792,
+                },
+                geo::Coord {
+                    x: 262.07125874767155,
+                    y: 167.91950902225472,
+                },
+                geo::Coord {
+                    x: 261.9556920171723,
+                    y: 170.27192029239632,
+                },
+                geo::Coord {
+                    x: 262.07125874767155,
+                    y: 172.6243318009565,
+                },
+                geo::Coord {
+                    x: 262.41684528598637,
+                    y: 174.9540880608747,
+                },
+                geo::Coord {
+                    x: 262.9891240240082,
+                    y: 177.23875245334602,
+                },
+                geo::Coord {
+                    x: 263.78258320102543,
+                    y: 179.45632275821663,
+                },
+                geo::Coord {
+                    x: 264.7895817399964,
+                    y: 181.58544191600777,
+                },
+                geo::Coord {
+                    x: 266.00042148837895,
+                    y: 183.6056059289167,
+                },
+                geo::Coord {
+                    x: 267.4034411550507,
+                    y: 185.497359125633,
+                },
+                geo::Coord {
+                    x: 268.9851293207154,
+                    y: 187.24248298885323,
+                },
+                geo::Coord {
+                    x: 270.7302531839356,
+                    y: 188.8241711545179,
+                },
+                geo::Coord {
+                    x: 272.1009976507172,
+                    y: 189.84078439952827,
+                },
+                geo::Coord {
+                    x: 271.89103504428715,
+                    y: 190.19108614208199,
+                },
+                geo::Coord {
+                    x: 270.57165905246586,
+                    y: 191.9700587678144,
+                },
+                geo::Coord {
+                    x: 269.0842663885102,
+                    y: 193.61114391567207,
+                },
+                geo::Coord {
+                    x: 267.4431814790711,
+                    y: 195.09853657962776,
+                },
+                geo::Coord {
+                    x: 265.66420885333866,
+                    y: 196.41791257144905,
+                },
+                geo::Coord {
+                    x: 263.76448079357,
+                    y: 197.5565656113813,
+                },
+                geo::Coord {
+                    x: 261.76229330310673,
+                    y: 198.50352987529732,
+                },
+                geo::Coord {
+                    x: 259.676927769278,
+                    y: 199.24968561412788,
+                },
+                geo::Coord {
+                    x: 257.52846809635014,
+                    y: 199.7878466534803,
+                },
+                geo::Coord {
+                    x: 255.33760472545475,
+                    y: 200.11283048870064,
+                },
+                geo::Coord {
+                    x: 253.1254369855866,
+                    y: 200.22150739910103,
+                },
+                geo::Coord {
+                    x: 250.91326924571842,
+                    y: 200.11283048870064,
+                },
+                geo::Coord {
+                    x: 248.72240587482304,
+                    y: 199.7878466534803,
+                },
+                geo::Coord {
+                    x: 246.5739459634766,
+                    y: 199.24968561412788,
+                },
+                geo::Coord {
+                    x: 246.1818618417725,
+                    y: 199.10939559223152,
+                },
+                geo::Coord {
+                    x: 247.87514301547856,
+                    y: 198.50352987529732,
+                },
+                geo::Coord {
+                    x: 249.8773307443604,
+                    y: 197.5565656113813,
+                },
+                geo::Coord {
+                    x: 251.7770585657105,
+                    y: 196.41791257144905,
+                },
+                geo::Coord {
+                    x: 253.5560314298615,
+                    y: 195.09853657962776,
+                },
+                geo::Coord {
+                    x: 255.19711633930058,
+                    y: 193.61114391567207,
+                },
+                geo::Coord {
+                    x: 256.68450900325627,
+                    y: 191.9700587678144,
+                },
+                geo::Coord {
+                    x: 258.00388499507756,
+                    y: 190.19108614208199,
+                },
+                geo::Coord {
+                    x: 259.1425380350098,
+                    y: 188.2913583207319,
+                },
+                geo::Coord {
+                    x: 260.0895022989258,
+                    y: 186.28917059185005,
+                },
+                geo::Coord {
+                    x: 260.8356580377564,
+                    y: 184.2038052964399,
+                },
+                geo::Coord {
+                    x: 261.3738190771088,
+                    y: 182.05534562351204,
+                },
+                geo::Coord {
+                    x: 261.69880291232914,
+                    y: 179.86448225261665,
+                },
+                geo::Coord {
+                    x: 261.80747982272953,
+                    y: 177.6523142743299,
+                },
+                geo::Coord {
+                    x: 261.69880291232914,
+                    y: 175.44014653446175,
+                },
+                geo::Coord {
+                    x: 261.3738190771088,
+                    y: 173.24928316356636,
+                },
+                geo::Coord {
+                    x: 260.8356580377564,
+                    y: 171.1008234906385,
+                },
+                geo::Coord {
+                    x: 260.0895022989258,
+                    y: 169.01545819522835,
+                },
+                geo::Coord {
+                    x: 259.1425380350098,
+                    y: 167.0132704663465,
+                },
+                geo::Coord {
+                    x: 258.00388499507756,
+                    y: 165.11354264499641,
+                },
+                geo::Coord {
+                    x: 256.68450900325627,
+                    y: 163.334570019264,
+                },
+                geo::Coord {
+                    x: 255.19711633930058,
+                    y: 161.69348487140633,
+                },
+                geo::Coord {
+                    x: 253.5560314298615,
+                    y: 160.20609220745064,
+                },
+                geo::Coord {
+                    x: 251.7770585657105,
+                    y: 158.88671621562935,
+                },
+                geo::Coord {
+                    x: 249.8773307443604,
+                    y: 157.7480631756971,
+                },
+                geo::Coord {
+                    x: 247.87514301547856,
+                    y: 156.80109891178108,
+                },
+            ]),
+            vec![],
+        )
+    }
+
+    /// Regression test: thin crescent polygon that splits into two islands when inset.
+    ///
+    /// This polygon is a valid, non-self-intersecting crescent (C-shape) produced by
+    /// `geo::MultiPolygon::difference`. Its connecting band is thin enough that
+    /// `buffer(-spacing)` splits it into two separate polygons (upper and lower islands).
+    /// Both islands must receive hatch lines.
+    #[test]
+    fn hatch_crescent_covers_both_islands() {
+        let polygon = make_crescent_polygon();
+
+        // Verify preconditions
+        use geo::algorithm::validation::Validation;
+        assert!(polygon.is_valid(), "test polygon must be valid");
+
+        // At spacing=0.567 (0.15mm pen), clip_inset=-0.567 splits into 2 islands:
+        //   Upper: Y≈[155.7, 171.1], area≈84
+        //   Lower: Y≈[177.0, 199.7], area≈171
+        let spacing = 0.567;
+        let params = HatchParams::new(spacing)
+            .with_join_lines(false)
+            .with_inset(true);
+        let paths = hatch_polygon(&polygon, &params);
+
+        // Separate boundary paths (closed) from hatch lines (open)
+        let hatch_lines: Vec<&FlattenedPath> = paths
+            .iter()
+            .filter(|p| {
+                let pts = p.data.points();
+                pts.len() >= 2 && pts.first() != pts.last()
+            })
+            .collect();
+
+        assert!(!hatch_lines.is_empty(), "should have hatch lines");
+
+        // The two islands are separated around Y≈172-176.
+        // Hatch lines must exist in BOTH the upper and lower islands.
+        let upper_threshold = 170.0;
+        let lower_threshold = 178.0;
+
+        let has_upper_hatch = hatch_lines
+            .iter()
+            .any(|p| p.data.points().iter().any(|pt| pt.y() < upper_threshold));
+        let has_lower_hatch = hatch_lines
+            .iter()
+            .any(|p| p.data.points().iter().any(|pt| pt.y() > lower_threshold));
+
+        assert!(
+            has_upper_hatch,
+            "upper island (Y < {upper_threshold}) must have hatch lines"
+        );
+        assert!(
+            has_lower_hatch,
+            "lower island (Y > {lower_threshold}) must have hatch lines"
+        );
     }
 
     #[test]
