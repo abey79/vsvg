@@ -29,7 +29,8 @@ impl Default for MySketch {
 
 impl App for MySketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(self.color);
+        sketch.layer(0).color(self.color);
+
         for i in 0..self.num_circle {
             sketch.circle(
                 100.0,

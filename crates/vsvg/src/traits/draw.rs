@@ -1,9 +1,9 @@
-use crate::path::into_bezpath::IntoBezPathTolerance;
+use crate::path::into_bezpath::IntoBezPathsTolerance;
 use crate::{Point, Polyline};
 use kurbo::Vec2;
 
 pub trait Draw {
-    fn add_path<T: IntoBezPathTolerance>(&mut self, path: T) -> &mut Self;
+    fn add_path<T: IntoBezPathsTolerance>(&mut self, path: T) -> &mut Self;
 
     /// Draw a cubic Bézier curve from (`x1`, `y1`) to (`x4`, `y4`) with control points at (`x2`,
     /// `y2`) and (`x3`, `y3`).

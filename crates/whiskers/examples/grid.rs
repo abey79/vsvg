@@ -42,7 +42,7 @@ impl Default for GridSketch {
 
 impl App for GridSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.stroke_width(5.0);
+        sketch.layer(0).pen_width(5.0);
 
         let grid = if self.is_canvas_sizing {
             Grid::from_total_size([sketch.width(), sketch.height()])
@@ -54,7 +54,7 @@ impl App for GridSketch {
             .rows(self.rows)
             .spacing([self.gutter_width, self.gutter_height])
             .build(sketch, |sketch, cell| {
-                sketch.color(
+                sketch.override_color(
                     if cell.row == self.marked_cell_row && cell.column == self.marked_cell_col {
                         Color::GREEN
                     } else {

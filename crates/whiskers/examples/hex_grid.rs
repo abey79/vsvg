@@ -28,7 +28,7 @@ impl Default for HexGridSketch {
 
 impl App for HexGridSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.stroke_width(5.0);
+        sketch.layer(0).pen_width(5.0);
 
         let grid = if self.is_pointy_orientation {
             HexGrid::with_pointy_orientation()

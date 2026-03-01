@@ -24,8 +24,7 @@ impl Default for InspectSketch {
 
 impl App for InspectSketch {
     fn update(&mut self, sketch: &mut Sketch, ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.stroke_width(Unit::Mm * 4.0);
-        sketch.color(Color::RED);
+        sketch.layer(0).color(Color::RED).pen_width(Unit::Mm * 4.0);
         sketch.rect(0.0, 0.0, self.width, self.height);
 
         if self.debug {

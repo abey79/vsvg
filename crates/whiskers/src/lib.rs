@@ -30,9 +30,7 @@
 //! impl App for MySketch {
 //!     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
 //!         // draw code goes here
-//!         sketch
-//!             .color(Color::DARK_RED)
-//!             .rect(200., 200., 150., 50.);
+//!         sketch.rect(200., 200., 150., 50.);
 //!
 //!         Ok(())
 //!     }
@@ -110,7 +108,7 @@ pub use grid_helpers::{
     hex_grid::{HexGrid, cell::HexGridCell},
 };
 pub use runner::{AnimationOptions, InfoOptions, LayoutOptions, PageSizeOptions, Runner};
-pub use sketch::Sketch;
+pub use sketch::{LayerHandle, Sketch};
 
 /// This is a convenience alias to the [`anyhow::Result`] type, which you can use for your sketch's
 /// main function.

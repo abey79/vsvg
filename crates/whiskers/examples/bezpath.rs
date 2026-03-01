@@ -61,12 +61,11 @@ impl App for BezpathSketch {
 
         fn paint_cross(sketch: &mut Sketch) {
             sketch
-                .color(Color::RED)
-                .stroke_width(0.5)
+                .override_color(Color::RED)
+                .override_stroke_width(0.5)
                 .line(-0.1, 0.0, 0.1, 0.0)
                 .line(0.0, 0.1, 0.0, -0.1)
-                .color(Color::BLACK)
-                .stroke_width(1.0);
+                .clear_overrides();
         }
 
         sketch.scale(Unit::Cm).translate(6.0, 7.0);

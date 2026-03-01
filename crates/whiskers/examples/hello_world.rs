@@ -17,7 +17,7 @@ impl Default for HelloWorldSketch {
 
 impl App for HelloWorldSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(Color::DARK_RED).stroke_width(3.0);
+        sketch.layer(0).color(Color::DARK_RED).pen_width(3.0);
 
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)

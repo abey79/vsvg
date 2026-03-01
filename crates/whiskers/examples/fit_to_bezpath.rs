@@ -88,8 +88,8 @@ impl App for FitToBezpathSketch {
             sketch
                 .push_matrix()
                 .translate(cx, cell_h * 0.5)
-                .color(Color::BLACK)
-                .stroke_width(0.5)
+                .override_color(Color::BLACK)
+                .override_stroke_width(0.5)
                 .add_path(path.data.clone())
                 .pop_matrix();
 
@@ -97,8 +97,8 @@ impl App for FitToBezpathSketch {
             sketch
                 .push_matrix()
                 .translate(cx, cell_h * 1.5)
-                .color(Color::BLUE)
-                .stroke_width(0.5);
+                .override_color(Color::BLUE)
+                .override_stroke_width(0.5);
 
             for fp in &flattened_paths {
                 sketch.add_path(fp.data.clone());
@@ -110,11 +110,11 @@ impl App for FitToBezpathSketch {
             sketch
                 .push_matrix()
                 .translate(cx, cell_h * 2.5)
-                .color(Color::LIGHT_GRAY)
-                .stroke_width(4.0)
+                .override_color(Color::LIGHT_GRAY)
+                .override_stroke_width(4.0)
                 .add_path(path.data.clone())
-                .color(Color::RED)
-                .stroke_width(0.5);
+                .override_color(Color::RED)
+                .override_stroke_width(0.5);
 
             for fitted in &fitted_paths {
                 sketch.add_path(fitted.data.clone());

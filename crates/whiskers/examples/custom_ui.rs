@@ -105,7 +105,7 @@ impl Default for CustomUISketch {
 
 impl App for CustomUISketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(self.color);
+        sketch.layer(0).color(self.color);
         for i in 0..5 {
             sketch.circle(100.0, 100.0, 30.0 + 40.0 + i as f64 * 3.0);
         }
