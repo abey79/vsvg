@@ -10,7 +10,7 @@ use crate::{SvgPathWriter, Transforms};
 pub use flattened_path::{
     FlattenedPath, Polyline, multi_polygon_to_flattened_paths, polygon_to_flattened_paths,
 };
-pub use into_bezpath::{IntoBezPath, IntoBezPathTolerance};
+pub use into_bezpath::{IntoBezPath, IntoBezPathTolerance, IntoBezPaths, IntoBezPathsTolerance};
 pub use metadata::{PathMetadata, ResolvedPathMetadata};
 pub use path::Path;
 pub use point::Point;
