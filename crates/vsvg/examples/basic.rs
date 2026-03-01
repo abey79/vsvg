@@ -18,8 +18,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     /* == Path == */
     // Amongst various ways to create a path, the SVG <path> syntax is supported.
     let mut path = vsvg::Path::from_svg("M 200 200 L 200 400 Q 500 300 200 200 Z").unwrap();
-    path.metadata_mut().color = vsvg::Color::DARK_GREEN;
-    path.metadata_mut().stroke_width = 3.0;
+    path.metadata_mut().color = Some(vsvg::Color::DARK_GREEN);
+    path.metadata_mut().stroke_width = Some(3.0);
     doc.push_path(3, path);
 
     /* == Draw == */

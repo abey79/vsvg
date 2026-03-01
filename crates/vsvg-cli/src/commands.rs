@@ -146,7 +146,7 @@ pub(crate) fn command_list() -> HashMap<Id, CommandDesc<'static>> {
             f64,
             |state, w| state.document.for_each(
                 |layer| layer.for_each(
-                    |path| path.metadata_mut().stroke_width = *w
+                    |path| path.metadata_mut().stroke_width = Some(*w)
                 )
             )
         ),

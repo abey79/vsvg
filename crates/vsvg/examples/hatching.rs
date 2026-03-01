@@ -7,10 +7,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut doc = vsvg::Document::default();
 
     let mut add_outline_and_hatches = |mut outline: Path, hatched: Vec<FlattenedPath>| {
-        outline.metadata_mut().color = Color::BLACK;
+        outline.metadata_mut().color = Some(Color::BLACK);
         doc.push_path(0, outline);
         for mut path in hatched {
-            path.metadata_mut().color = Color::RED;
+            path.metadata_mut().color = Some(Color::RED);
             doc.push_path(1, path);
         }
     };
