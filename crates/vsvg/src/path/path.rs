@@ -100,6 +100,85 @@ impl PathTrait<BezPath> for Path {
     fn metadata_mut(&mut self) -> &mut PathMetadata {
         &mut self.metadata
     }
+
+    /// Append another path to this one.
+    ///
+    /// The initial `MoveTo` of `other` is either dropped (if within `epsilon` of `self`'s
+    /// endpoint, avoiding a degenerate segment) or converted to `LineTo` (bridging the gap).
+    ///
+    /// Metadata is merged via [`PathMetadata::merge`].
+    fn join(&mut self, other: &Path, epsilon: f64) {
+        let self_is_empty = self.data.elements().is_empty();
+        let is_coincident = match (self.data.end(), other.data.start()) {
+            (Some(end), Some(start)) => end.distance(&start) < epsilon,
+            _ => false,
+        };
+
+        for (i, el) in other.data.elements().iter().enumerate() {
+            if i == 0 {
+                match el {
+                    PathEl::MoveTo(_) if is_coincident => {
+                        // Skip: points are coincident, no segment needed
+                    }
+
+                    PathEl::MoveTo(pt) if self_is_empty => {
+                        // Keep MoveTo: BezPath must start with MoveTo
+                        self.data.push(PathEl::MoveTo(*pt));
+                    }
+
+                    PathEl::MoveTo(pt) => {
+                        self.data.push(PathEl::LineTo(*pt));
+                    }
+                    _ => self.data.push(*el),
+                }
+            } else {
+                self.data.push(*el);
+            }
+        }
+
+        self.metadata.merge(&other.metadata);
+    }
+
+    /// Split a compound path into its individual paths.
+    ///
+    /// The returned paths always consist of a single, non-compound path.
+    fn split(self) -> Vec<Self> {
+        let elements = self.data.elements();
+        if elements.is_empty() {
+            return vec![];
+        }
+
+        let mut result = Vec::new();
+        let mut current = BezPath::new();
+
+        for el in elements {
+            match el {
+                PathEl::MoveTo(pt) => {
+                    // Save current path if non-empty and start new one
+                    if !current.elements().is_empty() {
+                        result.push(Path {
+                            data: std::mem::take(&mut current),
+                            metadata: self.metadata.clone(),
+                        });
+                    }
+                    current.push(PathEl::MoveTo(*pt));
+                }
+                _ => {
+                    current.push(*el);
+                }
+            }
+        }
+
+        // Remember the last subpath
+        if !current.elements().is_empty() {
+            result.push(Path {
+                data: current,
+                metadata: self.metadata,
+            });
+        }
+
+        result
+    }
 }
 
 impl Path {
@@ -320,5 +399,124 @@ mod test {
 
         let path = Path::from_svg("M 10,0 L 10,0").unwrap();
         assert!(path.data.is_point());
+    }
+
+    #[test]
+    fn test_path_split_simple() {
+        // Single subpath - returns vec with one element
+        let path = Path::from_svg("M 0,0 L 10,10 L 20,0").unwrap();
+        let parts = path.split();
+        assert_eq!(parts.len(), 1);
+        assert_eq!(parts[0].data.elements().len(), 3); // MoveTo + 2 LineTo
+    }
+
+    #[test]
+    fn test_path_split_compound() {
+        // Two subpaths
+        let path = Path::from_svg("M 0,0 L 10,10 M 50,50 L 60,60").unwrap();
+        let parts = path.split();
+        assert_eq!(parts.len(), 2);
+
+        // First subpath: M 0,0 L 10,10
+        assert_eq!(parts[0].data.elements().len(), 2);
+        assert_eq!(parts[0].data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(parts[0].data.end(), Some(Point::new(10.0, 10.0)));
+
+        // Second subpath: M 50,50 L 60,60
+        assert_eq!(parts[1].data.elements().len(), 2);
+        assert_eq!(parts[1].data.start(), Some(Point::new(50.0, 50.0)));
+        assert_eq!(parts[1].data.end(), Some(Point::new(60.0, 60.0)));
+    }
+
+    #[test]
+    fn test_path_split_three_subpaths() {
+        let path = Path::from_svg("M 0,0 L 10,0 M 20,0 L 30,0 M 40,0 L 50,0").unwrap();
+        let parts = path.split();
+        assert_eq!(parts.len(), 3);
+    }
+
+    #[test]
+    fn test_path_split_empty() {
+        let path = Path::default();
+        let parts = path.split();
+        assert!(parts.is_empty());
+    }
+
+    // ==================== join tests ====================
+
+    #[test]
+    fn test_path_join_coincident_drops_moveto() {
+        // When endpoints are coincident, MoveTo should be dropped (no degenerate LineTo)
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::from_svg("M 10,0 L 20,0").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // M 0,0 L 10,0 L 20,0 — 3 elements, no degenerate segment
+        assert_eq!(a.data.elements().len(), 3);
+        assert_eq!(a.data.start(), Some(Point::new(0.0, 0.0)));
+        assert_eq!(a.data.end(), Some(Point::new(20.0, 0.0)));
+    }
+
+    #[test]
+    fn test_path_join_gap_inserts_lineto() {
+        // When endpoints have a gap, MoveTo should become LineTo to bridge it
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::from_svg("M 10,5 L 20,5").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // M 0,0 L 10,0 L 10,5 L 20,5 — 4 elements with bridging LineTo
+        assert_eq!(a.data.elements().len(), 4);
+        assert!(matches!(a.data.elements()[2], PathEl::LineTo(_)));
+        assert_eq!(a.data.end(), Some(Point::new(20.0, 5.0)));
+    }
+
+    #[test]
+    fn test_path_join_empty_other() {
+        let mut a = Path::from_svg("M 0,0 L 10,0").unwrap();
+        let b = Path::default();
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.elements().len(), 2);
+    }
+
+    #[test]
+    fn test_path_join_empty_self() {
+        let mut a = Path::default();
+        let b = Path::from_svg("M 10,0 L 20,0").unwrap();
+
+        a.join(&b, 1e-10);
+
+        // Empty self keeps MoveTo: M 10,0 L 20,0
+        assert_eq!(a.data.elements().len(), 2);
+        assert!(matches!(a.data.elements()[0], PathEl::MoveTo(_)));
+    }
+
+    #[test]
+    fn test_path_split_with_close() {
+        // Closed subpath followed by open subpath
+        let path = Path::from_svg("M 0,0 L 10,0 L 10,10 Z M 50,50 L 60,60").unwrap();
+        let parts = path.split();
+        assert_eq!(parts.len(), 2);
+
+        // First is closed (has ClosePath)
+        assert!(
+            parts[0]
+                .data
+                .elements()
+                .iter()
+                .any(|el| matches!(el, PathEl::ClosePath))
+        );
+
+        // Second is open
+        assert!(
+            !parts[1]
+                .data
+                .elements()
+                .iter()
+                .any(|el| matches!(el, PathEl::ClosePath))
+        );
     }
 }

@@ -23,6 +23,14 @@ pub trait PathDataTrait:
     fn end(&self) -> Option<Point>;
     fn is_point(&self) -> bool;
     fn flip(&mut self);
+
+    /// Returns true if the path is closed (start ≈ end within [`crate::SAME_POINT_EPSILON`]).
+    fn is_closed(&self) -> bool {
+        match (self.start(), self.end()) {
+            (Some(start), Some(end)) => start.distance(&end) < crate::SAME_POINT_EPSILON,
+            _ => false,
+        }
+    }
 }
 
 pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt::Debug {
@@ -44,4 +52,23 @@ pub trait PathTrait<D: PathDataTrait>: Transforms + Clone + PartialEq + std::fmt
 
     fn metadata(&self) -> &PathMetadata;
     fn metadata_mut(&mut self) -> &mut PathMetadata;
+
+    /// Append another path to this one, creating a continuous path.
+    ///
+    /// If `self`'s endpoint and `other`'s start are within `epsilon`, the duplicate junction
+    /// point is skipped (polylines) or the `MoveTo` is dropped (`BezPath`s). Otherwise the gap
+    /// is bridged: polylines keep both points (implicit segment), `BezPath`s convert `MoveTo`
+    /// to `LineTo`.
+    ///
+    /// Metadata is merged via [`PathMetadata::merge`] (compatible values are kept, conflicts
+    /// become `None`).
+    fn join(&mut self, other: &Self, epsilon: f64);
+
+    /// Split a compound path into its individual subpaths.
+    ///
+    /// For `BezPath`-based paths, each `MoveTo` element starts a new subpath. For polyline-based
+    /// paths, this returns the path unchanged (polylines cannot represent compound paths).
+    ///
+    /// Metadata is cloned to all resulting paths.
+    fn split(self) -> Vec<Self>;
 }

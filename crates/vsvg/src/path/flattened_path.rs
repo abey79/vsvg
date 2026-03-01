@@ -46,6 +46,24 @@ impl Polyline {
     pub fn into_points(self) -> Vec<Point> {
         self.0
     }
+
+    /// Append another polyline to this one.
+    ///
+    /// If the endpoint of `self` and the start of `other` are within `epsilon`,
+    /// the duplicate point is skipped to avoid redundancy.
+    pub fn join(&mut self, other: &Polyline, epsilon: f64) {
+        if other.0.is_empty() {
+            return;
+        }
+
+        // Check if we should skip the first point of other (duplicate)
+        let skip = match (self.end(), other.start()) {
+            (Some(end), Some(start)) if end.distance(&start) < epsilon => 1,
+            _ => 0,
+        };
+
+        self.0.extend(other.0.iter().skip(skip).copied());
+    }
 }
 
 impl<P: Into<Point>> FromIterator<P> for Polyline {
@@ -131,6 +149,20 @@ impl PathTrait<Polyline> for FlattenedPath {
 
     fn metadata_mut(&mut self) -> &mut PathMetadata {
         &mut self.metadata
+    }
+
+    /// Append another path to this one.
+    ///
+    /// The underlying polylines are joined, and metadata is merged
+    /// Metadata is merged via [`PathMetadata::merge`].
+    fn join(&mut self, other: &FlattenedPath, epsilon: f64) {
+        self.data.join(&other.data, epsilon);
+        self.metadata.merge(&other.metadata);
+    }
+
+    /// Returns `vec![self]` since polylines cannot represent compound paths.
+    fn split(self) -> Vec<Self> {
+        vec![self]
     }
 }
 
@@ -352,6 +384,65 @@ mod tests {
                 Point::new(0., 0.)
             ]
         );
+    }
+
+    // ==================== join tests ====================
+
+    #[test]
+    fn test_polyline_join_coincident_skips_duplicate() {
+        // When endpoints are coincident, the duplicate point should be skipped
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![Point::new(10.0, 0.0), Point::new(20.0, 0.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 3);
+        assert_eq!(a.points()[0], Point::new(0.0, 0.0));
+        assert_eq!(a.points()[1], Point::new(10.0, 0.0));
+        assert_eq!(a.points()[2], Point::new(20.0, 0.0));
+    }
+
+    #[test]
+    fn test_polyline_join_gap_keeps_both_points() {
+        // When endpoints have a gap, both points should be kept (implicit bridge)
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![Point::new(10.0, 5.0), Point::new(20.0, 5.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 4);
+        assert_eq!(a.points()[1], Point::new(10.0, 0.0));
+        assert_eq!(a.points()[2], Point::new(10.0, 5.0));
+    }
+
+    #[test]
+    fn test_polyline_join_empty_other() {
+        let mut a = Polyline::new(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = Polyline::new(vec![]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.points().len(), 2);
+    }
+
+    #[test]
+    fn test_flattenedpath_join_coincident() {
+        let mut a = FlattenedPath::from(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = FlattenedPath::from(vec![Point::new(10.0, 0.0), Point::new(20.0, 0.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.points().len(), 3);
+    }
+
+    #[test]
+    fn test_flattenedpath_join_gap() {
+        let mut a = FlattenedPath::from(vec![Point::new(0.0, 0.0), Point::new(10.0, 0.0)]);
+        let b = FlattenedPath::from(vec![Point::new(10.0, 5.0), Point::new(20.0, 5.0)]);
+
+        a.join(&b, 1e-10);
+
+        assert_eq!(a.data.points().len(), 4);
     }
 
     #[test]
